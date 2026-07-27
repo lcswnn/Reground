@@ -1,56 +1,94 @@
-# Welcome to your Expo app 👋
+# Humanitas
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Verified proof that humanity is improving — a daily positive-progress story, a
+browsable feed of good news with sources, and the long-run metrics that rarely
+make headlines because they move slowly.
 
-## Get started
+Expo SDK 57 · React Native 0.86 · expo-router · Supabase
 
-1. Install dependencies
+## Setup
 
-   ```bash
-   npm install
-   ```
+### 1. Environment
 
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
-```bash
-npm run reset-project
+```sh
+cp .env.example .env
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+Fill in from **Supabase → Project Settings → API**:
 
-### Other setup steps
+| Variable | Where to find it |
+| --- | --- |
+| `EXPO_PUBLIC_SUPABASE_URL` | Project URL |
+| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (`sb_publishable_…`), formerly the anon key |
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+Both values ship inside the app bundle and are not secrets — Row Level Security
+is what protects the data. Never put the `service_role` key here.
 
-## Learn more
+> Env vars are inlined at bundle time. After editing `.env` you must restart
+> with `npx expo start --clear`; a hot reload will not pick up the change.
 
-To learn more about developing your project with Expo, look at the following resources:
+### 2. Database
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+In the Supabase SQL editor, run in order:
 
-## Join the community
+1. [`supabase/schema.sql`](supabase/schema.sql) — tables, indexes, RLS policies,
+   the new-user trigger, and the `current_streak()` function
+2. [`supabase/seed.sql`](supabase/seed.sql) — six metrics with real series and
+   six starter stories, one featured for today
 
-Join our community of developers creating universal apps.
+Both are idempotent.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+Then in **Authentication → Providers**, confirm Email is enabled. If "Confirm
+email" is on, new users must click the emailed link before their first sign-in —
+the sign-up screen tells them so.
+
+### 3. Run
+
+```sh
+npx expo start --clear
+```
+
+## Structure
+
+```
+src/
+  app/                    file-based routes
+    _layout.tsx           session provider + Stack.Protected auth gate
+    (auth)/               sign-in, sign-up — shown only when signed out
+    (tabs)/               Today, Feed, Progress, You — shown only when signed in
+    story/[id].tsx        story detail, save, mark-as-read
+  api/                    Supabase queries, one module per domain
+  components/             presentational components
+  constants/              theme tokens, category metadata
+  hooks/                  useAsync, useTheme, useGradients
+  lib/                    supabase client, session context, formatting
+  types/database.ts       schema types (regenerate with supabase gen types)
+supabase/                 schema.sql, seed.sql
+docs/widget.md            iOS widget plan — not built yet, see below
+```
+
+Routing is gated by `Stack.Protected` in [src/app/_layout.tsx](src/app/_layout.tsx):
+signed-out users can only reach `(auth)`, signed-in users can only reach
+`(tabs)`. Sign-in and sign-out need no manual navigation — flipping the session
+swaps the navigator.
+
+## Not yet built
+
+- **Home screen widget.** Requires a native WidgetKit target and a development
+  build; it cannot work in Expo Go. See [docs/widget.md](docs/widget.md) for the
+  full approach.
+- **Story ingestion.** The feed reads whatever is in the `stories` table. There
+  is no job pulling positive news from the web yet — a Supabase Edge Function on
+  a cron schedule is the natural home for it, since it needs API keys that must
+  not ship in the app.
+- **Password reset**, avatar upload, and push notifications.
+
+## Building for the App Store
+
+```sh
+eas build --platform ios --profile production
+eas submit --platform ios
+```
+
+Bundle ID `com.lucaswaunn.humanitas` · EAS project
+[@ginjaninja018/Humanitas](https://expo.dev/accounts/ginjaninja018/projects/Humanitas)
