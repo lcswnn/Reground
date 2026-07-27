@@ -1,0 +1,66 @@
+# Learn more https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files
+
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+
+# Native / signing credentials
+.kotlin/
+*.orig.*
+*.jks
+*.keystore
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.cer
+*.certSigningRequest
+
+# EAS local credentials — contains keystore + Apple key paths and passwords
+credentials.json
+secrets.json
+
+# Build artifacts
+*.ipa
+*.aab
+*.apk
+.eas-build-local-nodejs/
+
+# Metro
+.metro-health-check*
+
+# debug
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# macOS
+.DS_Store
+*.pem
+
+# env files — ignore all of them, including plain .env
+# (EXPO_PUBLIC_* vars are inlined into the JS bundle, so treat them as public
+# regardless; anything truly secret belongs in EAS secrets, not a committed file)
+.env
+.env.*
+!.env.example
+
+# Firebase / Google service config (holds project + API keys).
+# If you adopt these, upload them as EAS file environment variables rather
+# than committing them, or builds will fail on missing files.
+google-services.json
+GoogleService-Info.plist
+
+# typescript
+*.tsbuildinfo
+
+example
+
+# generated native folders
+/ios
+/android
