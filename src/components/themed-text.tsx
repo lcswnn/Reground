@@ -38,68 +38,66 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   );
 }
 
+// Libertinus is loaded as two single-weight families, so `fontWeight` is absent
+// throughout: naming a weight the family doesn't carry drops the text back to
+// the system font. Emphasis comes from the display face, color, and caps.
 const styles = StyleSheet.create({
   default: {
+    fontFamily: Fonts.body,
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '500',
   },
   defaultSemiBold: {
+    fontFamily: Fonts.body,
     fontSize: 16,
     lineHeight: 24,
-    fontWeight: '700',
   },
   hero: {
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.display,
     fontSize: 40,
-    lineHeight: 44,
-    fontWeight: '800',
-    letterSpacing: -0.5,
+    lineHeight: 48,
   },
   title: {
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.display,
     fontSize: 32,
-    lineHeight: 38,
-    fontWeight: '800',
-    letterSpacing: -0.4,
+    lineHeight: 40,
   },
   subtitle: {
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.display,
     fontSize: 24,
-    lineHeight: 30,
-    fontWeight: '700',
+    lineHeight: 32,
   },
   sectionTitle: {
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.display,
     fontSize: 20,
-    lineHeight: 26,
-    fontWeight: '700',
+    lineHeight: 28,
   },
   eyebrow: {
+    fontFamily: Fonts.body,
     fontSize: 12,
     lineHeight: 16,
-    fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 1.1,
   },
   small: {
+    fontFamily: Fonts.body,
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: '500',
   },
   smallBold: {
+    fontFamily: Fonts.body,
     fontSize: 14,
     lineHeight: 20,
-    fontWeight: '700',
   },
   link: {
+    fontFamily: Fonts.body,
     lineHeight: 30,
     fontSize: 14,
   },
   linkPrimary: {
+    fontFamily: Fonts.body,
     lineHeight: 30,
     fontSize: 14,
-    fontWeight: '700',
   },
   code: {
     fontFamily: Fonts.mono,

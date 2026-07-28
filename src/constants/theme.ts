@@ -16,68 +16,93 @@ import { Platform } from 'react-native';
 
 export const Colors = {
   light: {
-    text: '#1B1524',
-    textSecondary: '#6B6480',
-    textMuted: '#948CA8',
-    textOnBrand: '#3D2500',
+    /** Warm near-black rather than true black: softer, less clinical at 6am. */
+    text: '#221F1A',
+    textSecondary: '#6B6459',
+    textMuted: '#9A9287',
+    textOnBrand: '#3A2410',
 
     /** Near-white with a hair of warmth, so screens read as paper, not a lightbox. */
-    background: '#FAFAF8',
-    backgroundElement: '#F2F1ED',
-    backgroundSelected: '#E8E6E0',
+    background: '#FBFAF7',
+    backgroundElement: '#F3F1EB',
+    backgroundSelected: '#E9E5DC',
     surface: '#FFFFFF',
 
-    border: '#E7E5DF',
+    border: '#E8E4DA',
 
-    /** Golden hour. The primary brand accent. */
-    brand: '#F5A524',
-    brandStrong: '#D9860A',
-    brandSoft: '#FFF0D4',
+    /** Early sun on a wall — apricot rather than saturated orange. */
+    brand: '#E9A567',
+    /** The text-safe cut of the brand (4.9:1 on `background`). */
+    brandStrong: '#AC5C2D',
+    brandSoft: '#FBEEDF',
 
-    /** Progress / "up and to the right". */
-    positive: '#12B76A',
-    positiveSoft: '#DCFAE9',
+    /** Progress / "up and to the right". Muted sage keeps it from shouting. */
+    positive: '#4F8F6B',
+    positiveSoft: '#E3EFE8',
 
     /** Used for declines that are *good* (poverty, child mortality). */
-    decline: '#0BA5EC',
-    declineSoft: '#DCF3FD',
+    decline: '#4A7FA5',
+    declineSoft: '#E2ECF3',
 
     /** Secondary accent for humanity/people-flavored surfaces. */
-    accent: '#7C5CFF',
-    accentSoft: '#EDE9FF',
+    accent: '#7C86B8',
+    accentSoft: '#EAEAF4',
+
+    /** Form errors. Brick, not siren red — nothing here is an emergency. */
+    danger: '#B4453F',
   },
   dark: {
-    text: '#FDF8F2',
-    textSecondary: '#B3ABC2',
-    textMuted: '#7E7691',
-    textOnBrand: '#2A1900',
+    text: '#F2EDE6',
+    textSecondary: '#B4ABA0',
+    textMuted: '#857C71',
+    textOnBrand: '#2A1A0C',
 
-    background: '#14101B',
-    backgroundElement: '#201A2B',
-    backgroundSelected: '#2C2438',
-    surface: '#1B1624',
+    background: '#171512',
+    backgroundElement: '#211E1A',
+    backgroundSelected: '#2B2823',
+    surface: '#1D1A16',
 
-    border: '#2F2740',
+    border: '#322E28',
 
-    brand: '#FFBE4D',
-    brandStrong: '#F5A524',
-    brandSoft: '#3A2B12',
+    brand: '#E9A567',
+    /** Inverted from light: the *lighter* cut is the readable one on dark. */
+    brandStrong: '#F0B67F',
+    brandSoft: '#3A2A1B',
 
-    positive: '#3DDC93',
-    positiveSoft: '#12331F',
+    positive: '#6FBF95',
+    positiveSoft: '#172B21',
 
-    decline: '#4FC3F7',
-    declineSoft: '#0E2B38',
+    decline: '#6FA8CE',
+    declineSoft: '#14252F',
 
-    accent: '#A48BFF',
-    accentSoft: '#251E42',
+    accent: '#9AA2D6',
+    accentSoft: '#22233A',
+
+    danger: '#E08A85',
   },
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
 
+/**
+ * Family names registered by `useFonts` in the root layout. Referenced as
+ * strings everywhere else, so a missing load shows up as system fallback text
+ * rather than a crash.
+ */
+export const LibertinusMath = 'LibertinusMath';
+export const LibertinusSerif = 'LibertinusSerif';
+export const LibertinusSerifSemibold = 'LibertinusSerif-Semibold';
+export const LibertinusSerifBold = 'LibertinusSerif-Bold';
+
 export const Fonts = Platform.select({
   ios: {
+    /**
+     * Headings. One family name per weight file — RN can't synthesize weights
+     * for a custom family, so `fontWeight` must stay off anything using these.
+     */
+    display: LibertinusSerifBold,
+    /** Everything that isn't a heading. */
+    body: LibertinusSerif,
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: 'system-ui',
     /** iOS `UIFontDescriptorSystemDesignSerif` */
@@ -88,12 +113,16 @@ export const Fonts = Platform.select({
     mono: 'ui-monospace',
   },
   default: {
+    display: LibertinusSerifBold,
+    body: LibertinusSerif,
     sans: 'normal',
     serif: 'serif',
     rounded: 'normal',
     mono: 'monospace',
   },
   web: {
+    display: `${LibertinusSerifBold}, var(--font-serif)`,
+    body: `${LibertinusSerif}, var(--font-serif)`,
     sans: 'var(--font-display)',
     serif: 'var(--font-serif)',
     rounded: 'var(--font-rounded)',

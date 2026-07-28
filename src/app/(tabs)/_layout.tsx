@@ -21,6 +21,9 @@ export default function TabsLayout() {
       disableTransparentOnScrollEdge
       minimizeBehavior="never"
       shadowColor={colors.border}
+      // Without this the selected icon renders in the system blue, which is the
+      // least calm thing on the screen.
+      tintColor={colors.brandStrong}
       indicatorColor={colors.backgroundElement}
       labelStyle={{ selected: { color: colors.brandStrong } }}>
       <NativeTabs.Trigger name="index">

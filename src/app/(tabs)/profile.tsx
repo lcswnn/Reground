@@ -6,7 +6,7 @@ import { StoryCard } from '@/components/story-card';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { BottomTabInset, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchCurrentStreak, fetchSavedStories } from '@/api/stories';
 import { queryKeys } from '@/lib/query';
@@ -157,8 +157,8 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   avatarText: {
+    fontFamily: Fonts.display,
     fontSize: 28,
-    fontWeight: '800',
   },
   headerText: {
     flex: 1,

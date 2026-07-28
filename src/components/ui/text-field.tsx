@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { StyleSheet, Text, TextInput, View, type TextInputProps } from 'react-native';
 
-import { Radius, Spacing } from '@/constants/theme';
+import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 export interface TextFieldProps extends TextInputProps {
@@ -31,13 +31,13 @@ export function TextField({ label, errorText, style, ...rest }: TextFieldProps) 
           {
             backgroundColor: theme.surface,
             color: theme.text,
-            borderColor: errorText ? '#E5484D' : focused ? theme.brand : theme.border,
+            borderColor: errorText ? theme.danger : focused ? theme.brand : theme.border,
           },
           style,
         ]}
         {...rest}
       />
-      {errorText ? <Text style={styles.error}>{errorText}</Text> : null}
+      {errorText ? <Text style={[styles.error, { color: theme.danger }]}>{errorText}</Text> : null}
     </View>
   );
 }
@@ -47,12 +47,13 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   label: {
+    fontFamily: Fonts.body,
     fontSize: 13,
-    fontWeight: '700',
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
   input: {
+    fontFamily: Fonts.body,
     height: 52,
     borderRadius: Radius.md,
     borderWidth: 1.5,
@@ -60,8 +61,7 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   error: {
-    color: '#E5484D',
+    fontFamily: Fonts.body,
     fontSize: 13,
-    fontWeight: '600',
   },
 });

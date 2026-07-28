@@ -1,7 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
 import { CATEGORIES } from '@/constants/categories';
-import { Radius, Spacing } from '@/constants/theme';
+import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import type { StoryCategory } from '@/types/database';
 
@@ -36,8 +36,8 @@ const styles = StyleSheet.create({
     fontSize: 11,
   },
   label: {
+    fontFamily: Fonts.body,
     fontSize: 11,
-    fontWeight: '800',
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },

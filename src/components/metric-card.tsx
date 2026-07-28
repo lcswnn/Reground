@@ -2,7 +2,7 @@ import { StyleSheet, View } from 'react-native';
 
 import { Sparkline } from '@/components/sparkline';
 import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
+import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { computeTrend, formatValue } from '@/lib/format';
 import type { MetricWithSeries } from '@/types/database';
@@ -76,7 +76,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   trendText: {
-    fontWeight: '800',
+    fontFamily: Fonts.body,
     fontSize: 12,
   },
   value: {

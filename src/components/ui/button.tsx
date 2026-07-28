@@ -66,9 +66,8 @@ const styles = StyleSheet.create({
     height: 44,
   },
   label: {
-    fontFamily: Fonts.rounded,
+    fontFamily: Fonts.body,
     fontSize: 17,
-    fontWeight: '700',
   },
   pressed: {
     opacity: 0.75,

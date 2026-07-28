@@ -1,10 +1,11 @@
 import { QueryClientProvider } from '@tanstack/react-query';
+import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
-import { Colors } from '@/constants/theme';
+import { Colors, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
@@ -27,13 +28,26 @@ function RootNavigator() {
   const isDark = scheme === 'dark';
   const palette = isDark ? Colors.dark : Colors.light;
 
+  // Loaded at runtime rather than through the expo-font config plugin, which
+  // would need a native rebuild to pick up.
+  // One family name per file: RN can't synthesize weights for a custom family,
+  // so the bold face is registered under its own name and used directly.
+  const [fontsLoaded, fontError] = useFonts({
+    [LibertinusSerif]: require('../../assets/fonts/LibertinusSerif-Regular.otf'),
+    [LibertinusSerifBold]: require('../../assets/fonts/LibertinusSerif-Bold.otf'),
+  });
+
+  // A font that fails to decode shouldn't hold the app hostage — fall through
+  // to system text instead.
+  const fontsSettled = fontsLoaded || !!fontError;
+
   // Hold the splash until we know whether a session was restored, otherwise the
   // sign-in screen flashes for a frame before the tabs mount.
   useEffect(() => {
-    if (!isLoading) {
+    if (!isLoading && fontsSettled) {
       void SplashScreen.hideAsync();
     }
-  }, [isLoading]);
+  }, [isLoading, fontsSettled]);
 
   const base = isDark ? DarkTheme : DefaultTheme;
   const navigationTheme = {
@@ -48,7 +62,7 @@ function RootNavigator() {
     },
   };
 
-  if (isLoading) return null;
+  if (isLoading || !fontsSettled) return null;
 
   return (
     <ThemeProvider value={navigationTheme}>
