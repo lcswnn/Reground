@@ -86,7 +86,7 @@ export default function StoryScreen() {
     return <ErrorState error={storyQuery.error} onRetry={() => void storyQuery.refetch()} />;
   }
   if (!story) {
-    return <EmptyState emoji="🔍" title="Story not found" message="It may have been removed." />;
+    return <EmptyState title="Story not found" message="It may have been removed." />;
   }
 
   return (
@@ -136,7 +136,7 @@ export default function StoryScreen() {
 
         <View style={styles.actions}>
           <Button
-            title={isSaved ? '🔖 Saved' : '🔖 Save this'}
+            title={isSaved ? 'Saved' : 'Save this'}
             variant={isSaved ? 'secondary' : 'primary'}
             onPress={() => toggleSave.mutate(!isSaved)}
             disabled={toggleSave.isPending || savedIdsQuery.isPending}

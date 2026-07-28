@@ -9,7 +9,13 @@ interface SessionContextValue {
   /** True until we know whether a persisted session exists. Gate the UI on this. */
   isLoading: boolean;
   signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, displayName: string) => Promise<void>;
+  /** `birthDate` is `YYYY-MM-DD`; it seeds profiles.birth_date via the trigger. */
+  signUp: (
+    email: string,
+    password: string,
+    displayName: string,
+    birthDate: string,
+  ) => Promise<void>;
   signOut: () => Promise<void>;
 }
 
@@ -59,12 +65,12 @@ export function SessionProvider({ children }: PropsWithChildren) {
         });
         if (error) throw error;
       },
-      async signUp(email, password, displayName) {
+      async signUp(email, password, displayName, birthDate) {
         const { error } = await supabase.auth.signUp({
           email: email.trim(),
           password,
           // Read by the handle_new_user() trigger to seed the profiles row.
-          options: { data: { display_name: displayName.trim() } },
+          options: { data: { display_name: displayName.trim(), birth_date: birthDate } },
         });
         if (error) throw error;
       },

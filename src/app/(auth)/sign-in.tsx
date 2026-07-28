@@ -52,7 +52,6 @@ export default function SignInScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             <View style={styles.hero}>
-              <ThemedText style={styles.mark}>🌅</ThemedText>
               <ThemedText type="hero">Welcome back</ThemedText>
               <ThemedText type="default" themeColor="textSecondary">
                 Today&rsquo;s proof that things are getting better is waiting.
@@ -123,9 +122,6 @@ const styles = StyleSheet.create({
   },
   hero: {
     gap: Spacing.two,
-  },
-  mark: {
-    fontSize: 52,
   },
   form: {
     gap: Spacing.three,

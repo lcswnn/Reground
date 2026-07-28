@@ -34,21 +34,27 @@ export function StoryCard({ story }: { story: Story }) {
         <View style={styles.body}>
           <CategoryPill category={story.category} />
 
-          <ThemedText type="defaultSemiBold" style={styles.title} numberOfLines={3}>
-            {story.title}
-          </ThemedText>
-
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
-            {story.summary}
-          </ThemedText>
-
-          <View style={styles.meta}>
-            <ThemedText type="small" themeColor="textMuted" numberOfLines={1} style={styles.source}>
-              {story.source_name}
+          <View style={styles.text}>
+            <ThemedText type="defaultSemiBold" style={styles.title} numberOfLines={3}>
+              {story.title}
             </ThemedText>
-            <ThemedText type="small" themeColor="textMuted">
-              {formatRelative(story.published_at)}
+
+            <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
+              {story.summary}
             </ThemedText>
+
+            <View style={styles.meta}>
+              <ThemedText
+                type="small"
+                themeColor="textMuted"
+                numberOfLines={1}
+                style={styles.source}>
+                {story.source_name}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted">
+                {formatRelative(story.published_at)}
+              </ThemedText>
+            </View>
           </View>
         </View>
       </Pressable>
@@ -72,6 +78,14 @@ const styles = StyleSheet.create({
   },
   body: {
     padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  // The category pill carries 8pt of its own padding, so its label sits 8pt in
+  // from its box. Indenting the copy by the same 8 puts every line of text on
+  // one left edge with that label, and lets the pill's rounded box sit slightly
+  // proud of the column rather than looking like the text has slipped left.
+  text: {
+    paddingLeft: Spacing.two,
     gap: Spacing.two,
   },
   title: {

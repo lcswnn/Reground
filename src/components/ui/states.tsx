@@ -17,18 +17,9 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   );
 }
 
-export function EmptyState({
-  emoji = '🌱',
-  title,
-  message,
-}: {
-  emoji?: string;
-  title: string;
-  message?: string;
-}) {
+export function EmptyState({ title, message }: { title: string; message?: string }) {
   return (
     <View style={styles.center}>
-      <ThemedText style={styles.emoji}>{emoji}</ThemedText>
       <ThemedText type="sectionTitle" style={styles.centered}>
         {title}
       </ThemedText>
@@ -44,7 +35,6 @@ export function EmptyState({
 export function ErrorState({ error, onRetry }: { error: Error; onRetry?: () => void }) {
   return (
     <View style={styles.center}>
-      <ThemedText style={styles.emoji}>🌤️</ThemedText>
       <ThemedText type="sectionTitle" style={styles.centered}>
         Could not load this
       </ThemedText>
@@ -67,9 +57,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.two,
     padding: Spacing.five,
-  },
-  emoji: {
-    fontSize: 40,
   },
   centered: {
     textAlign: 'center',

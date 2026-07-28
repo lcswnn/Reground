@@ -65,6 +65,11 @@ export type Profile = {
   id: string;
   display_name: string | null;
   avatar_url: string | null;
+  /**
+   * `YYYY-MM-DD`. Null for every account created before the birthday field
+   * existed, so anything reading it has to handle its absence.
+   */
+  birth_date: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -115,7 +120,10 @@ export type Database = {
       };
       profiles: {
         Row: Profile;
-        Insert: Insert<Profile, 'created_at' | 'updated_at' | 'display_name' | 'avatar_url'>;
+        Insert: Insert<
+          Profile,
+          'created_at' | 'updated_at' | 'display_name' | 'avatar_url' | 'birth_date'
+        >;
         Update: Partial<Profile>;
         Relationships: [];
       };

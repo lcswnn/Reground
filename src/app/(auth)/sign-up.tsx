@@ -11,12 +11,26 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
+import { DateField } from '@/components/ui/date-field';
 import { TextField } from '@/components/ui/text-field';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/lib/session';
 
 const MIN_PASSWORD_LENGTH = 8;
+
+/**
+ * Birthday bounds. The far end is a plausible human lifespan rather than a
+ * round number, and the near end is today — "since you were born" needs a date
+ * that has actually happened.
+ */
+const OLDEST_YEARS = 120;
+const TODAY = new Date();
+const EARLIEST_BIRTHDAY = new Date(
+  TODAY.getFullYear() - OLDEST_YEARS,
+  TODAY.getMonth(),
+  TODAY.getDate(),
+);
 
 export default function SignUpScreen() {
   const theme = useTheme();
@@ -25,6 +39,7 @@ export default function SignUpScreen() {
   const [displayName, setDisplayName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [birthDate, setBirthDate] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -38,9 +53,14 @@ export default function SignUpScreen() {
       return;
     }
 
+    if (!birthDate) {
+      setError('Pick your birthday so we can show you what has changed since.');
+      return;
+    }
+
     setSubmitting(true);
     try {
-      await signUp(email, password, displayName);
+      await signUp(email, password, displayName, birthDate);
       // With "Confirm email" enabled in Supabase, signUp returns no session —
       // the user has to click the emailed link first. Tell them that instead of
       // leaving them on a screen that looks like it did nothing.
@@ -56,6 +76,7 @@ export default function SignUpScreen() {
     displayName.trim().length > 0 &&
     email.trim().length > 0 &&
     password.length > 0 &&
+    birthDate !== null &&
     !submitting;
 
   return (
@@ -69,7 +90,6 @@ export default function SignUpScreen() {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}>
             <View style={styles.hero}>
-              <ThemedText style={styles.mark}>🌱</ThemedText>
               <ThemedText type="hero">Start your streak</ThemedText>
               <ThemedText type="default" themeColor="textSecondary">
                 One verified piece of progress, every single day.
@@ -85,6 +105,14 @@ export default function SignUpScreen() {
                 autoComplete="name"
                 textContentType="name"
                 placeholder="Ada"
+              />
+              <DateField
+                label="Birthday"
+                value={birthDate}
+                onChange={setBirthDate}
+                placeholder="When it all started for you"
+                minimumDate={EARLIEST_BIRTHDAY}
+                maximumDate={TODAY}
               />
               <TextField
                 label="Email"
@@ -155,9 +183,6 @@ const styles = StyleSheet.create({
   },
   hero: {
     gap: Spacing.two,
-  },
-  mark: {
-    fontSize: 52,
   },
   form: {
     gap: Spacing.three,

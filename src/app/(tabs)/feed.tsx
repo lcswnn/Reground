@@ -49,13 +49,13 @@ export default function FeedScreen() {
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
+      style={styles.filterRow}
       contentContainerStyle={styles.filters}>
       <FilterChip label="All" active={category === null} onPress={() => setCategory(null)} />
       {CATEGORY_KEYS.map((key) => (
         <FilterChip
           key={key}
           label={CATEGORIES[key].label}
-          emoji={CATEGORIES[key].emoji}
           active={category === key}
           onPress={() => setCategory(key)}
         />
@@ -84,6 +84,9 @@ export default function FeedScreen() {
             data={stories}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => <StoryCard story={item} />}
+            // flex-basis 0 rather than the ScrollView default, so the list
+            // takes exactly what the header and filter row leave behind.
+            style={styles.flex}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
             onEndReached={() => {
@@ -121,12 +124,10 @@ export default function FeedScreen() {
 
 function FilterChip({
   label,
-  emoji,
   active,
   onPress,
 }: {
   label: string;
-  emoji?: string;
   active: boolean;
   onPress: () => void;
 }) {
@@ -145,7 +146,6 @@ function FilterChip({
       <ThemedText
         type="smallBold"
         style={{ color: active ? theme.textOnBrand : theme.textSecondary }}>
-        {emoji ? `${emoji} ` : ''}
         {label}
       </ThemedText>
     </Pressable>
@@ -164,6 +164,17 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
+  /**
+   * A ScrollView carries `flexGrow: 1, flexShrink: 1` in its own base style, so
+   * left alone this row fights the list below it for the column's height and
+   * loses a chunk of itself — the chips get clipped from the middle down, and
+   * the row re-measures every time the list's contents change. Pinning it to
+   * its natural height keeps it out of that negotiation.
+   */
+  filterRow: {
+    flexGrow: 0,
+    flexShrink: 0,
+  },
   filters: {
     paddingHorizontal: Spacing.four,
     paddingVertical: Spacing.two,
@@ -175,7 +186,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   list: {
-    padding: Spacing.four,
+    // Deliberately not the page gutter: a card carries its own 16pt body
+    // padding, so 8 here puts the title and the category pill at 24 — level
+    // with the header text and the left edge of the filter chips above.
+    paddingHorizontal: Spacing.two,
     paddingTop: Spacing.two,
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.five,

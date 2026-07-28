@@ -1,9 +1,31 @@
 import type { MetricDirection, MetricPoint } from '@/types/database';
 
-/** Local calendar date as `YYYY-MM-DD` — matches Postgres `date` columns. */
-export function todayISO(date = new Date()): string {
+/**
+ * Local calendar date as `YYYY-MM-DD` — matches Postgres `date` columns.
+ *
+ * Not `toISOString().slice(0, 10)` on its own: that converts to UTC first, so
+ * anyone west of Greenwich gets yesterday's date for most of the evening.
+ */
+export function toISODate(date: Date): string {
   const offset = date.getTimezoneOffset() * 60_000;
   return new Date(date.getTime() - offset).toISOString().slice(0, 10);
+}
+
+export function todayISO(date = new Date()): string {
+  return toISODate(date);
+}
+
+/** A stored `YYYY-MM-DD` back as a local Date, with no timezone shift. */
+export function parseISODate(iso: string): Date {
+  return new Date(`${iso}T00:00:00`);
+}
+
+export function formatBirthday(iso: string): string {
+  return parseISODate(iso).toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
 }
 
 export function formatDay(iso: string): string {

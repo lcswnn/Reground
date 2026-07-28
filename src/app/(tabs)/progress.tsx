@@ -85,7 +85,6 @@ export default function ProgressScreen() {
             }
             ListEmptyComponent={
               <EmptyState
-                emoji="📈"
                 title="No metrics yet"
                 message="Seed the metrics and metric_points tables and the trends will appear here."
               />

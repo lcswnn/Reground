@@ -80,12 +80,10 @@ export default function ProfileScreen() {
             <StatTile
               value={streakQuery.isPending ? '—' : String(streak)}
               label={streak === 1 ? 'day streak' : 'day streak'}
-              emoji="🔥"
             />
             <StatTile
               value={savedQuery.isPending ? '—' : String(saved.length)}
               label="saved"
-              emoji="🔖"
             />
           </View>
 
@@ -104,7 +102,6 @@ export default function ProfileScreen() {
               </View>
             ) : (
               <EmptyState
-                emoji="🔖"
                 title="Nothing saved yet"
                 message="Tap the bookmark on any story to keep it here."
               />
@@ -120,11 +117,10 @@ export default function ProfileScreen() {
   );
 }
 
-function StatTile({ value, label, emoji }: { value: string; label: string; emoji: string }) {
+function StatTile({ value, label }: { value: string; label: string }) {
   const theme = useTheme();
   return (
     <View style={[styles.tile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <ThemedText style={styles.tileEmoji}>{emoji}</ThemedText>
       <ThemedText type="title">{value}</ThemedText>
       <ThemedText type="small" themeColor="textSecondary">
         {label}
@@ -174,9 +170,6 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.half,
-  },
-  tileEmoji: {
-    fontSize: 20,
   },
   section: {
     gap: Spacing.three,
