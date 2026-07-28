@@ -1,6 +1,5 @@
 import { useQueries } from '@tanstack/react-query';
 import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -10,7 +9,6 @@ import { MetricCard } from '@/components/metric-card';
 import { ThemedText } from '@/components/themed-text';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { useGradients } from '@/hooks/use-gradient';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchCurrentStreak, fetchDailyProof } from '@/api/stories';
 import { fetchMetrics } from '@/api/metrics';
@@ -20,7 +18,6 @@ import { useSession } from '@/lib/session';
 
 export default function TodayScreen() {
   const theme = useTheme();
-  const gradients = useGradients();
   const router = useRouter();
   const { session } = useSession();
 
@@ -69,29 +66,23 @@ export default function TodayScreen() {
             tintColor={theme.brand}
           />
         }>
-        <LinearGradient colors={gradients.sunrise} style={styles.gradient} />
-
         <SafeAreaView edges={['top']} style={styles.header}>
           <View style={styles.headerRow}>
             <View style={styles.headerText}>
               <ThemedText type="eyebrow" themeColor="textSecondary">
                 {formatDay(todayISO())}
               </ThemedText>
-              <ThemedText type="hero">
+              <ThemedText type="title">
                 {greeting}, {firstName}.
               </ThemedText>
             </View>
             {streak > 0 ? (
-              <View style={[styles.streak, { backgroundColor: theme.surface }]}>
+              <View style={[styles.streak, { backgroundColor: theme.backgroundElement }]}>
                 <ThemedText style={styles.streakEmoji}>🔥</ThemedText>
                 <ThemedText type="smallBold">{streak}</ThemedText>
               </View>
             ) : null}
           </View>
-
-          <ThemedText type="default" themeColor="textSecondary" style={styles.tagline}>
-            Verified proof that humanity is getting better.
-          </ThemedText>
         </SafeAreaView>
 
         <View style={styles.content}>
@@ -184,13 +175,6 @@ const styles = StyleSheet.create({
   scroll: {
     paddingBottom: BottomTabInset + Spacing.five,
   },
-  gradient: {
-    position: 'absolute',
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 340,
-  },
   header: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
@@ -219,9 +203,6 @@ const styles = StyleSheet.create({
   },
   streakEmoji: {
     fontSize: 14,
-  },
-  tagline: {
-    maxWidth: 320,
   },
   content: {
     paddingHorizontal: Spacing.four,

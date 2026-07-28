@@ -2,9 +2,9 @@
  * Humanitas design tokens.
  *
  * The palette is deliberately warm and sunrise-leaning: this app exists to make
- * "things are getting better" feel true at a glance, so the default surface is a
- * warm cream rather than a clinical white, and the primary accent is a golden
- * amber rather than a corporate blue.
+ * "things are getting better" feel true at a glance, so the primary accent is a
+ * golden amber rather than a corporate blue. Surfaces stay a quiet near-white so
+ * the stories and charts carry the color.
  *
  * Dark mode keeps the same hues but drops the luminance, so the app reads as the
  * same product at night instead of a different one.
@@ -21,12 +21,13 @@ export const Colors = {
     textMuted: '#948CA8',
     textOnBrand: '#3D2500',
 
-    background: '#FFFBF4',
-    backgroundElement: '#FFF4E4',
-    backgroundSelected: '#FFE9CB',
+    /** Near-white with a hair of warmth, so screens read as paper, not a lightbox. */
+    background: '#FAFAF8',
+    backgroundElement: '#F2F1ED',
+    backgroundSelected: '#E8E6E0',
     surface: '#FFFFFF',
 
-    border: '#F0E4D2',
+    border: '#E7E5DF',
 
     /** Golden hour. The primary brand accent. */
     brand: '#F5A524',
@@ -74,18 +75,6 @@ export const Colors = {
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
-
-/** Sunrise gradient used on the daily-proof hero. */
-export const Gradients = {
-  light: {
-    sunrise: ['#FFD98A', '#FFAE6B', '#FF8FA0'] as const,
-    dawn: ['#FFF0D4', '#FFE3E8'] as const,
-  },
-  dark: {
-    sunrise: ['#5A3A12', '#6B2F3C', '#3B2352'] as const,
-    dawn: ['#221A2E', '#2B1F33'] as const,
-  },
-} as const;
 
 export const Fonts = Platform.select({
   ios: {

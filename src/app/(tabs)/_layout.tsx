@@ -9,7 +9,18 @@ export default function TabsLayout() {
 
   return (
     <NativeTabs
+      // The bar matches the page and leans on `shadowColor` for its top edge.
+      // A contrasting fill would read as an 83pt panel: iOS centers the icons in
+      // the top 49pt and leaves the home-indicator inset below them empty, so a
+      // visible block makes the icons look shoved to the top.
+      //
+      // Opacity still has to be forced, though — iOS turns the bar transparent
+      // at a scroll edge (or on a non-scrolling screen), and on iOS 26 it
+      // minimizes the bar away as you scroll down.
       backgroundColor={colors.background}
+      disableTransparentOnScrollEdge
+      minimizeBehavior="never"
+      shadowColor={colors.border}
       indicatorColor={colors.backgroundElement}
       labelStyle={{ selected: { color: colors.brandStrong } }}>
       <NativeTabs.Trigger name="index">

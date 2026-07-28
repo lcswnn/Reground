@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { Link } from 'expo-router';
 import { useState } from 'react';
 import {
@@ -14,7 +13,6 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { TextField } from '@/components/ui/text-field';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useGradients } from '@/hooks/use-gradient';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/lib/session';
 
@@ -22,7 +20,6 @@ const MIN_PASSWORD_LENGTH = 8;
 
 export default function SignUpScreen() {
   const theme = useTheme();
-  const gradients = useGradients();
   const { signUp } = useSession();
 
   const [displayName, setDisplayName] = useState('');
@@ -63,7 +60,6 @@ export default function SignUpScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
-      <LinearGradient colors={gradients.dawn} style={StyleSheet.absoluteFill} />
       <SafeAreaView style={styles.safe}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : undefined}
