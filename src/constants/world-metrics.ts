@@ -43,9 +43,10 @@ export function categoryLabel(category: string): string {
 }
 
 /**
- * Tiles per page, as three rows of two.
+ * Tiles per page, as two rows of two.
  *
- * Six rather than four because the set grew to thirteen indicators; at four a
- * page the last page held a single tile.
+ * Thirteen indicators page as 4/4/4/1, so the last page carries a single
+ * half-width tile. Six per page was tried and only moved the lone tile to a
+ * taller page rather than removing it.
  */
-export const WORLD_METRICS_PER_PAGE = 6;
+export const WORLD_METRICS_PER_PAGE = 4;

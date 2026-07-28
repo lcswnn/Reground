@@ -142,11 +142,10 @@ export default function TodayScreen() {
             keyExtractor={(page) => page[0].id}
             renderItem={({ item: page, index: pageIndex }) => (
               <View style={[styles.worldPage, { width: pageWidth }]}>
-                {/* Three rows of two, so thirteen indicators page as 6/6/1
-                    rather than leaving a lone tile at four per page. Empty rows
-                    are dropped: a short final page must not reserve the gaps
-                    for rows it doesn't have. */}
-                {[page.slice(0, 2), page.slice(2, 4), page.slice(4, 6)]
+                {/* Two rows of two, so thirteen indicators page as 4/4/4/1.
+                    Empty rows are dropped: the short final page must not
+                    reserve the gap for a row it doesn't have. */}
+                {[page.slice(0, 2), page.slice(2, 4)]
                   .filter((row) => row.length > 0)
                   .map((row, rowIndex) => (
                     <View key={rowIndex} style={styles.worldRow}>
