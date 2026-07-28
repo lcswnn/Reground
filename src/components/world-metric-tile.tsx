@@ -8,17 +8,19 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
+import { barFill, formatMetricValue, isRegressing, type HumanityMetric } from '@/api/humanity';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
-import { WORLD_CATEGORIES, type WorldMetric } from '@/constants/world-metrics';
+import { categoryLabel } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
 
 const FILL_DURATION = 650;
-/** Per-tile offset, so a page lands as a cascade rather than four bars at once. */
+/** Per-tile offset, so a page lands as a cascade rather than six bars at once. */
 const STAGGER = 70;
 
+
 interface WorldMetricTileProps {
-  metric: WorldMetric;
+  metric: HumanityMetric;
   /** True while this tile's page is the one on screen. */
   active: boolean;
   /** Position within the page, used to stagger the fill. */
@@ -29,10 +31,21 @@ export function WorldMetricTile({ metric, active, index }: WorldMetricTileProps)
   const theme = useTheme();
   const fill = useSharedValue(0);
 
-  // Blue is "how far along"; red is the wrong direction. Grey used to carry the
-  // bad cases, which let them pass as merely unremarkable.
-  const accent = metric.isProgress ? theme.info : theme.decline;
-  const track = metric.isProgress ? theme.infoSoft : theme.declineSoft;
+  // A negative normalized value means the indicator has regressed past its own
+  // baseline — not "no progress", but worse than where we started. Blue is "how
+  // far along"; red is the wrong direction.
+  const regressing = isRegressing(metric);
+  const accent = regressing ? theme.decline : theme.info;
+  const track = regressing ? theme.declineSoft : theme.infoSoft;
+
+  const projected = barFill(metric.normalized, regressing);
+  const observed = barFill(metric.normalizedObserved, regressing);
+
+  // Solid out to what was actually measured, dotted across the gap the nowcast
+  // invented. Ordered rather than assumed: a regressing metric projects *below*
+  // its last observation, so the dotted span runs the other way.
+  const solidEnd = Math.min(observed, projected);
+  const dottedEnd = Math.max(observed, projected);
 
   useEffect(() => {
     // Bars empty when the page leaves and refill when it returns, so swiping
@@ -40,20 +53,18 @@ export function WorldMetricTile({ metric, active, index }: WorldMetricTileProps)
     fill.value = active
       ? withDelay(
           index * STAGGER,
-          withTiming(metric.progress, {
-            duration: FILL_DURATION,
-            easing: Easing.out(Easing.cubic),
-          }),
+          withTiming(1, { duration: FILL_DURATION, easing: Easing.out(Easing.cubic) }),
         )
       : 0;
-  }, [active, index, metric.progress, fill]);
+  }, [active, index, fill]);
 
-  const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
+  const solidStyle = useAnimatedStyle(() => ({ width: `${fill.value * solidEnd * 100}%` }));
+  const dottedStyle = useAnimatedStyle(() => ({ width: `${fill.value * dottedEnd * 100}%` }));
 
   return (
     <View style={[styles.tile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <ThemedText type="eyebrow" themeColor="textMuted" numberOfLines={1} style={styles.category}>
-        {WORLD_CATEGORIES[metric.category]}
+        {categoryLabel(metric.category)}
       </ThemedText>
 
       <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.label}>
@@ -66,14 +77,20 @@ export function WorldMetricTile({ metric, active, index }: WorldMetricTileProps)
         adjustsFontSizeToFit
         minimumFontScale={0.7}
         style={styles.value}>
-        {metric.value}
+        {formatMetricValue(metric)}
       </ThemedText>
 
       <View
         style={[styles.track, { backgroundColor: track }]}
         accessible={false}
         importantForAccessibility="no">
-        <Animated.View style={[styles.fill, { backgroundColor: accent }, fillStyle]} />
+        {/* Drawn first and underneath: the dashed band spans the whole
+            observed-to-projected range, and the solid fill covers the measured
+            part of it, leaving only the projected gap showing through. */}
+        {metric.isProjected && dottedEnd > solidEnd ? (
+          <Animated.View style={[styles.dotted, { borderColor: accent }, dottedStyle]} />
+        ) : null}
+        <Animated.View style={[styles.fill, { backgroundColor: accent }, solidStyle]} />
       </View>
 
       <ThemedText type="small" numberOfLines={1} style={[styles.delta, { color: accent }]}>
@@ -112,6 +129,21 @@ const styles = StyleSheet.create({
   fill: {
     height: '100%',
     borderRadius: Radius.pill,
+    // Both bars occupy the same row; the solid one is painted over the dashed.
+    position: 'absolute',
+    left: 0,
+    top: 0,
+  },
+  // A dashed border on a 6pt bar reads as a dotted line without needing SVG.
+  dotted: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    height: '100%',
+    borderRadius: Radius.pill,
+    borderWidth: 1,
+    borderStyle: 'dashed',
+    opacity: 0.7,
   },
   delta: {
     fontSize: 16,

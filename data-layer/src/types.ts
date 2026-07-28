@@ -157,8 +157,18 @@ export interface ArtifactMetric {
   currentValue: number;
   isProjected: boolean;
   lastObservedAt: string;
+  /** The last real measurement, before any projection. */
+  lastObservedValue: number;
   sourceLastUpdated: string | null;
   normalized: number;
+  /**
+   * `normalized` of `lastObservedValue`.
+   *
+   * Sent rather than derived because the client has no baseline or target to
+   * compute it from, and the tile needs both ends to draw the solid bar out to
+   * what was measured and a dotted tail across the projected gap.
+   */
+  normalizedObserved: number;
   contribution: number;
   weight: number;
   polarity: MetricPolarity;

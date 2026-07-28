@@ -19,16 +19,15 @@ import { ThemedText } from '@/components/themed-text';
 import { ErrorState, LoadingState } from '@/components/ui/states';
 import { WorldMetricTile } from '@/components/world-metric-tile';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { WORLD_METRICS, WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
+import { WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
+import { fetchHumanityArtifact } from '@/api/humanity';
 import { fetchMetrics } from '@/api/metrics';
 import { useAppReady } from '@/lib/app-ready';
 import { formatDay, todayISO } from '@/lib/format';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
-
-const WORLD_PAGES = chunk(WORLD_METRICS, WORLD_METRICS_PER_PAGE);
 
 export default function TodayScreen() {
   const theme = useTheme();
@@ -58,11 +57,25 @@ export default function TodayScreen() {
   // Shares the metrics cache with the Progress tab rather than refetching.
   const metricsQuery = useQuery({ queryKey: queryKeys.metrics, queryFn: fetchMetrics });
 
+  // The headline bar and the world grid both come from this one file.
+  const humanityQuery = useQuery({
+    queryKey: queryKeys.humanity,
+    queryFn: fetchHumanityArtifact,
+  });
+
+  const worldPages = humanityQuery.data
+    ? chunk(humanityQuery.data.metrics, WORLD_METRICS_PER_PAGE)
+    : [];
+
   const greeting = getGreeting();
   const firstName =
     (session?.user.user_metadata?.display_name as string | undefined)?.split(' ')[0] ?? 'friend';
 
-  const { isRefreshing, onRefresh } = usePullToRefresh(metricsQuery.refetch);
+  // Pull-to-refresh reloads both: the artifact is what the top of the screen is
+  // made of, so refreshing only the charts below would feel like it did nothing.
+  const { isRefreshing, onRefresh } = usePullToRefresh(() =>
+    Promise.all([metricsQuery.refetch(), humanityQuery.refetch()]),
+  );
 
   const metrics = metricsQuery.data ?? [];
 
@@ -106,10 +119,17 @@ export default function TodayScreen() {
           </ThemedText>
         </SafeAreaView>
 
-        <View style={styles.summarySection}>
-          <HumanityProgress active={isRevealed} />
-        </View>
+        {humanityQuery.data ? (
+          <View style={styles.summarySection}>
+            <HumanityProgress artifact={humanityQuery.data} active={isRevealed} />
+          </View>
+        ) : humanityQuery.error ? (
+          <View style={styles.summarySection}>
+            <ErrorState error={humanityQuery.error} onRetry={onRefresh} />
+          </View>
+        ) : null}
 
+        {worldPages.length > 0 ? (
         <View style={styles.worldSection}>
           <View style={styles.sectionHeaderPadded}>
             <ThemedText type="eyebrow" themeColor="textMuted">
@@ -118,24 +138,30 @@ export default function TodayScreen() {
           </View>
 
           <FlatList
-            data={WORLD_PAGES}
+            data={worldPages}
             keyExtractor={(page) => page[0].id}
             renderItem={({ item: page, index: pageIndex }) => (
               <View style={[styles.worldPage, { width: pageWidth }]}>
-                {[page.slice(0, 2), page.slice(2, 4)].map((row, rowIndex) => (
-                  <View key={rowIndex} style={styles.worldRow}>
-                    {row.map((metric, columnIndex) => (
-                      <WorldMetricTile
-                        key={metric.id}
-                        metric={metric}
-                        active={pageIndex === worldPage && isRevealed}
-                        index={rowIndex * 2 + columnIndex}
-                      />
-                    ))}
-                    {/* Keeps a lone tile on a short final page half-width. */}
-                    {row.length === 1 ? <View style={styles.tileSpacer} /> : null}
-                  </View>
-                ))}
+                {/* Three rows of two, so thirteen indicators page as 6/6/1
+                    rather than leaving a lone tile at four per page. Empty rows
+                    are dropped: a short final page must not reserve the gaps
+                    for rows it doesn't have. */}
+                {[page.slice(0, 2), page.slice(2, 4), page.slice(4, 6)]
+                  .filter((row) => row.length > 0)
+                  .map((row, rowIndex) => (
+                    <View key={rowIndex} style={styles.worldRow}>
+                      {row.map((metric, columnIndex) => (
+                        <WorldMetricTile
+                          key={metric.id}
+                          metric={metric}
+                          active={pageIndex === worldPage && isRevealed}
+                          index={rowIndex * 2 + columnIndex}
+                        />
+                      ))}
+                      {/* Keeps a lone tile on a short final page half-width. */}
+                      {row.length === 1 ? <View style={styles.tileSpacer} /> : null}
+                    </View>
+                  ))}
               </View>
             )}
             horizontal
@@ -151,9 +177,9 @@ export default function TodayScreen() {
             }
           />
 
-          {WORLD_PAGES.length > 1 ? (
+          {worldPages.length > 1 ? (
             <View style={styles.dots}>
-              {WORLD_PAGES.map((page, index) => (
+              {worldPages.map((page, index) => (
                 <View
                   key={page[0].id}
                   style={[
@@ -168,6 +194,7 @@ export default function TodayScreen() {
             </View>
           ) : null}
         </View>
+        ) : null}
 
         {metricsQuery.isPending ? (
           <LoadingState label="Gathering good news…" />

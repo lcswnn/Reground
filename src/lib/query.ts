@@ -19,6 +19,8 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   dailyProof: ['daily-proof'] as const,
   feed: (category: string | null) => ['feed', category] as const,
+  /** The served humanity-progress artifact. */
+  humanity: ['humanity'] as const,
   metrics: ['metrics'] as const,
   story: (id: string) => ['story', id] as const,
   profile: (userId: string) => ['profile', userId] as const,

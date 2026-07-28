@@ -1,3 +1,4 @@
+import { fetchHumanityArtifact } from '@/api/humanity';
 import { fetchMetrics } from '@/api/metrics';
 import { fetchProfile } from '@/api/profile';
 import {
@@ -26,6 +27,13 @@ export function prefetchAppData(userId: string): Promise<unknown> {
   return Promise.all([
     // Today and Progress share this one.
     queryClient.prefetchQuery({ queryKey: queryKeys.metrics, queryFn: fetchMetrics }),
+
+    // The headline bar and the whole world grid come from this single file, so
+    // it is the one warm-up that decides whether the first screen has content.
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.humanity,
+      queryFn: fetchHumanityArtifact,
+    }),
 
     // The unfiltered feed is the only page the tab opens on; category filters
     // are a deliberate tap, so those can load on demand.
