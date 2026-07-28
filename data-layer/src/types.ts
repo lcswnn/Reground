@@ -177,6 +177,9 @@ export interface ArtifactMetric {
   /** Computed from the real series, replacing the hand-authored strings. */
   delta: string;
   nowcastConfidence: number;
+  /** Who publishes the underlying data, and where to go read it. */
+  sourceName: string;
+  sourceUrl: string;
   series: SeriesPoint[];
 }
 

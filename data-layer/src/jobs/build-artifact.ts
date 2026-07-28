@@ -18,7 +18,13 @@ import { nowcast } from '../nowcast/index.js';
 import { computeCompositeScore } from '../scoring/composite.js';
 import { normalizeMetric } from '../scoring/normalize.js';
 import { readObservations } from '../storage/supabase.js';
-import type { Artifact, ArtifactMetric, Observation, SeriesPoint } from '../types.js';
+import type {
+  Artifact,
+  ArtifactMetric,
+  MetricConfig,
+  Observation,
+  SeriesPoint,
+} from '../types.js';
 
 /**
  * How much history each metric ships.
@@ -75,6 +81,32 @@ function describeDelta(observations: Observation[], unit: string): string {
   return `${arrow} ${rounded}${suffix} since ${since}${lastYear === firstYear ? '' : ''}`;
 }
 
+/**
+ * Where a metric's numbers come from, for the "View source" link.
+ *
+ * Derived from the adapter rather than authored per metric: an OWID chart's
+ * public page is always its slug, so restating it thirteen times would only
+ * create thirteen chances to get it wrong.
+ */
+function sourceOf(metric: MetricConfig): { sourceName: string; sourceUrl: string } {
+  if (metric.owidSlug) {
+    const params = new URLSearchParams(metric.owidParams ?? {}).toString();
+    return {
+      sourceName: 'Our World in Data',
+      sourceUrl: `https://ourworldindata.org/grapher/${metric.owidSlug}${params ? `?${params}` : ''}`,
+    };
+  }
+
+  switch (metric.sourceAdapterId) {
+    case 'noaa:co2-trend-gl':
+      return { sourceName: 'NOAA Global Monitoring Laboratory', sourceUrl: 'https://gml.noaa.gov/ccgg/trends/global.html' };
+    case 'ember:monthly-generation':
+      return { sourceName: 'Ember', sourceUrl: 'https://ember-energy.org/data/monthly-electricity-data/' };
+    default:
+      throw new Error(`No source link known for adapter ${metric.sourceAdapterId}`);
+  }
+}
+
 async function main() {
   const asOf = new Date();
 
@@ -117,6 +149,7 @@ async function main() {
       basis: metric.basis,
       delta: describeDelta(series, metric.unit),
       nowcastConfidence: projection.confidence,
+      ...sourceOf(metric),
       series: downsample(series),
     };
   });

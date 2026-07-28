@@ -43,6 +43,9 @@ export interface HumanityMetric {
   /** Computed from the real series, not hand-authored. */
   delta: string;
   nowcastConfidence: number;
+  /** Who publishes the underlying data, and where to go read it. */
+  sourceName: string;
+  sourceUrl: string;
   series: HumanitySeriesPoint[];
 }
 

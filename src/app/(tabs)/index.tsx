@@ -37,7 +37,6 @@ export default function TodayScreen() {
   // This screen mounts under the splash now, so the bars would otherwise fill
   // while hidden and be sitting full by the time anyone sees them.
   const isRevealed = useAppReady();
-  const [metricPage, setMetricPage] = useState(0);
   const [worldPage, setWorldPage] = useState(0);
 
   // Drives the status-bar scrim: this page scrolls its own header up past the
@@ -54,10 +53,8 @@ export default function TodayScreen() {
   // own width is the page width and `pagingEnabled` lands exactly on each card.
   const pageWidth = Math.min(width, MaxContentWidth);
 
-  // Shares the metrics cache with the Progress tab rather than refetching.
-  const metricsQuery = useQuery({ queryKey: queryKeys.metrics, queryFn: fetchMetrics });
-
-  // The headline bar and the world grid both come from this one file.
+  // The headline bar and the world grid both come from this one file — it is
+  // now the only thing this screen fetches.
   const humanityQuery = useQuery({
     queryKey: queryKeys.humanity,
     queryFn: fetchHumanityArtifact,
@@ -71,13 +68,7 @@ export default function TodayScreen() {
   const firstName =
     (session?.user.user_metadata?.display_name as string | undefined)?.split(' ')[0] ?? 'friend';
 
-  // Pull-to-refresh reloads both: the artifact is what the top of the screen is
-  // made of, so refreshing only the charts below would feel like it did nothing.
-  const { isRefreshing, onRefresh } = usePullToRefresh(() =>
-    Promise.all([metricsQuery.refetch(), humanityQuery.refetch()]),
-  );
-
-  const metrics = metricsQuery.data ?? [];
+  const { isRefreshing, onRefresh } = usePullToRefresh(humanityQuery.refetch);
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -193,64 +184,6 @@ export default function TodayScreen() {
             </View>
           ) : null}
         </View>
-        ) : null}
-
-        {metricsQuery.isPending ? (
-          <LoadingState label="Gathering good news…" />
-        ) : metricsQuery.error ? (
-          <ErrorState error={metricsQuery.error} onRetry={onRefresh} />
-        ) : metrics.length > 0 ? (
-          <View style={styles.metricsSection}>
-            <View style={[styles.sectionHeaderRow, styles.metricsHeader]}>
-              <ThemedText type="eyebrow" themeColor="textMuted">
-                The long view
-              </ThemedText>
-              <Pressable
-                accessibilityRole="button"
-                onPress={() => router.push('/progress')}
-                hitSlop={8}>
-                <ThemedText type="linkPrimary">See all</ThemedText>
-              </Pressable>
-            </View>
-
-            <FlatList
-              data={metrics}
-              keyExtractor={(metric) => metric.id}
-              renderItem={({ item, index }) => (
-                <View style={[styles.metricPage, { width: pageWidth }]}>
-                  <MetricCard metric={item} active={index === metricPage && isRevealed} />
-                </View>
-              )}
-              horizontal
-              pagingEnabled
-              showsHorizontalScrollIndicator={false}
-              getItemLayout={(_, index) => ({
-                length: pageWidth,
-                offset: pageWidth * index,
-                index,
-              })}
-              onMomentumScrollEnd={(event) =>
-                setMetricPage(Math.round(event.nativeEvent.contentOffset.x / pageWidth))
-              }
-            />
-
-            {metrics.length > 1 ? (
-              <View style={styles.dots}>
-                {metrics.map((metric, index) => (
-                  <View
-                    key={metric.id}
-                    style={[
-                      styles.dot,
-                      {
-                        backgroundColor:
-                          index === metricPage ? theme.brandStrong : theme.backgroundSelected,
-                      },
-                    ]}
-                  />
-                ))}
-              </View>
-            ) : null}
-          </View>
         ) : null}
       </Animated.ScrollView>
 

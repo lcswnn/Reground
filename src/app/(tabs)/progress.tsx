@@ -1,23 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import { useCallback, useState } from 'react';
-import {
-  FlatList,
-  Linking,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  View,
-  type ViewToken,
-} from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, View, type ViewToken } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { MetricCard } from '@/components/metric-card';
+import { MetricChartCard } from '@/components/metric-chart-card';
 import { ThemedText } from '@/components/themed-text';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
-import { fetchMetrics } from '@/api/metrics';
+import { fetchHumanityArtifact } from '@/api/humanity';
 import { queryKeys } from '@/lib/query';
 
 /** How much of a card has to be on screen before its chart draws itself. */
@@ -35,11 +27,17 @@ export default function ProgressScreen() {
   }, []);
 
   const { data, error, isPending, refetch } = useQuery({
-    queryKey: queryKeys.metrics,
-    queryFn: fetchMetrics,
+    queryKey: queryKeys.humanity,
+    queryFn: fetchHumanityArtifact,
   });
 
   const { isRefreshing, onRefresh } = usePullToRefresh(refetch);
+
+  // Longest history first, so the charts that actually earn the name "the long
+  // view" lead — CO₂ per person reaches back to 1750, internet access to 2005.
+  const metrics = [...(data?.metrics ?? [])].sort(
+    (a, b) => (a.series[0]?.t ?? '').localeCompare(b.series[0]?.t ?? ''),
+  );
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -57,20 +55,10 @@ export default function ProgressScreen() {
           <ErrorState error={error} onRetry={() => void refetch()} />
         ) : (
           <FlatList
-            data={data ?? []}
+            data={metrics}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <View style={styles.cardWrapper}>
-                <MetricCard metric={item} active={visibleIds.includes(item.id)} />
-                <Pressable
-                  accessibilityRole="link"
-                  accessibilityLabel={`Open source: ${item.source_name}`}
-                  onPress={() => Linking.openURL(item.source_url)}
-                  hitSlop={6}
-                  style={styles.sourceLink}>
-                  <ThemedText type="linkPrimary">View source →</ThemedText>
-                </Pressable>
-              </View>
+              <MetricChartCard metric={item} active={visibleIds.includes(item.id)} />
             )}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
@@ -88,7 +76,7 @@ export default function ProgressScreen() {
             ListEmptyComponent={
               <EmptyState
                 title="No metrics yet"
-                message="Seed the metrics and metric_points tables and the trends will appear here."
+                message="The progress data hasn't been built yet. Run the data layer's backfill and publish steps."
               />
             }
           />

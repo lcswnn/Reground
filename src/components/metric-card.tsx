@@ -49,7 +49,7 @@ export function MetricCard({ metric, active = true }: MetricCardProps) {
         </ThemedText>
       )}
 
-      <Sparkline points={metric.points} color={accent} active={active} />
+      <Sparkline values={metric.points.map((point) => point.value)} color={accent} active={active} />
 
       <ThemedText type="small" themeColor="textMuted" numberOfLines={2}>
         {trend ? `${trend.fromPeriod}–${trend.toPeriod} · ` : ''}

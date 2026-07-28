@@ -8,16 +8,25 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import type { MetricPoint } from '@/types/database';
-
 const GROW_DURATION = 550;
 /** Per-bar offset, so a series sweeps left to right instead of popping at once. */
 const STAGGER = 28;
 /** Floor so a near-zero point still reads as a bar rather than a gap. */
 const MIN_BAR_HEIGHT = 3;
 
+/**
+ * Most bars a phone width can carry before they stop being bars.
+ *
+ * Each one reserves 2pt of width plus a 3pt gap, so past this the row overflows
+ * and the series turns into a smear. Long histories — CO₂ per person reaches
+ * back to 1750 — get evenly sampled down to this rather than truncated, so the
+ * chart still spans the whole period.
+ */
+const MAX_BARS = 40;
+
 interface SparklineProps {
-  points: MetricPoint[];
+  /** Oldest first. Sampled down if longer than `MAX_BARS`. */
+  values: number[];
   color: string;
   height?: number;
   /**
@@ -35,25 +44,27 @@ interface SparklineProps {
  * dozen flex children render fine, so it is not worth a native dependency that
  * would also have to be wired into the widget target later.
  */
-export function Sparkline({ points, color, height = 44, active = true }: SparklineProps) {
-  if (points.length < 2) return null;
+export function Sparkline({ values, color, height = 44, active = true }: SparklineProps) {
+  const bars = sample(values, MAX_BARS);
+  if (bars.length < 2) return null;
 
-  const values = points.map((p) => p.value);
-  const min = Math.min(...values);
-  const max = Math.max(...values);
+  const min = Math.min(...bars);
+  const max = Math.max(...bars);
   const span = max - min;
 
   return (
     <View style={[styles.row, { height }]} accessible={false} importantForAccessibility="no">
-      {points.map((point, index) => {
+      {bars.map((value, index) => {
         // A flat series would divide by zero; render it as a mid-height band.
-        const ratio = span === 0 ? 0.5 : (point.value - min) / span;
+        const ratio = span === 0 ? 0.5 : (value - min) / span;
         return (
           <SparkBar
-            key={point.id}
+            // Positional by nature — the bars are a shape, not a list of
+            // identities, and the series is replaced wholesale when it changes.
+            key={index}
             color={color}
             targetHeight={Math.max(MIN_BAR_HEIGHT, ratio * height)}
-            opacity={0.25 + (index / (points.length - 1)) * 0.75}
+            opacity={0.25 + (index / (bars.length - 1)) * 0.75}
             index={index}
             active={active}
           />
@@ -61,6 +72,24 @@ export function Sparkline({ points, color, height = 44, active = true }: Sparkli
       })}
     </View>
   );
+}
+
+/**
+ * Evenly thins a series to at most `limit` values, always keeping the last one.
+ *
+ * The final value is what the card's headline number reports, so dropping it to
+ * keep the stride even would leave the chart ending somewhere the text says it
+ * doesn't.
+ */
+function sample(values: number[], limit: number): number[] {
+  if (values.length <= limit) return values;
+
+  const stride = Math.ceil(values.length / limit);
+  const thinned = values.filter((_, index) => index % stride === 0);
+  const last = values[values.length - 1];
+
+  if (thinned[thinned.length - 1] !== last) thinned.push(last);
+  return thinned;
 }
 
 interface SparkBarProps {

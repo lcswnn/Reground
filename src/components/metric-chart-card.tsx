@@ -1,0 +1,131 @@
+import { Linking, Pressable, StyleSheet, View } from 'react-native';
+
+import {
+  formatMetricValue,
+  isRegressing,
+  lastObservedYear,
+  type HumanityMetric,
+} from '@/api/humanity';
+import { Sparkline } from '@/components/sparkline';
+import { ThemedText } from '@/components/themed-text';
+import { Fonts, Radius, Spacing } from '@/constants/theme';
+import { categoryLabel } from '@/constants/world-metrics';
+import { useTheme } from '@/hooks/use-theme';
+
+interface MetricChartCardProps {
+  metric: HumanityMetric;
+  /** False parks the chart while it's off screen; bars regrow on return. */
+  active?: boolean;
+}
+
+/**
+ * The long view of one indicator: its full history as a chart, the current
+ * number, and where it came from.
+ *
+ * Distinct from `MetricCard`, which renders the Supabase `metrics` table. This
+ * one renders the served artifact, which is where the real series now live —
+ * decades of history per indicator, some of it reaching back to 1750.
+ */
+export function MetricChartCard({ metric, active = true }: MetricChartCardProps) {
+  const theme = useTheme();
+
+  // Same convention as the world tiles: red is the wrong direction, and the
+  // charts stay green-ish/blue whether the number rises or falls, because what
+  // matters is whether the movement is the good one.
+  const regressing = isRegressing(metric);
+  const accent = regressing ? theme.decline : theme.positive;
+  const accentSoft = regressing ? theme.declineSoft : theme.positiveSoft;
+
+  const values = metric.series.map((point) => point.v);
+  const firstYear = metric.series[0]?.t.slice(0, 4);
+
+  return (
+    <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+      <View style={styles.header}>
+        <View style={styles.headerText}>
+          <ThemedText type="eyebrow" themeColor="textMuted" numberOfLines={1}>
+            {categoryLabel(metric.category)}
+          </ThemedText>
+          <ThemedText type="smallBold" themeColor="textSecondary" numberOfLines={2}>
+            {metric.label}
+          </ThemedText>
+        </View>
+
+        <View style={[styles.deltaPill, { backgroundColor: accentSoft }]}>
+          <ThemedText type="small" style={[styles.deltaText, { color: accent }]} numberOfLines={1}>
+            {metric.delta}
+          </ThemedText>
+        </View>
+      </View>
+
+      <ThemedText type="title" style={styles.value}>
+        {formatMetricValue(metric)}
+      </ThemedText>
+
+      <Sparkline values={values} color={accent} active={active} height={56} />
+
+      {/* Provenance in full: what the chart spans, and whether the headline
+          number above it was measured or modelled. */}
+      <ThemedText type="small" themeColor="textMuted" numberOfLines={2}>
+        {firstYear ? `${firstYear}–${lastObservedYear(metric)} · ` : ''}
+        {metric.isProjected
+          ? `projected for today, last measured ${lastObservedYear(metric)}`
+          : `measured ${lastObservedYear(metric)}`}
+      </ThemedText>
+
+      <ThemedText type="small" themeColor="textSecondary" style={styles.basis}>
+        {metric.basis}
+      </ThemedText>
+
+      <Pressable
+        accessibilityRole="link"
+        accessibilityLabel={`Open source: ${metric.sourceName}`}
+        onPress={() => Linking.openURL(metric.sourceUrl)}
+        hitSlop={6}
+        style={styles.sourceLink}>
+        <ThemedText type="linkPrimary">{metric.sourceName} →</ThemedText>
+      </Pressable>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  card: {
+    borderRadius: Radius.lg,
+    borderWidth: 1,
+    padding: Spacing.three,
+    gap: Spacing.two,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: Spacing.two,
+  },
+  headerText: {
+    flex: 1,
+    gap: Spacing.half,
+  },
+  deltaPill: {
+    paddingHorizontal: Spacing.two,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+    // Keeps a long delta string from squeezing the label to nothing.
+    maxWidth: '45%',
+  },
+  deltaText: {
+    fontFamily: Fonts.body,
+    fontSize: 16,
+  },
+  value: {
+    fontSize: 28,
+    lineHeight: 32,
+  },
+  basis: {
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  sourceLink: {
+    alignSelf: 'flex-end',
+  },
+});
