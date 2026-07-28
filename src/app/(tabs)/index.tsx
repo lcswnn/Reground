@@ -1,29 +1,19 @@
 import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import {
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  useWindowDimensions,
-  View,
-} from 'react-native';
+import { FlatList, RefreshControl, StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, { useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { HumanityProgress } from '@/components/humanity-progress';
-import { MetricCard } from '@/components/metric-card';
 import { ScrollTopFade } from '@/components/scroll-top-fade';
 import { ThemedText } from '@/components/themed-text';
-import { ErrorState, LoadingState } from '@/components/ui/states';
+import { ErrorState } from '@/components/ui/states';
 import { WorldMetricTile } from '@/components/world-metric-tile';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchHumanityArtifact } from '@/api/humanity';
-import { fetchMetrics } from '@/api/metrics';
 import { useAppReady } from '@/lib/app-ready';
 import { formatDay, todayISO } from '@/lib/format';
 import { queryKeys } from '@/lib/query';
@@ -31,7 +21,6 @@ import { useSession } from '@/lib/session';
 
 export default function TodayScreen() {
   const theme = useTheme();
-  const router = useRouter();
   const { session } = useSession();
   const { width } = useWindowDimensions();
   // This screen mounts under the splash now, so the bars would otherwise fill
@@ -224,11 +213,6 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 36,
   },
-  sectionHeaderRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
   sectionHeaderPadded: {
     paddingHorizontal: Spacing.four,
   },
@@ -260,21 +244,6 @@ const styles = StyleSheet.create({
   },
   tileSpacer: {
     flex: 1,
-  },
-  // Sits outside the page gutter so the carousel can run to the screen edge;
-  // the header keeps the gutter so it still lines up with the cards.
-  metricsSection: {
-    marginTop: Spacing.four,
-    gap: Spacing.three,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-  },
-  metricsHeader: {
-    paddingHorizontal: Spacing.four,
-  },
-  metricPage: {
-    paddingHorizontal: Spacing.four,
   },
   dots: {
     flexDirection: 'row',

@@ -1,5 +1,4 @@
 import { fetchHumanityArtifact } from '@/api/humanity';
-import { fetchMetrics } from '@/api/metrics';
 import { fetchProfile } from '@/api/profile';
 import {
   fetchCurrentStreak,
@@ -25,11 +24,9 @@ import { queryClient, queryKeys } from '@/lib/query';
  */
 export function prefetchAppData(userId: string): Promise<unknown> {
   return Promise.all([
-    // Today and Progress share this one.
-    queryClient.prefetchQuery({ queryKey: queryKeys.metrics, queryFn: fetchMetrics }),
-
-    // The headline bar and the whole world grid come from this single file, so
-    // it is the one warm-up that decides whether the first screen has content.
+    // Today and Progress share this one: the headline bar, the world grid, and
+    // every chart on the Progress tab all come from this single file, so it is
+    // the one warm-up that decides whether the first screen has content.
     queryClient.prefetchQuery({
       queryKey: queryKeys.humanity,
       queryFn: fetchHumanityArtifact,
