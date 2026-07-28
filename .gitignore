@@ -49,6 +49,7 @@ yarn-error.*
 .env
 .env.*
 !.env.example
+!.env.data-layer.example
 
 # Firebase / Google service config (holds project + API keys).
 # If you adopt these, upload them as EAS file environment variables rather

@@ -8,7 +8,7 @@ import { defineConfig } from 'vitest/config';
  */
 export default defineConfig({
   test: {
-    include: ['src/**/*.test.ts'],
+    include: ['src/**/*.test.ts', 'data-layer/test/**/*.test.ts'],
     environment: 'node',
   },
   // The constants module guards its weight check on this, the way the RN
