@@ -14,33 +14,11 @@ Expo SDK 57 · React Native 0.86 · expo-router · Supabase
 cp .env.example .env
 ```
 
-Fill in from **Supabase → Project Settings → API**:
-
-| Variable | Where to find it |
-| --- | --- |
-| `EXPO_PUBLIC_SUPABASE_URL` | Project URL |
-| `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | Publishable key (`sb_publishable_…`), formerly the anon key |
-
 Both values ship inside the app bundle and are not secrets — Row Level Security
 is what protects the data. Never put the `service_role` key here.
 
 > Env vars are inlined at bundle time. After editing `.env` you must restart
 > with `npx expo start --clear`; a hot reload will not pick up the change.
-
-### 2. Database
-
-In the Supabase SQL editor, run in order:
-
-1. [`supabase/schema.sql`](supabase/schema.sql) — tables, indexes, RLS policies,
-   the new-user trigger, and the `current_streak()` function
-2. [`supabase/seed.sql`](supabase/seed.sql) — six metrics with real series and
-   six starter stories, one featured for today
-
-Both are idempotent.
-
-Then in **Authentication → Providers**, confirm Email is enabled. If "Confirm
-email" is on, new users must click the emailed link before their first sign-in —
-the sign-up screen tells them so.
 
 ### 3. Run
 
@@ -89,6 +67,3 @@ swaps the navigator.
 eas build --platform ios --profile production
 eas submit --platform ios
 ```
-
-Bundle ID `com.lucaswaunn.humanitas` · EAS project
-[@ginjaninja018/Humanitas](https://expo.dev/accounts/ginjaninja018/projects/Humanitas)
