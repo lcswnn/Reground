@@ -7,7 +7,13 @@ import { useTheme } from '@/hooks/use-theme';
 import { computeTrend, formatValue } from '@/lib/format';
 import type { MetricWithSeries } from '@/types/database';
 
-export function MetricCard({ metric }: { metric: MetricWithSeries }) {
+interface MetricCardProps {
+  metric: MetricWithSeries;
+  /** Passed through to the sparkline: false parks its bars while off screen. */
+  active?: boolean;
+}
+
+export function MetricCard({ metric, active = true }: MetricCardProps) {
   const theme = useTheme();
   const trend = computeTrend(metric.points, metric.direction);
   const latest = metric.points[metric.points.length - 1];
@@ -42,7 +48,7 @@ export function MetricCard({ metric }: { metric: MetricWithSeries }) {
         </ThemedText>
       )}
 
-      <Sparkline points={metric.points} color={accent} />
+      <Sparkline points={metric.points} color={accent} active={active} />
 
       <ThemedText type="small" themeColor="textMuted" numberOfLines={2}>
         {trend ? `${trend.fromPeriod}–${trend.toPeriod} · ` : ''}

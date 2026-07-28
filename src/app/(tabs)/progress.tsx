@@ -1,5 +1,14 @@
 import { useQuery } from '@tanstack/react-query';
-import { FlatList, Linking, Pressable, RefreshControl, StyleSheet, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import {
+  FlatList,
+  Linking,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+  type ViewToken,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { MetricCard } from '@/components/metric-card';
@@ -10,8 +19,20 @@ import { useTheme } from '@/hooks/use-theme';
 import { fetchMetrics } from '@/api/metrics';
 import { queryKeys } from '@/lib/query';
 
+/** How much of a card has to be on screen before its chart draws itself. */
+const VIEWABILITY = { itemVisiblePercentThreshold: 40 };
+
 export default function ProgressScreen() {
   const theme = useTheme();
+  // The list renders well past the fold, so charts would otherwise play their
+  // fill while still off screen. Tracking visibility means each one draws when
+  // you actually reach it — the vertical equivalent of the pagers on Today.
+  const [visibleIds, setVisibleIds] = useState<string[]>([]);
+  // Stable identity: FlatList refuses a changed onViewableItemsChanged.
+  const onViewableItemsChanged = useCallback(({ viewableItems }: { viewableItems: ViewToken[] }) => {
+    setVisibleIds(viewableItems.map((token) => token.key));
+  }, []);
+
   const {
     data,
     error,
@@ -40,7 +61,7 @@ export default function ProgressScreen() {
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
               <View style={styles.cardWrapper}>
-                <MetricCard metric={item} />
+                <MetricCard metric={item} active={visibleIds.includes(item.id)} />
                 <Pressable
                   accessibilityRole="link"
                   accessibilityLabel={`Open source: ${item.source_name}`}
@@ -53,6 +74,8 @@ export default function ProgressScreen() {
             )}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}
+            onViewableItemsChanged={onViewableItemsChanged}
+            viewabilityConfig={VIEWABILITY}
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}

@@ -1,164 +1,210 @@
-import { useQueries } from '@tanstack/react-query';
-import { Image } from 'expo-image';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
-import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import {
+  FlatList,
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  useWindowDimensions,
+  View,
+} from 'react-native';
+import Animated, { useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { CategoryPill } from '@/components/category-pill';
 import { MetricCard } from '@/components/metric-card';
+import { ScrollTopFade } from '@/components/scroll-top-fade';
 import { ThemedText } from '@/components/themed-text';
 import { ErrorState, LoadingState } from '@/components/ui/states';
+import { WorldMetricTile } from '@/components/world-metric-tile';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { WORLD_METRICS, WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
-import { fetchCurrentStreak, fetchDailyProof } from '@/api/stories';
 import { fetchMetrics } from '@/api/metrics';
 import { formatDay, todayISO } from '@/lib/format';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
 
+const WORLD_PAGES = chunk(WORLD_METRICS, WORLD_METRICS_PER_PAGE);
+
 export default function TodayScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session } = useSession();
+  const { width } = useWindowDimensions();
+  const [metricPage, setMetricPage] = useState(0);
+  const [worldPage, setWorldPage] = useState(0);
 
-  // Separate queries so the metrics cache is shared with the Progress tab
-  // rather than refetched per screen.
-  const [proofQuery, metricsQuery, streakQuery] = useQueries({
-    queries: [
-      { queryKey: queryKeys.dailyProof, queryFn: () => fetchDailyProof() },
-      { queryKey: queryKeys.metrics, queryFn: fetchMetrics },
-      { queryKey: queryKeys.streak, queryFn: fetchCurrentStreak },
-    ],
-  });
+  // Drives the status-bar scrim: this page scrolls its own header up past the
+  // clock, so the text needs something to pass behind.
+  const scrollRef = useAnimatedRef<Animated.ScrollView>();
+  const scrollOffset = useScrollViewOffset(scrollRef);
+
+  // Each item is a full-width page with the gutter *inside* it, so the list's
+  // own width is the page width and `pagingEnabled` lands exactly on each card.
+  const pageWidth = Math.min(width, MaxContentWidth);
+
+  // Shares the metrics cache with the Progress tab rather than refetching.
+  const metricsQuery = useQuery({ queryKey: queryKeys.metrics, queryFn: fetchMetrics });
 
   const greeting = getGreeting();
   const firstName =
     (session?.user.user_metadata?.display_name as string | undefined)?.split(' ')[0] ?? 'friend';
 
-  const isPending = proofQuery.isPending || metricsQuery.isPending;
-  const error = proofQuery.error ?? metricsQuery.error;
-
   function refreshAll() {
-    void proofQuery.refetch();
     void metricsQuery.refetch();
-    void streakQuery.refetch();
   }
 
-  if (isPending) return <LoadingState label="Gathering good news…" />;
-  if (error) return <ErrorState error={error} onRetry={refreshAll} />;
-
-  const story = proofQuery.data ?? null;
-  const streak = streakQuery.data ?? 0;
-  const isRefreshing = proofQuery.isRefetching || metricsQuery.isRefetching;
-  // Three metrics is enough to signal "there is more here" without turning the
-  // home screen into the Progress tab.
-  const highlightMetrics = (metricsQuery.data ?? []).slice(0, 3);
+  const metrics = metricsQuery.data ?? [];
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
-      <ScrollView
+      <Animated.ScrollView
+        ref={scrollRef}
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={isRefreshing}
+            refreshing={metricsQuery.isRefetching}
             onRefresh={refreshAll}
             tintColor={theme.brand}
           />
         }>
         <SafeAreaView edges={['top']} style={styles.header}>
-          <View style={styles.headerRow}>
-            <View style={styles.headerText}>
-              <ThemedText type="eyebrow" themeColor="textSecondary">
-                {formatDay(todayISO())}
-              </ThemedText>
-              <ThemedText type="title">
-                {greeting}, {firstName}.
-              </ThemedText>
-            </View>
-            {streak > 0 ? (
-              <View style={[styles.streak, { backgroundColor: theme.backgroundElement }]}>
-                <ThemedText style={styles.streakEmoji}>🔥</ThemedText>
-                <ThemedText type="smallBold">{streak}</ThemedText>
-              </View>
-            ) : null}
-          </View>
+          <ThemedText type="eyebrow" themeColor="textSecondary">
+            {formatDay(todayISO())}
+          </ThemedText>
+          <ThemedText
+            type="title"
+            style={styles.greeting}
+            numberOfLines={1}
+            // With the streak gone the line has the full width, but a long name
+            // can still overrun — shrink rather than truncate someone's name.
+            adjustsFontSizeToFit
+            minimumFontScale={0.75}>
+            {greeting}, {firstName}.
+          </ThemedText>
         </SafeAreaView>
 
-        <View style={styles.content}>
-          <View style={styles.sectionHeader}>
+        <View style={styles.worldSection}>
+          <View style={styles.sectionHeaderPadded}>
             <ThemedText type="eyebrow" themeColor="textMuted">
-              Today&rsquo;s proof
+              State of the world
             </ThemedText>
           </View>
 
-          {story ? (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={story.title}
-              onPress={() => router.push({ pathname: '/story/[id]', params: { id: story.id } })}
-              style={({ pressed }) => [
-                styles.proofCard,
-                { backgroundColor: theme.surface, borderColor: theme.border },
-                pressed && styles.pressed,
-              ]}>
-              {story.image_url ? (
-                <Image
-                  source={{ uri: story.image_url }}
-                  style={styles.proofImage}
-                  contentFit="cover"
-                  transition={250}
+          <FlatList
+            data={WORLD_PAGES}
+            keyExtractor={(page) => page[0].id}
+            renderItem={({ item: page, index: pageIndex }) => (
+              <View style={[styles.worldPage, { width: pageWidth }]}>
+                {[page.slice(0, 2), page.slice(2, 4)].map((row, rowIndex) => (
+                  <View key={rowIndex} style={styles.worldRow}>
+                    {row.map((metric, columnIndex) => (
+                      <WorldMetricTile
+                        key={metric.id}
+                        metric={metric}
+                        active={pageIndex === worldPage}
+                        index={rowIndex * 2 + columnIndex}
+                      />
+                    ))}
+                    {/* Keeps a lone tile on a short final page half-width. */}
+                    {row.length === 1 ? <View style={styles.tileSpacer} /> : null}
+                  </View>
+                ))}
+              </View>
+            )}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            getItemLayout={(_, index) => ({
+              length: pageWidth,
+              offset: pageWidth * index,
+              index,
+            })}
+            onMomentumScrollEnd={(event) =>
+              setWorldPage(Math.round(event.nativeEvent.contentOffset.x / pageWidth))
+            }
+          />
+
+          {WORLD_PAGES.length > 1 ? (
+            <View style={styles.dots}>
+              {WORLD_PAGES.map((page, index) => (
+                <View
+                  key={page[0].id}
+                  style={[
+                    styles.dot,
+                    {
+                      backgroundColor:
+                        index === worldPage ? theme.brandStrong : theme.backgroundSelected,
+                    },
+                  ]}
                 />
-              ) : null}
-              <View style={styles.proofBody}>
-                <CategoryPill category={story.category} />
-                <ThemedText type="subtitle">{story.title}</ThemedText>
-                <ThemedText type="default" themeColor="textSecondary">
-                  {story.summary}
-                </ThemedText>
-                <View style={styles.proofFooter}>
-                  <ThemedText type="small" themeColor="textMuted" numberOfLines={1}>
-                    {story.source_name}
-                  </ThemedText>
-                  <ThemedText type="linkPrimary">Read the proof →</ThemedText>
-                </View>
-              </View>
-            </Pressable>
-          ) : (
-            <View
-              style={[
-                styles.emptyProof,
-                { backgroundColor: theme.brandSoft, borderColor: theme.border },
-              ]}>
-              <ThemedText style={styles.emptyEmoji}>🌤️</ThemedText>
-              <ThemedText type="sectionTitle">No story featured yet</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.centered}>
-                Add a story with today&rsquo;s date in `featured_date` and it will appear here.
-              </ThemedText>
-            </View>
-          )}
-
-          {highlightMetrics.length > 0 ? (
-            <View style={styles.metricsSection}>
-              <View style={styles.sectionHeaderRow}>
-                <ThemedText type="eyebrow" themeColor="textMuted">
-                  The long view
-                </ThemedText>
-                <Pressable
-                  accessibilityRole="button"
-                  onPress={() => router.push('/progress')}
-                  hitSlop={8}>
-                  <ThemedText type="linkPrimary">See all</ThemedText>
-                </Pressable>
-              </View>
-
-              {highlightMetrics.map((metric) => (
-                <MetricCard key={metric.id} metric={metric} />
               ))}
             </View>
           ) : null}
         </View>
-      </ScrollView>
+
+        {metricsQuery.isPending ? (
+          <LoadingState label="Gathering good news…" />
+        ) : metricsQuery.error ? (
+          <ErrorState error={metricsQuery.error} onRetry={refreshAll} />
+        ) : metrics.length > 0 ? (
+          <View style={styles.metricsSection}>
+            <View style={[styles.sectionHeaderRow, styles.metricsHeader]}>
+              <ThemedText type="eyebrow" themeColor="textMuted">
+                The long view
+              </ThemedText>
+              <Pressable
+                accessibilityRole="button"
+                onPress={() => router.push('/progress')}
+                hitSlop={8}>
+                <ThemedText type="linkPrimary">See all</ThemedText>
+              </Pressable>
+            </View>
+
+            <FlatList
+              data={metrics}
+              keyExtractor={(metric) => metric.id}
+              renderItem={({ item, index }) => (
+                <View style={[styles.metricPage, { width: pageWidth }]}>
+                  <MetricCard metric={item} active={index === metricPage} />
+                </View>
+              )}
+              horizontal
+              pagingEnabled
+              showsHorizontalScrollIndicator={false}
+              getItemLayout={(_, index) => ({
+                length: pageWidth,
+                offset: pageWidth * index,
+                index,
+              })}
+              onMomentumScrollEnd={(event) =>
+                setMetricPage(Math.round(event.nativeEvent.contentOffset.x / pageWidth))
+              }
+            />
+
+            {metrics.length > 1 ? (
+              <View style={styles.dots}>
+                {metrics.map((metric, index) => (
+                  <View
+                    key={metric.id}
+                    style={[
+                      styles.dot,
+                      {
+                        backgroundColor:
+                          index === metricPage ? theme.brandStrong : theme.backgroundSelected,
+                      },
+                    ]}
+                  />
+                ))}
+              </View>
+            ) : null}
+          </View>
+        ) : null}
+      </Animated.ScrollView>
+
+      <ScrollTopFade offset={scrollOffset} />
     </View>
   );
 }
@@ -170,6 +216,14 @@ function getGreeting(): string {
   return 'Good evening';
 }
 
+function chunk<T>(items: T[], size: number): T[][] {
+  const pages: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    pages.push(items.slice(index, index + size));
+  }
+  return pages;
+}
+
 const styles = StyleSheet.create({
   root: { flex: 1 },
   scroll: {
@@ -178,87 +232,66 @@ const styles = StyleSheet.create({
   header: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    gap: Spacing.two,
+    gap: Spacing.one,
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  headerRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
-  },
-  headerText: {
-    flex: 1,
-    gap: Spacing.one,
-  },
-  streak: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    paddingHorizontal: Spacing.two,
-    paddingVertical: Spacing.one,
-    borderRadius: Radius.pill,
-  },
-  streakEmoji: {
-    fontSize: 14,
-  },
-  content: {
-    paddingHorizontal: Spacing.four,
-    paddingTop: Spacing.four,
-    gap: Spacing.three,
-    width: '100%',
-    maxWidth: MaxContentWidth,
-    alignSelf: 'center',
-  },
-  sectionHeader: {
-    marginTop: Spacing.two,
+  greeting: {
+    fontSize: 28,
+    lineHeight: 36,
   },
   sectionHeaderRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
   },
-  proofCard: {
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    overflow: 'hidden',
+  sectionHeaderPadded: {
+    paddingHorizontal: Spacing.four,
   },
-  pressed: {
-    opacity: 0.9,
-    transform: [{ scale: 0.995 }],
-  },
-  proofImage: {
+  // Same full-bleed treatment as the long view: header keeps the page gutter,
+  // the pager runs edge to edge.
+  worldSection: {
+    paddingTop: Spacing.three,
+    gap: Spacing.three,
     width: '100%',
-    height: 200,
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
   },
-  proofBody: {
-    padding: Spacing.four,
-    gap: Spacing.two,
+  worldPage: {
+    paddingHorizontal: Spacing.four,
+    gap: Spacing.three,
   },
-  proofFooter: {
+  worldRow: {
     flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-    marginTop: Spacing.two,
+    gap: Spacing.three,
   },
-  emptyProof: {
-    borderRadius: Radius.xl,
-    borderWidth: 1,
-    padding: Spacing.five,
-    alignItems: 'center',
-    gap: Spacing.two,
+  tileSpacer: {
+    flex: 1,
   },
-  emptyEmoji: {
-    fontSize: 40,
-  },
-  centered: {
-    textAlign: 'center',
-  },
+  // Sits outside the page gutter so the carousel can run to the screen edge;
+  // the header keeps the gutter so it still lines up with the cards.
   metricsSection: {
     marginTop: Spacing.four,
     gap: Spacing.three,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
+  },
+  metricsHeader: {
+    paddingHorizontal: Spacing.four,
+  },
+  metricPage: {
+    paddingHorizontal: Spacing.four,
+  },
+  dots: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    gap: Spacing.two,
+  },
+  dot: {
+    width: 6,
+    height: 6,
+    borderRadius: Radius.pill,
   },
 });
