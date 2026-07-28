@@ -17,10 +17,10 @@ export const TAB_BAR_HEIGHT = 49;
  * content band and exposes no inset to move the glyph within it. Here the icon
  * simply starts lower.
  *
- * Budget: icon (24) + gap (1) + label line (14) = 39pt of the 49pt band, so
- * anything past 10 starts clipping the label's descenders.
+ * Budget: icon (24) + gap (1) + label line (16) = 41pt of the 49pt band, so
+ * anything past 8 starts clipping the label's descenders.
  */
-const ICON_DROP = 9;
+const ICON_DROP = 7;
 const ICON_SIZE = 24;
 
 const ICONS: Record<string, { default: SFSymbol; selected: SFSymbol }> = {
@@ -33,7 +33,11 @@ const ICONS: Record<string, { default: SFSymbol; selected: SFSymbol }> = {
   profile: { default: 'person', selected: 'person.fill' },
 };
 
-/** One hue per tab, drawn from the app palette so the bar matches the rest. */
+/**
+ * One hue per tab, drawn from the app palette so the bar matches the rest.
+ * Only the selected tab wears its color; the rest sit in grey, so where you are
+ * is legible from the color alone rather than from a difference in opacity.
+ */
 const TAB_COLORS: Record<string, ThemeColor> = {
   index: 'brand',
   feed: 'positive',
@@ -60,10 +64,10 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
         const focused = state.index === index;
         const label = options.title ?? route.name;
         const icon = ICONS[route.name];
-        // Each tab keeps its own hue whether or not it is selected; the
-        // unselected ones just sit back, so the row reads as four colors rather
-        // than one accent and three greys.
-        const color = theme[TAB_COLORS[route.name] ?? 'brand'];
+        // `textMuted` rather than a dimmed hue: an unselected tab should read as
+        // grey outright, so the one color in the row is unmistakably the tab
+        // you're on.
+        const color = focused ? theme[TAB_COLORS[route.name] ?? 'brand'] : theme.textMuted;
 
         function onPress() {
           const event = navigation.emit({
@@ -84,7 +88,7 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
             accessibilityState={{ selected: focused }}
             accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
             onPress={onPress}
-            style={[styles.item, !focused && styles.itemInactive]}>
+            style={styles.item}>
             {icon ? (
               <SymbolView
                 name={focused ? icon.selected : icon.default}
@@ -117,16 +121,13 @@ const styles = StyleSheet.create({
     paddingTop: ICON_DROP,
     gap: Platform.select({ ios: 1, default: 2 }),
   },
-  itemInactive: {
-    opacity: 0.45,
-  },
   iconFallback: {
     width: 22,
     height: 22,
     borderRadius: 11,
   },
   label: {
-    fontSize: 11,
-    lineHeight: 14,
+    fontSize: 13,
+    lineHeight: 16,
   },
 });

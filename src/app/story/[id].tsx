@@ -174,8 +174,8 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   summary: {
-    fontSize: 18,
-    lineHeight: 26,
+    fontSize: 20,
+    lineHeight: 29,
   },
   sourceCard: {
     borderRadius: Radius.md,

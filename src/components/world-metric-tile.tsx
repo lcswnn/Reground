@@ -88,16 +88,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: Spacing.three,
     gap: Spacing.one,
-    minHeight: 150,
+    minHeight: 168,
   },
   category: {
-    fontSize: 10,
+    fontSize: 13,
     letterSpacing: 0.9,
   },
   label: {
     // Holds two lines of label so tiles in a row stay aligned regardless of
-    // whether the name wraps.
-    minHeight: 40,
+    // whether the name wraps. Two lines of `small` is 48 now that it's 17/24.
+    minHeight: 48,
   },
   value: {
     marginTop: 'auto',
@@ -112,6 +112,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   delta: {
-    fontSize: 12,
+    fontSize: 16,
   },
 });

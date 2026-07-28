@@ -89,8 +89,8 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   title: {
-    fontSize: 18,
-    lineHeight: 24,
+    fontSize: 20,
+    lineHeight: 27,
   },
   meta: {
     flexDirection: 'row',

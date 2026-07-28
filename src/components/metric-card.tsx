@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
   },
   trendText: {
     fontFamily: Fonts.body,
-    fontSize: 12,
+    fontSize: 16,
   },
   value: {
     fontSize: 28,

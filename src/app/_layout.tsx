@@ -3,14 +3,35 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
+import { AppReadyContext } from '@/lib/app-ready';
+import { prefetchAppData } from '@/lib/bootstrap';
 import { Colors, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 
 SplashScreen.preventAutoHideAsync();
+// Without this the splash is swapped out on a single frame, which reads as a
+// jump cut now that it sits over an already-populated screen.
+SplashScreen.setOptions({ fade: true, duration: 350 });
+
+/** When the JS bundle came up, i.e. roughly when the splash became ours to hold. */
+const startedAt = Date.now();
+
+/**
+ * Floor on the splash, so a warm cache doesn't reduce it to a flicker on the
+ * way past. Short enough that it never feels like a wait of its own.
+ */
+const MIN_SPLASH_MS = 900;
+
+/**
+ * Ceiling on the warm-up. A slow or dead connection must not strand the user
+ * on the splash — past this we show the app and let each screen handle its own
+ * loading and error states, which is what they were built to do anyway.
+ */
+const PREFETCH_TIMEOUT_MS = 6000;
 
 export default function RootLayout() {
   return (
@@ -42,13 +63,65 @@ function RootNavigator() {
   // to system text instead.
   const fontsSettled = fontsLoaded || !!fontError;
 
-  // Hold the splash until we know whether a session was restored, otherwise the
-  // sign-in screen flashes for a frame before the tabs mount.
+  // Warm every cache the first screens read, while the splash is still up.
+  // Signed out there is nothing to fetch, so this settles immediately.
+  const userId = session?.user.id;
+  // Tracked per user rather than as a bare flag, so the state is only ever set
+  // from a callback — and so a different account signing in later can't inherit
+  // the previous one's "already warm".
+  const [warmedFor, setWarmedFor] = useState<string | null>(null);
+  const isWarm = !userId || warmedFor === userId;
+
   useEffect(() => {
-    if (!isLoading && fontsSettled) {
-      void SplashScreen.hideAsync();
-    }
-  }, [isLoading, fontsSettled]);
+    if (isLoading || !userId) return;
+
+    let active = true;
+    const settle = () => {
+      if (active) setWarmedFor(userId);
+    };
+
+    void prefetchAppData(userId).then(settle, settle);
+    const timeout = setTimeout(settle, PREFETCH_TIMEOUT_MS);
+
+    return () => {
+      active = false;
+      clearTimeout(timeout);
+    };
+  }, [isLoading, userId]);
+
+  // Hold the splash until we know whether a session was restored — otherwise
+  // the sign-in screen flashes for a frame before the tabs mount — and until
+  // the warm-up lands, so what's underneath is finished rather than filling in.
+  const isReady = !isLoading && fontsSettled && isWarm;
+
+  const [isRevealed, setIsRevealed] = useState(false);
+
+  useEffect(() => {
+    if (!isReady) return;
+
+    let frame = 0;
+    const timeout = setTimeout(
+      () => {
+        // Two frames: the first lets the cache writes flush into the mounted
+        // screens, the second lets that render actually reach the glass. Hiding
+        // any earlier uncovers the spinner we just spent the splash avoiding.
+        frame = requestAnimationFrame(() => {
+          frame = requestAnimationFrame(() => {
+            void SplashScreen.hideAsync();
+            // Released with the fade rather than after it, so the charts fill
+            // as the splash dissolves instead of starting on a still frame.
+            setIsRevealed(true);
+          });
+        });
+      },
+      Math.max(0, MIN_SPLASH_MS - (Date.now() - startedAt)),
+    );
+
+    return () => {
+      clearTimeout(timeout);
+      cancelAnimationFrame(frame);
+    };
+  }, [isReady]);
 
   const base = isDark ? DarkTheme : DefaultTheme;
   const navigationTheme = {
@@ -63,34 +136,39 @@ function RootNavigator() {
     },
   };
 
+  // Deliberately not gated on `isWarm`: the navigator mounts as soon as it can
+  // and does its first render underneath the splash, so the warm-up and the
+  // layout pass overlap instead of queuing.
   if (isLoading || !fontsSettled) return null;
 
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      <Stack screenOptions={{ headerShadowVisible: false }}>
-        <Stack.Protected guard={!!session}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-          <Stack.Screen
-            name="story/[id]"
-            options={{ title: '', headerBackButtonDisplayMode: 'minimal' }}
-          />
-          <Stack.Screen
-            name="settings"
-            options={{
-              title: 'Settings',
-              headerBackButtonDisplayMode: 'minimal',
-              // iOS already pushes from the right edge; this is what gets
-              // Android to do the same instead of its default fade upward.
-              animation: 'slide_from_right',
-            }}
-          />
-        </Stack.Protected>
+      <AppReadyContext value={isRevealed}>
+        <Stack screenOptions={{ headerShadowVisible: false }}>
+          <Stack.Protected guard={!!session}>
+            <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+            <Stack.Screen
+              name="story/[id]"
+              options={{ title: '', headerBackButtonDisplayMode: 'minimal' }}
+            />
+            <Stack.Screen
+              name="settings"
+              options={{
+                title: 'Settings',
+                headerBackButtonDisplayMode: 'minimal',
+                // iOS already pushes from the right edge; this is what gets
+                // Android to do the same instead of its default fade upward.
+                animation: 'slide_from_right',
+              }}
+            />
+          </Stack.Protected>
 
-        <Stack.Protected guard={!session}>
-          <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-        </Stack.Protected>
-      </Stack>
+          <Stack.Protected guard={!session}>
+            <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+          </Stack.Protected>
+        </Stack>
+      </AppReadyContext>
     </ThemeProvider>
   );
 }

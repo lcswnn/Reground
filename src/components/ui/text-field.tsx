@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.body,
-    fontSize: 13,
+    fontSize: 15,
     textTransform: 'uppercase',
     letterSpacing: 0.6,
   },
@@ -58,10 +58,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1.5,
     paddingHorizontal: Spacing.three,
-    fontSize: 16,
+    fontSize: 17,
   },
   error: {
     fontFamily: Fonts.body,
-    fontSize: 13,
+    fontSize: 15,
   },
 });

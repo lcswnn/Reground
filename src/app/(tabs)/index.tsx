@@ -21,6 +21,7 @@ import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/th
 import { WORLD_METRICS, WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchMetrics } from '@/api/metrics';
+import { useAppReady } from '@/lib/app-ready';
 import { formatDay, todayISO } from '@/lib/format';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
@@ -44,6 +45,9 @@ export default function TodayScreen() {
   const { session } = useSession();
   const { isDark } = useThemePreference();
   const { width } = useWindowDimensions();
+  // This screen mounts under the splash now, so the bars would otherwise fill
+  // while hidden and be sitting full by the time anyone sees them.
+  const isRevealed = useAppReady();
   const [metricPage, setMetricPage] = useState(0);
   const [worldPage, setWorldPage] = useState(0);
 
@@ -143,7 +147,7 @@ export default function TodayScreen() {
                       <WorldMetricTile
                         key={metric.id}
                         metric={metric}
-                        active={pageIndex === worldPage}
+                        active={pageIndex === worldPage && isRevealed}
                         index={rowIndex * 2 + columnIndex}
                       />
                     ))}
@@ -207,7 +211,7 @@ export default function TodayScreen() {
               keyExtractor={(metric) => metric.id}
               renderItem={({ item, index }) => (
                 <View style={[styles.metricPage, { width: pageWidth }]}>
-                  <MetricCard metric={item} active={index === metricPage} />
+                  <MetricCard metric={item} active={index === metricPage && isRevealed} />
                 </View>
               )}
               horizontal

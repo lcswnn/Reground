@@ -29,7 +29,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.body,
-    fontSize: 11,
+    fontSize: 13,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },
