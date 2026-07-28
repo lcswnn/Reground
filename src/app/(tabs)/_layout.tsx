@@ -1,6 +1,6 @@
 import { NativeTabs } from 'expo-router/unstable-native-tabs';
 
-import { Colors } from '@/constants/theme';
+import { Colors, LibertinusSerif } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 
 export default function TabsLayout() {
@@ -25,7 +25,10 @@ export default function TabsLayout() {
       // least calm thing on the screen.
       tintColor={colors.brandStrong}
       indicatorColor={colors.backgroundElement}
-      labelStyle={{ selected: { color: colors.brandStrong } }}>
+      labelStyle={{
+        default: { fontFamily: LibertinusSerif },
+        selected: { fontFamily: LibertinusSerif, color: colors.brandStrong },
+      }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Today</NativeTabs.Trigger.Label>
         <NativeTabs.Trigger.Icon sf={{ default: 'sun.max', selected: 'sun.max.fill' }} />
