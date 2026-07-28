@@ -93,15 +93,24 @@ export const Colors = {
     textMuted: "#857C71",
     textOnBrand: "#2A1A0C",
 
-    background: "#171512",
-    backgroundElement: "#211E1A",
-    backgroundSelected: "#2B2823",
-    surface: "#1D1A16",
+    /**
+     * Near-black with the brown pushed further than it was: the old ramp only
+     * had ~5 points between its red and blue channels, which at these levels
+     * reads as plain charcoal. Doubling that gap is enough to see the warmth
+     * without lifting the screens off black.
+     *
+     * Luminance is deliberately unmoved (0.0079 vs the old 0.0076), so every
+     * contrast ratio noted below still holds.
+     */
+    background: "#1A1510",
+    backgroundElement: "#251E17",
+    backgroundSelected: "#2F281F",
+    surface: "#211A13",
 
-    border: "#322E28",
+    border: "#362E24",
 
-    // The four hues carry across schemes unchanged — each one clears 4.9:1 on
-    // this background, so dark mode needs no lightened cuts.
+    // The warm pair carries across schemes unchanged — both clear 4.9:1 on this
+    // background, so neither needs a night-specific cut.
     brand: "#E67F4D",
     brandStrong: "#E67F4D",
     brandSoft: "#3A241A",
@@ -114,13 +123,22 @@ export const Colors = {
     decline: "#E08A85",
     declineSoft: "#2E1B19",
 
-    info: "#80B5D9",
+    /**
+     * Pulled down from #80B5D9 (8.2:1), which glared against the near-black.
+     * 6.9:1 keeps it comfortably readable while letting the page stay the
+     * brightest thing in the room rather than the bar on it.
+     */
+    info: "#74A6C9",
     infoSoft: "#14252F",
 
-    accent: "#DDBEDC",
-    // No darkening needed at night: the wash itself is 10.6:1 here, so the
-    // strong and soft variants are the same value the light scheme separates.
-    accentStrong: "#DDBEDC",
+    /**
+     * Same treatment as the blue: #DDBEDC was 10.6:1 here, brighter than the
+     * body text. 7.8:1 still reads as the same lilac-pink, just no longer lit.
+     */
+    accent: "#C2A0C1",
+    // Still one value at night — the dimmed wash carries text on its own, so
+    // the split the light scheme needs would be a distinction without a use.
+    accentStrong: "#C2A0C1",
     accentSoft: "#2A2130",
 
     danger: "#E08A85",

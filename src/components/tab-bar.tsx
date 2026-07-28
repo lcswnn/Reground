@@ -1,6 +1,14 @@
 import { SymbolView, type SFSymbol } from 'expo-symbols';
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import Animated, {
+  Easing,
+  useAnimatedStyle,
+  useReducedMotion,
+  useSharedValue,
+  withSpring,
+  withTiming,
+} from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import type { ThemeColor } from '@/constants/theme';
@@ -22,6 +30,15 @@ export const TAB_BAR_HEIGHT = 49;
  */
 const ICON_DROP = 7;
 const ICON_SIZE = 24;
+
+/**
+ * How far the icon shrinks under a finger. Small on purpose — at 24pt the glyph
+ * is already tiny, and anything deeper reads as the icon flinching rather than
+ * as the tab acknowledging the touch.
+ */
+const PRESS_SCALE = 0.86;
+/** Paired with the shrink: motion alone is easy to miss on a 24pt target. */
+const PRESS_FADE = 0.3;
 
 const ICONS: Record<string, { default: SFSymbol; selected: SFSymbol }> = {
   index: { default: 'sun.max', selected: 'sun.max.fill' },
@@ -65,7 +82,6 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
         const { options } = descriptors[route.key];
         const focused = state.index === index;
         const label = options.title ?? route.name;
-        const icon = ICONS[route.name];
         // `textMuted` rather than a dimmed hue: an unselected tab should read as
         // grey outright, so the one color in the row is unmistakably the tab
         // you're on.
@@ -84,30 +100,78 @@ export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarP
         }
 
         return (
-          <Pressable
+          <TabItem
             key={route.key}
-            accessibilityRole="button"
-            accessibilityState={{ selected: focused }}
+            icon={ICONS[route.name]}
+            label={label}
+            color={color}
+            focused={focused}
             accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
             onPress={onPress}
-            style={styles.item}>
-            {icon ? (
-              <SymbolView
-                name={focused ? icon.selected : icon.default}
-                size={ICON_SIZE}
-                tintColor={color}
-                // Android and web have no SF Symbols; the label still names the
-                // tab, so a dot placeholder keeps the row from collapsing.
-                fallback={<View style={[styles.iconFallback, { backgroundColor: color }]} />}
-              />
-            ) : null}
-            <ThemedText type="small" style={[styles.label, { color }]} numberOfLines={1}>
-              {label}
-            </ThemedText>
-          </Pressable>
+          />
         );
       })}
     </View>
+  );
+}
+
+interface TabItemProps {
+  icon?: { default: SFSymbol; selected: SFSymbol };
+  label: string;
+  color: string;
+  focused: boolean;
+  accessibilityLabel: string;
+  onPress: () => void;
+}
+
+/**
+ * Its own component because the press animation needs a shared value per tab,
+ * and hooks can't be called from inside the routes `map`.
+ */
+function TabItem({ icon, label, color, focused, accessibilityLabel, onPress }: TabItemProps) {
+  const press = useSharedValue(0);
+  // Honors the system Reduce Motion switch: the tab still responds, it just
+  // does it by dimming instead of moving.
+  const reducedMotion = useReducedMotion();
+
+  const iconStyle = useAnimatedStyle(() => ({
+    transform: reducedMotion ? [] : [{ scale: 1 - press.value * (1 - PRESS_SCALE) }],
+    opacity: 1 - press.value * PRESS_FADE,
+  }));
+
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityState={{ selected: focused }}
+      accessibilityLabel={accessibilityLabel}
+      onPress={onPress}
+      // Down fast and up slowly: the press should feel like it caught, and the
+      // release is where the spring reads. Driving both off one value keeps a
+      // quick tap from stranding the icon mid-shrink.
+      onPressIn={() => {
+        press.value = withTiming(1, { duration: 90, easing: Easing.out(Easing.quad) });
+      }}
+      onPressOut={() => {
+        press.value = withSpring(0, { damping: 13, stiffness: 340, mass: 0.5 });
+      }}
+      style={styles.item}>
+      <Animated.View style={iconStyle}>
+        {icon ? (
+          <SymbolView
+            name={focused ? icon.selected : icon.default}
+            size={ICON_SIZE}
+            tintColor={color}
+            // Android and web have no SF Symbols; the label still names the
+            // tab, so a dot placeholder keeps the row from collapsing.
+            fallback={<View style={[styles.iconFallback, { backgroundColor: color }]} />}
+          />
+        ) : null}
+      </Animated.View>
+
+      <ThemedText type="small" style={[styles.label, { color }]} numberOfLines={1}>
+        {label}
+      </ThemedText>
+    </Pressable>
   );
 }
 

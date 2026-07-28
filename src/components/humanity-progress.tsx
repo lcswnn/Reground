@@ -9,7 +9,11 @@ import Animated, {
 
 import { ThemedText } from "@/components/themed-text";
 import { Radius, Spacing } from "@/constants/theme";
-import { HUMANITY_PROGRESS, WORLD_METRICS } from "@/constants/world-metrics";
+import {
+  HUMANITY_PROGRESS,
+  HUMANITY_WEAKEST,
+  WORLD_METRICS,
+} from "@/constants/world-metrics";
 import { useTheme } from "@/hooks/use-theme";
 
 /** Slower than a tile's bar: this one is the headline, so it takes its time. */
@@ -53,7 +57,7 @@ export function HumanityProgress({ active = true }: HumanityProgressProps) {
       accessible
       accessibilityRole="progressbar"
       accessibilityValue={{ min: 0, max: 100, now: percent }}
-      accessibilityLabel={`Humanity progress: ${percent} percent, averaged across ${count} indicators`}
+      accessibilityLabel={`Humanity progress: ${percent} percent across ${count} indicators, weighted toward the weakest: ${HUMANITY_WEAKEST.label.toLowerCase()}`}
     >
       <View style={styles.header}>
         <ThemedText type="eyebrow" themeColor="textMuted">
@@ -83,8 +87,11 @@ export function HumanityProgress({ active = true }: HumanityProgressProps) {
         />
       </View>
 
+      {/* Names the weakest indicator rather than saying "average", which this
+          deliberately isn't — half the number is that one metric. */}
       <ThemedText type="small" themeColor="textSecondary">
-        The average of all indicators represented in this app.
+        Across {count} indicators, weighted hard toward the worst of them:{' '}
+        {HUMANITY_WEAKEST.label.toLowerCase()}.
       </ThemedText>
     </View>
   );
