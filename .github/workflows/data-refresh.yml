@@ -1,0 +1,63 @@
+name: Refresh data
+
+# Daily, not because the sources change daily — most are annual — but because
+# NOAA's CO₂ trend does, and because refresh.ts gates every other source on its
+# own published `nextUpdate` and skips when it isn't due. The artifact is
+# rebuilt each run regardless, since the nowcast moves the displayed numbers
+# every day even when no new observation landed.
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: data-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Guards the model itself. A refresh that publishes a broken score is
+      # worse than one that doesn't run.
+      - name: Test the scoring model
+        run: npm test
+
+      - name: Refresh observations
+        run: npm run data:refresh
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          EMBER_API_KEY: ${{ secrets.EMBER_API_KEY }}
+
+      - name: Build artifact
+        run: npm run data:artifact -- --out humanity.json
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      - name: Publish artifact
+        run: npm run data:publish
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+
+      # The published artifact is the only thing the app reads, so keeping a
+      # copy of each run's output makes a bad number diagnosable after the fact.
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: humanity-json
+          path: humanity.json
+          retention-days: 14
