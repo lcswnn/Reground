@@ -22,9 +22,13 @@ const BUCKET = 'artifacts';
 const OBJECT = 'humanity.json';
 
 /**
- * Five minutes. The artifact is rebuilt daily at most, but a short TTL means a
- * correction to a bad number reaches phones in minutes rather than hours — and
- * at this size the CDN traffic is irrelevant either way.
+ * Requested TTL, in seconds.
+ *
+ * Note this project's Storage responds `Cache-Control: no-cache` regardless of
+ * what is asked for — CDN caching is a paid Supabase feature — so in practice
+ * clients revalidate on every fetch and a republish is visible immediately. The
+ * value is kept because it costs nothing and starts applying if the project is
+ * ever upgraded; do not rely on it as a guarantee either way.
  */
 const CACHE_SECONDS = 300;
 

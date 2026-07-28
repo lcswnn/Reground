@@ -10,7 +10,10 @@
     "ios": {
       "icon": "./assets/icon.png",
       "bundleIdentifier": "com.lucaswaunn.humanitas",
-      "supportsTablet": true
+      "supportsTablet": true,
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "package": "com.lucaswaunn.humanitas",
