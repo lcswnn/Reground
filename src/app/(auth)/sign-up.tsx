@@ -13,24 +13,12 @@ import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { DateField } from '@/components/ui/date-field';
 import { TextField } from '@/components/ui/text-field';
+import { EARLIEST_BIRTHDAY, LATEST_BIRTHDAY } from '@/constants/birthday';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useSession } from '@/lib/session';
 
 const MIN_PASSWORD_LENGTH = 8;
-
-/**
- * Birthday bounds. The far end is a plausible human lifespan rather than a
- * round number, and the near end is today — "since you were born" needs a date
- * that has actually happened.
- */
-const OLDEST_YEARS = 120;
-const TODAY = new Date();
-const EARLIEST_BIRTHDAY = new Date(
-  TODAY.getFullYear() - OLDEST_YEARS,
-  TODAY.getMonth(),
-  TODAY.getDate(),
-);
 
 export default function SignUpScreen() {
   const theme = useTheme();
@@ -112,7 +100,7 @@ export default function SignUpScreen() {
                 onChange={setBirthDate}
                 placeholder="When it all started for you"
                 minimumDate={EARLIEST_BIRTHDAY}
-                maximumDate={TODAY}
+                maximumDate={LATEST_BIRTHDAY}
               />
               <TextField
                 label="Email"

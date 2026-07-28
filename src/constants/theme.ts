@@ -18,10 +18,19 @@ import { Platform } from "react-native";
 
 export const Colors = {
   light: {
-    /** Warm near-black rather than true black: softer, less clinical at 6am. */
+    /**
+     * Warm near-black rather than true black: softer, less clinical at 6am.
+     *
+     * The two greys below it are pulled down from where they started (#6B6459
+     * and #9A9287) because the lighter pair washed out on this near-white
+     * paper — muted sat at 2.94:1, under the 4.5:1 needed for body text.
+     * Ratios here are against `background`; on `surface` they run ~4% higher.
+     */
     text: "#221F1A",
-    textSecondary: "#6B6459",
-    textMuted: "#9A9287",
+    /** 8.5:1 — headings' quieter sibling, still comfortably readable. */
+    textSecondary: "#4F493F",
+    /** 4.9:1 — clears AA, where the old value did not. */
+    textMuted: "#756D61",
     textOnBrand: "#3A2410",
 
     /** Near-white with a hair of warmth, so screens read as paper, not a lightbox. */
@@ -30,7 +39,11 @@ export const Colors = {
     backgroundSelected: "#E9E5DC",
     surface: "#FFFFFF",
 
-    border: "#E8E4DA",
+    /**
+     * 2.1:1 against the page. The old #E8E4DA was 1.22:1 — technically a line,
+     * but at 1px it read as a smudge and card edges disappeared.
+     */
+    border: "#B8AF9C",
 
     /** Warm terracotta. The single orange in the app. */
     brand: "#e08659",
@@ -46,7 +59,7 @@ export const Colors = {
     positiveSoft: "#EDEBD8",
 
     /** Used for declines that are *good* (poverty, child mortality). */
-    decline: "#5c94b7",
+    decline: "#c84949",
     declineSoft: "#E6F1F8",
 
     /** Secondary accent for humanity/people-flavored surfaces. */

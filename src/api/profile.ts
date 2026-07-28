@@ -12,6 +12,16 @@ export async function fetchProfile(userId: string): Promise<Profile | null> {
   return data;
 }
 
+/** `birthDate` is `YYYY-MM-DD`. */
+export async function updateBirthDate(userId: string, birthDate: string): Promise<void> {
+  const { error } = await supabase
+    .from('profiles')
+    .update({ birth_date: birthDate, updated_at: new Date().toISOString() })
+    .eq('id', userId);
+
+  if (error) throw error;
+}
+
 export async function updateDisplayName(userId: string, displayName: string): Promise<void> {
   const { error } = await supabase
     .from('profiles')

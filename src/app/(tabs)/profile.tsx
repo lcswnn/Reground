@@ -1,10 +1,11 @@
 import { useQueries } from '@tanstack/react-query';
-import { Alert, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { StoryCard } from '@/components/story-card';
 import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { BottomTabInset, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -14,7 +15,8 @@ import { useSession } from '@/lib/session';
 
 export default function ProfileScreen() {
   const theme = useTheme();
-  const { session, signOut } = useSession();
+  const router = useRouter();
+  const { session } = useSession();
 
   const [savedQuery, streakQuery] = useQueries({
     queries: [
@@ -35,19 +37,6 @@ export default function ProfileScreen() {
   const displayName =
     (session?.user.user_metadata?.display_name as string | undefined) ?? 'Friend';
   const email = session?.user.email ?? '';
-
-  function confirmSignOut() {
-    Alert.alert('Sign out?', 'Your streak and saved stories stay on your account.', [
-      { text: 'Cancel', style: 'cancel' },
-      {
-        text: 'Sign out',
-        style: 'destructive',
-        onPress: () => {
-          void signOut();
-        },
-      },
-    ]);
-  }
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -74,6 +63,22 @@ export default function ProfileScreen() {
                 {email}
               </ThemedText>
             </View>
+
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Settings"
+              onPress={() => router.push('/settings')}
+              hitSlop={12}
+              style={({ pressed }) => [styles.settings, pressed && styles.settingsPressed]}>
+              <SymbolView
+                name="gearshape"
+                size={26}
+                tintColor={theme.textSecondary}
+                // No SF Symbols off iOS. A dot would be meaningless for an
+                // entry point, so the fallback says what it opens.
+                fallback={<ThemedText type="linkPrimary">Settings</ThemedText>}
+              />
+            </Pressable>
           </View>
 
           <View style={styles.stats}>
@@ -106,10 +111,6 @@ export default function ProfileScreen() {
                 message="Tap the bookmark on any story to keep it here."
               />
             )}
-          </View>
-
-          <View style={styles.actions}>
-            <Button title="Sign out" variant="secondary" onPress={confirmSignOut} />
           </View>
         </ScrollView>
       </SafeAreaView>
@@ -160,6 +161,15 @@ const styles = StyleSheet.create({
     flex: 1,
     gap: Spacing.half,
   },
+  // Pinned to the top of the row rather than centered on the avatar, so it
+  // reads as a corner control instead of a third item in the identity block.
+  settings: {
+    alignSelf: 'flex-start',
+    paddingTop: Spacing.one,
+  },
+  settingsPressed: {
+    opacity: 0.6,
+  },
   stats: {
     flexDirection: 'row',
     gap: Spacing.three,
@@ -176,8 +186,5 @@ const styles = StyleSheet.create({
   },
   savedList: {
     gap: Spacing.three,
-  },
-  actions: {
-    marginTop: Spacing.three,
   },
 });

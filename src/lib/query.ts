@@ -21,6 +21,7 @@ export const queryKeys = {
   feed: (category: string | null) => ['feed', category] as const,
   metrics: ['metrics'] as const,
   story: (id: string) => ['story', id] as const,
+  profile: (userId: string) => ['profile', userId] as const,
   savedStoryIds: ['saved-story-ids'] as const,
   savedStories: ['saved-stories'] as const,
   streak: ['streak'] as const,

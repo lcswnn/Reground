@@ -1,14 +1,15 @@
 /**
- * Learn more about light and dark modes:
- * https://docs.expo.dev/guides/color-schemes/
+ * The palette for the appearance the user picked in Settings.
+ *
+ * Deliberately not the system color scheme: appearance is an in-app setting
+ * that defaults to light. See `@/lib/theme-preference`.
  */
 
 import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useThemePreference } from '@/lib/theme-preference';
 
 export function useTheme() {
-  const scheme = useColorScheme();
-  const theme = scheme === 'unspecified' ? 'light' : scheme;
+  const { isDark } = useThemePreference();
 
-  return Colors[theme];
+  return isDark ? Colors.dark : Colors.light;
 }

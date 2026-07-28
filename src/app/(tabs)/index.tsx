@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 import Animated, { useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { MetricCard } from '@/components/metric-card';
 import { ScrollTopFade } from '@/components/scroll-top-fade';
@@ -24,13 +24,25 @@ import { fetchMetrics } from '@/api/metrics';
 import { formatDay, todayISO } from '@/lib/format';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
+import { useThemePreference } from '@/lib/theme-preference';
 
 const WORLD_PAGES = chunk(WORLD_METRICS, WORLD_METRICS_PER_PAGE);
+
+/** Floor on how long the refresh wheel stays up, so a pull always registers. */
+const MIN_SPINNER_MS = 700;
+
+/**
+ * The refresh wheel is the one blue in the app. Two values because a single
+ * one cannot clear both fields: the darker reads 4.3:1 on paper, the lighter
+ * 8.3:1 on the night background. Both are the palette's sky hue.
+ */
+const REFRESH_TINT = { light: '#3E7CA8', dark: '#80B5D9' };
 
 export default function TodayScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session } = useSession();
+  const { isDark } = useThemePreference();
   const { width } = useWindowDimensions();
   const [metricPage, setMetricPage] = useState(0);
   const [worldPage, setWorldPage] = useState(0);
@@ -39,6 +51,9 @@ export default function TodayScreen() {
   // clock, so the text needs something to pass behind.
   const scrollRef = useAnimatedRef<Animated.ScrollView>();
   const scrollOffset = useScrollViewOffset(scrollRef);
+
+  const insets = useSafeAreaInsets();
+  const tint = isDark ? REFRESH_TINT.dark : REFRESH_TINT.light;
 
   // Each item is a full-width page with the gutter *inside* it, so the list's
   // own width is the page width and `pagingEnabled` lands exactly on each card.
@@ -51,8 +66,21 @@ export default function TodayScreen() {
   const firstName =
     (session?.user.user_metadata?.display_name as string | undefined)?.split(' ')[0] ?? 'friend';
 
-  function refreshAll() {
-    void metricsQuery.refetch();
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  async function refreshAll() {
+    setIsRefreshing(true);
+    try {
+      // Raced against a floor rather than awaited alone: a warm cache answers
+      // in a few frames, and the wheel would be gone before it finished
+      // drawing — which reads as the pull having done nothing at all.
+      await Promise.all([
+        metricsQuery.refetch(),
+        new Promise((resolve) => setTimeout(resolve, MIN_SPINNER_MS)),
+      ]);
+    } finally {
+      setIsRefreshing(false);
+    }
   }
 
   const metrics = metricsQuery.data ?? [];
@@ -65,9 +93,20 @@ export default function TodayScreen() {
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={metricsQuery.isRefetching}
-            onRefresh={refreshAll}
-            tintColor={theme.brand}
+            refreshing={isRefreshing}
+            onRefresh={() => void refreshAll()}
+            // Every other tab puts its scroller inside the SafeAreaView, so the
+            // wheel lands below the clock on its own. This screen scrolls its
+            // header up past the status bar, which means the scroll view starts
+            // at y=0 and the wheel draws behind the notch — invisible. Push it
+            // down by the inset it is missing.
+            progressViewOffset={insets.top}
+            // tintColor is the iOS wheel; colors/progressBackgroundColor are
+            // the Android one. Setting only the first leaves Android with its
+            // default blue on a warm background.
+            tintColor={tint}
+            colors={[tint]}
+            progressBackgroundColor={theme.surface}
           />
         }>
         <SafeAreaView edges={['top']} style={styles.header}>

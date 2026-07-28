@@ -6,26 +6,27 @@ import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 
 import { Colors, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
+import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 
 SplashScreen.preventAutoHideAsync();
 
 export default function RootLayout() {
   return (
     <QueryClientProvider client={queryClient}>
-      <SessionProvider>
-        <RootNavigator />
-      </SessionProvider>
+      <ThemePreferenceProvider>
+        <SessionProvider>
+          <RootNavigator />
+        </SessionProvider>
+      </ThemePreferenceProvider>
     </QueryClientProvider>
   );
 }
 
 function RootNavigator() {
   const { session, isLoading } = useSession();
-  const scheme = useColorScheme();
-  const isDark = scheme === 'dark';
+  const { isDark } = useThemePreference();
   const palette = isDark ? Colors.dark : Colors.light;
 
   // Loaded at runtime rather than through the expo-font config plugin, which
@@ -73,6 +74,16 @@ function RootNavigator() {
           <Stack.Screen
             name="story/[id]"
             options={{ title: '', headerBackButtonDisplayMode: 'minimal' }}
+          />
+          <Stack.Screen
+            name="settings"
+            options={{
+              title: 'Settings',
+              headerBackButtonDisplayMode: 'minimal',
+              // iOS already pushes from the right edge; this is what gets
+              // Android to do the same instead of its default fade upward.
+              animation: 'slide_from_right',
+            }}
           />
         </Stack.Protected>
 
