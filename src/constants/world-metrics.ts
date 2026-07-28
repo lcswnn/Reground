@@ -1,23 +1,35 @@
 /**
- * Headline indicators for the "State of the world" grid.
+ * Headline indicators for the "State of the world" grid, and the config the
+ * composite score is computed from.
  *
  * The current values are still hand-authored placeholders — nothing in this file
  * comes from a feed yet, and it should be replaced wholesale once one exists.
- * What is no longer authored is each metric's *score*. Every tile now declares
- * the two ends of its own scale:
+ * What is not a placeholder is the scoring config around them. Every indicator
+ * declares:
  *
- *   floor  — the 0% anchor: the worst state we're measuring against, generally
- *            the level at the comparison year in `delta`.
- *   target — the 100% anchor: the point at which this counts as solved.
+ *   baselineValue — the 0% anchor: the reference point progress is measured
+ *                   from, generally the level at the comparison year in `delta`.
+ *   targetValue   — the 100% anchor: the point at which this counts as solved.
+ *   direction     — whether the number is meant to rise or fall.
+ *   weight        — its share of the headline. Authored to sum to 1.
+ *   polarity      — whether progress on it adds to the score, or failure on it
+ *                   subtracts from it.
  *
- * and the bar is derived from where `current` sits between them. Where the SDGs
- * state a number, `basis` cites it; where they only say "substantially reduce",
- * the threshold is a judgment call and `basis` says so, so it can be argued with
- * rather than mistaken for a source.
+ * Where the SDGs state a number, `basis` cites it; where they only say
+ * "substantially reduce", the threshold is a judgment call and `basis` says so,
+ * so it can be argued with rather than mistaken for a source. `basis` also
+ * carries the reasoning for the weight, which is a judgment call in every case.
  *
- * Direction is implicit: child mortality runs floor 9.3 → target 2.5, literacy
- * runs 68 → 100, and the same subtraction scores both.
+ * The arithmetic that turns this into one number lives in `@/lib/scoring` and
+ * knows nothing about this file.
  */
+
+import {
+  computeBreakdown,
+  normalizeMetric,
+  weightError,
+  type MetricConfig,
+} from '@/lib/scoring';
 
 export type WorldCategory =
   | 'health'
@@ -36,19 +48,11 @@ export const WORLD_CATEGORIES: Record<WorldCategory, string> = {
   education: 'Education',
 };
 
-interface WorldMetricInput {
-  id: string;
-  category: WorldCategory;
-  label: string;
-  /** Pre-formatted for display. */
+/** The scoring config, plus the display-only fields the tiles need. */
+interface WorldMetricInput extends MetricConfig<WorldCategory> {
+  /** Pre-formatted for display. The same figure as `currentValue`. */
   value: string;
-  /** The same figure as `value`, as a number, in the units `floor`/`target` use. */
-  current: number;
-  /** The 0% anchor: the worst state being measured against. */
-  floor: number;
-  /** The 100% anchor: the level at which this indicator is done. */
-  target: number;
-  /** Where the anchors come from — an SDG number, or an admission that it's a call. */
+  /** Where the anchors and the weight come from. */
   basis: string;
   /** Movement since the comparison year. */
   delta: string;
@@ -57,30 +61,35 @@ interface WorldMetricInput {
 }
 
 export interface WorldMetric extends WorldMetricInput {
-  /** 0–1, derived from `current` against `floor` and `target`. */
+  /** 0–1, derived from `currentValue` against its two anchors. */
   progress: number;
 }
 
 /**
- * No score is allowed to reach a true zero.
+ * Weights are grouped by category and total 1.00:
  *
- * The geometric mean below multiplies these together, so a single 0 would
- * annihilate the index no matter how the other eleven are doing — which is a
- * stronger claim than "we are failing badly at one thing". The `min` term is
- * what's meant to carry that weight, and it does so without the cliff.
+ *   poverty 0.22 · health 0.20 · environment 0.20 · education 0.18 ·
+ *   safety 0.12 · tech access 0.08
+ *
+ * The ordering is the arguable part and is meant to be argued with. Material
+ * deprivation and staying alive lead because they gate everything below them;
+ * tech access trails because it's closest to being an instrument for the rest
+ * rather than an end in itself.
  */
-const SCORE_FLOOR = 0.01;
-
 const INDICATORS: WorldMetricInput[] = [
   {
     id: 'child-mortality',
     category: 'health',
     label: 'Child mortality before 5',
     value: '3.6%',
-    current: 3.6,
-    floor: 9.3,
-    target: 2.5,
-    basis: 'SDG 3.2: under-5 mortality at or below 25 per 1,000 live births. Floor is the 1990 rate.',
+    currentValue: 3.6,
+    baselineValue: 9.3,
+    targetValue: 2.5,
+    direction: 'lower_is_better',
+    weight: 0.11,
+    polarity: 'contributor',
+    basis:
+      'SDG 3.2: under-5 mortality at or below 25 per 1,000 live births. Baseline is the 1990 rate. Weighted highest in health — it is the closest thing the set has to a direct count of avoidable death.',
     delta: '↓ 61% since 1990',
     isProgress: true,
   },
@@ -89,10 +98,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'health',
     label: 'Life expectancy',
     value: '73.4 yrs',
-    current: 73.4,
-    floor: 46,
-    target: 80,
-    basis: 'No SDG figure. Target is roughly what the longest-lived countries already reach; floor is the 1950 global average.',
+    currentValue: 73.4,
+    baselineValue: 46,
+    targetValue: 80,
+    direction: 'higher_is_better',
+    weight: 0.09,
+    polarity: 'contributor',
+    basis:
+      'No SDG figure. Target is roughly what the longest-lived countries already reach; baseline is the 1950 global average. Slightly under child mortality because the two overlap — falling child deaths are part of what lifts this.',
     delta: '↑ 9 yrs since 1990',
     isProgress: true,
   },
@@ -101,10 +114,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'poverty',
     label: 'Living in extreme poverty',
     value: '8.5%',
-    current: 8.5,
-    floor: 38,
-    target: 0,
-    basis: 'SDG 1.1: eradicate extreme poverty for all people everywhere. Floor is the 1990 share.',
+    currentValue: 8.5,
+    baselineValue: 38,
+    targetValue: 0,
+    direction: 'lower_is_better',
+    weight: 0.12,
+    polarity: 'contributor',
+    basis:
+      'SDG 1.1: eradicate extreme poverty for all people everywhere. Baseline is the 1990 share. The heaviest single weight in the set: it gates schooling, nutrition, and health outcomes alike.',
     delta: '↓ 28 pts since 1990',
     isProgress: true,
   },
@@ -113,10 +130,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'poverty',
     label: 'Undernourished',
     value: '9.1%',
-    current: 9.1,
-    floor: 19,
-    target: 0,
-    basis: 'SDG 2.1: end hunger and ensure access to sufficient food year-round. Floor is the 1990–92 share.',
+    currentValue: 9.1,
+    baselineValue: 19,
+    targetValue: 0,
+    direction: 'lower_is_better',
+    weight: 0.1,
+    polarity: 'contributor',
+    basis:
+      'SDG 2.1: end hunger and ensure access to sufficient food year-round. Baseline is the 1990–92 share. Weighted just under extreme poverty, which it largely tracks.',
     delta: '↓ 10 pts since 1990',
     isProgress: true,
   },
@@ -125,10 +146,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'environment',
     label: 'Electricity from renewables',
     value: '30%',
-    current: 30,
-    floor: 19,
-    target: 100,
-    basis: 'No SDG figure (7.2 says only "substantially increase"). Target is fully decarbonized electricity; floor is the 2000 share.',
+    currentValue: 30,
+    baselineValue: 19,
+    targetValue: 100,
+    direction: 'higher_is_better',
+    weight: 0.08,
+    polarity: 'contributor',
+    basis:
+      'No SDG figure (7.2 says only "substantially increase"). Target is fully decarbonized electricity; baseline is the 2000 share. Weighted as the upside half of the environment budget — the downside half is carried by CO₂ per person.',
     delta: '↑ 11 pts since 2000',
     isProgress: true,
   },
@@ -137,11 +162,15 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'environment',
     label: 'CO₂ per person',
     value: '4.7 t',
-    current: 4.7,
-    floor: 4.9,
-    target: 2.0,
-    basis: 'No SDG figure. Target is the per-capita level broadly consistent with 1.5°C; floor is the recent peak, which is why this scores near zero.',
-    delta: '↑ 0.3 t since 2000',
+    currentValue: 4.7,
+    baselineValue: 4.1,
+    targetValue: 2.0,
+    direction: 'lower_is_better',
+    weight: 0.12,
+    polarity: 'detractor',
+    basis:
+      'No SDG figure. Target is the per-capita level broadly consistent with 1.5°C; baseline is the 1990 level, the same comparison year most of this set uses. The only detractor in the set: emissions are above their own baseline, so this subtracts its full weight rather than contributing a small positive share.',
+    delta: '↑ 0.6 t since 1990',
     isProgress: false,
   },
   {
@@ -149,10 +178,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'safety',
     label: 'Homicide rate',
     value: '5.8 /100k',
-    current: 5.8,
-    floor: 7.4,
-    target: 2.0,
-    basis: 'No SDG figure (16.1 says "significantly reduce"). Target is roughly the rate in the safest third of countries; floor is the 1993 peak.',
+    currentValue: 5.8,
+    baselineValue: 7.4,
+    targetValue: 2.0,
+    direction: 'lower_is_better',
+    weight: 0.05,
+    polarity: 'contributor',
+    basis:
+      'No SDG figure (16.1 says "significantly reduce"). Target is roughly the rate in the safest third of countries; baseline is the 1993 peak. Weighted modestly: it moves few lives per year next to the health and poverty indicators.',
     delta: '↓ 1.4 since 1993',
     isProgress: true,
   },
@@ -161,10 +194,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'safety',
     label: 'Deaths in conflict',
     value: '0.6 /100k',
-    current: 0.6,
-    floor: 4.0,
-    target: 0,
-    basis: 'No SDG figure (16.1). Target is zero; floor is the mid-century post-war peak.',
+    currentValue: 0.6,
+    baselineValue: 4.0,
+    targetValue: 0,
+    direction: 'lower_is_better',
+    weight: 0.07,
+    polarity: 'contributor',
+    basis:
+      'No SDG figure (16.1). Target is zero; baseline is the mid-century post-war peak. Weighted above homicide because it is the more volatile of the two — this is where a bad decade would show up.',
     delta: '↓ 88% since 1950',
     isProgress: true,
   },
@@ -173,10 +210,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'access',
     label: 'People online',
     value: '68%',
-    current: 68,
-    floor: 16,
-    target: 100,
-    basis: 'SDG 9.c: universal and affordable access. Floor is the 2005 share.',
+    currentValue: 68,
+    baselineValue: 16,
+    targetValue: 100,
+    direction: 'higher_is_better',
+    weight: 0.05,
+    polarity: 'contributor',
+    basis:
+      'SDG 9.c: universal and affordable access. Baseline is the 2005 share. Light weight: access is mostly a means to the other indicators rather than an end.',
     delta: '↑ 41 pts since 2005',
     isProgress: true,
   },
@@ -185,10 +226,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'access',
     label: 'Mobile network coverage',
     value: '95%',
-    current: 95,
-    floor: 73,
-    target: 100,
-    basis: 'SDG 9.c: universal access. Floor is the 2005 share of population covered.',
+    currentValue: 95,
+    baselineValue: 73,
+    targetValue: 100,
+    direction: 'higher_is_better',
+    weight: 0.03,
+    polarity: 'contributor',
+    basis:
+      'SDG 9.c: universal access. Baseline is the 2005 share of population covered. The lightest weight in the set — coverage is a precondition for being online, so it is largely already counted there.',
     delta: '↑ 22 pts since 2005',
     isProgress: true,
   },
@@ -197,10 +242,14 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'education',
     label: 'Adult literacy',
     value: '87%',
-    current: 87,
-    floor: 68,
-    target: 100,
-    basis: 'SDG 4.6: all youth and most adults literate and numerate. Floor is the 1980 rate.',
+    currentValue: 87,
+    baselineValue: 68,
+    targetValue: 100,
+    direction: 'higher_is_better',
+    weight: 0.1,
+    polarity: 'contributor',
+    basis:
+      'SDG 4.6: all youth and most adults literate and numerate. Baseline is the 1980 rate. Weighted as the broadest education measure — it covers the whole adult population rather than one cohort.',
     delta: '↑ 19 pts since 1980',
     isProgress: true,
   },
@@ -209,80 +258,69 @@ const INDICATORS: WorldMetricInput[] = [
     category: 'education',
     label: 'Girls in primary school',
     value: '90%',
-    current: 90,
-    floor: 76,
-    target: 100,
-    basis: 'SDG 4.1: all girls and boys complete primary education. Floor is the 1990 rate.',
+    currentValue: 90,
+    baselineValue: 76,
+    targetValue: 100,
+    direction: 'higher_is_better',
+    weight: 0.08,
+    polarity: 'contributor',
+    basis:
+      'SDG 4.1: all girls and boys complete primary education. Baseline is the 1990 rate. Weighted just under adult literacy, which it feeds into a generation later.',
     delta: '↑ 14 pts since 1990',
     isProgress: true,
   },
 ];
 
-/**
- * Where `current` sits between the two anchors, clamped to [SCORE_FLOOR, 1].
- *
- * The subtraction handles both directions on its own: when a metric is meant to
- * fall, `target - floor` is negative and so is `current - floor`, and the ratio
- * comes out the right way up. Overshooting the target caps at 1 rather than
- * banking credit — a solved indicator is solved, and letting one run past 100%
- * would let it pay for another's failure, which is the whole thing this
- * aggregation is trying not to do.
- */
-function scoreOf(metric: WorldMetricInput): number {
-  const span = metric.target - metric.floor;
-  if (span === 0) return SCORE_FLOOR;
-  const raw = (metric.current - metric.floor) / span;
-  return Math.min(1, Math.max(SCORE_FLOOR, raw));
+if (__DEV__) {
+  const error = weightError(INDICATORS);
+  // Tolerance is floating-point slack, not a budget: 0.01 is smaller than any
+  // weight above, so a metric added without adjusting the others still trips.
+  if (Math.abs(error) > 0.001) {
+    console.warn(
+      `[world-metrics] weights sum to ${(1 + error).toFixed(3)}, expected 1.000`,
+    );
+  }
 }
 
 export const WORLD_METRICS: WorldMetric[] = INDICATORS.map((metric) => ({
   ...metric,
-  progress: scoreOf(metric),
+  progress: normalizeMetric(metric),
 }));
 
 /** Tiles per page in the grid. */
 export const WORLD_METRICS_PER_PAGE = 4;
 
-/** How much of the headline number the worst indicator alone accounts for. */
-const MIN_WEIGHT = 0.5;
-
-const SCORES = WORLD_METRICS.map((metric) => metric.progress);
+const BREAKDOWN = computeBreakdown(INDICATORS);
 
 /**
- * Geometric rather than arithmetic: the mean of the logs, so a score near zero
- * drags the whole number down instead of being averaged away by eleven healthy
- * ones. Doubling one indicator from 0.4 to 0.8 moves this as much as doubling
- * any other, which an arithmetic mean does not do.
+ * The headline number, 0–1.
+ *
+ * Computed from `INDICATORS` rather than stored, so a new metric changes this
+ * the moment it lands. See `@/lib/scoring` for the model; in short it is a
+ * weighted sum of the eleven contributors, minus what the one detractor
+ * destroys.
+ *
+ * Two things are worth keeping apart when reading this against the 27% the
+ * previous model showed:
+ *
+ *   - that number was half geometric mean, half worst-single-score, so CO₂
+ *     sitting a hair off its worst recorded level held the whole bar down by
+ *     itself;
+ *   - this one lets the other eleven indicators outvote it, and charges CO₂ its
+ *     full 0.12 weight as a subtraction instead.
+ *
+ * The result is ~51%. The rise is the method changing, not the world improving.
  */
-const GEOMETRIC_MEAN = Math.exp(
-  SCORES.reduce((total, score) => total + Math.log(score), 0) / SCORES.length,
-);
+export const HUMANITY_PROGRESS = BREAKDOWN.score;
 
-const WORST_SCORE = Math.min(...SCORES);
+/** Every metric's signed share of the headline, biggest mover first. */
+export const HUMANITY_CONTRIBUTIONS = BREAKDOWN.contributions;
 
-/**
- * The headline number: half the geometric mean, half the worst score.
- *
- * An arithmetic mean answers "how are things on average", which lets eleven
- * good indicators bury one catastrophe. This answers something closer to "how
- * are we doing, all things considered" — and the `min` term means the bar
- * cannot get far past the single thing we are failing worst at, no matter how
- * many indicators are added above it.
- *
- * Two changes stack here, and it's worth keeping them apart when reading the
- * drop from the 73% this used to show:
- *
- *   - re-deriving the scores against real anchors takes the arithmetic mean
- *     from 73% to 57%, because several indicators were authored more
- *     generously than their distance to a stated target justifies;
- *   - switching to this blend takes it from 57% to 27%.
- *
- * The second number is held there almost entirely by CO₂ per person, which sits
- * a hair off its own worst recorded level. That is the method working, not a
- * bug in the numbers.
- */
-export const HUMANITY_PROGRESS = MIN_WEIGHT * WORST_SCORE + (1 - MIN_WEIGHT) * GEOMETRIC_MEAN;
-
-/** The indicator holding the number down — named on the home screen. */
+/** The indicator taking the most off the headline — named on the home screen. */
 export const HUMANITY_WEAKEST: WorldMetric =
-  WORLD_METRICS.find((metric) => metric.progress === WORST_SCORE) ?? WORLD_METRICS[0];
+  WORLD_METRICS.find(
+    (metric) => metric.id === BREAKDOWN.contributions.find((entry) => entry.points < 0)?.metric.id,
+  ) ??
+  // No detractor is dragging: fall back to the contributor furthest from its
+  // own target, which is the honest answer to "what's holding this up".
+  [...WORLD_METRICS].sort((a, b) => a.progress - b.progress)[0];
