@@ -89,6 +89,3 @@ swaps the navigator.
 eas build --platform ios --profile production
 eas submit --platform ios
 ```
-
-Bundle ID `com.lucaswaunn.humanitas` · EAS project
-[@ginjaninja018/Humanitas](https://expo.dev/accounts/ginjaninja018/projects/Humanitas)
