@@ -8,6 +8,7 @@ import { StoryCard } from '@/components/story-card';
 import { ThemedText } from '@/components/themed-text';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { BottomTabInset, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchCurrentStreak, fetchSavedStories } from '@/api/stories';
 import { queryKeys } from '@/lib/query';
@@ -27,12 +28,10 @@ export default function ProfileScreen() {
 
   const saved = savedQuery.data ?? [];
   const streak = streakQuery.data ?? 0;
-  const isRefreshing = savedQuery.isRefetching || streakQuery.isRefetching;
 
-  function refreshAll() {
-    void savedQuery.refetch();
-    void streakQuery.refetch();
-  }
+  const { isRefreshing, onRefresh } = usePullToRefresh(() =>
+    Promise.all([savedQuery.refetch(), streakQuery.refetch()]),
+  );
 
   const displayName =
     (session?.user.user_metadata?.display_name as string | undefined) ?? 'Friend';
@@ -47,8 +46,10 @@ export default function ProfileScreen() {
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
-              onRefresh={refreshAll}
-              tintColor={theme.brand}
+              onRefresh={onRefresh}
+              tintColor={theme.info}
+              colors={[theme.info]}
+              progressBackgroundColor={theme.surface}
             />
           }>
           <View style={styles.header}>
@@ -98,7 +99,7 @@ export default function ProfileScreen() {
             {savedQuery.isPending ? (
               <LoadingState />
             ) : savedQuery.error ? (
-              <ErrorState error={savedQuery.error} onRetry={refreshAll} />
+              <ErrorState error={savedQuery.error} onRetry={onRefresh} />
             ) : saved.length > 0 ? (
               <View style={styles.savedList}>
                 {saved.map((story) => (

@@ -18,10 +18,11 @@ export function MetricCard({ metric, active = true }: MetricCardProps) {
   const trend = computeTrend(metric.points, metric.direction);
   const latest = metric.points[metric.points.length - 1];
 
-  // Progress is always the hopeful color, whether the number went up (vaccination
-  // coverage) or down (child mortality).
-  const accent = trend?.isProgress === false ? theme.textSecondary : theme.positive;
-  const accentSoft = trend?.isProgress === false ? theme.backgroundElement : theme.positiveSoft;
+  // Charts stay green whether the number went up (vaccination coverage) or down
+  // (child mortality) — what matters is the direction being the good one. When
+  // it isn't, the chart and its pill go red rather than merely grey.
+  const accent = trend?.isProgress === false ? theme.decline : theme.positive;
+  const accentSoft = trend?.isProgress === false ? theme.declineSoft : theme.positiveSoft;
 
   return (
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>

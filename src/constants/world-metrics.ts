@@ -154,3 +154,16 @@ export const WORLD_METRICS: WorldMetric[] = [
 
 /** Tiles per page in the grid. */
 export const WORLD_METRICS_PER_PAGE = 4;
+
+/**
+ * The single headline number: every indicator's own progress, averaged.
+ *
+ * Derived rather than authored, so adding a metric above moves the bar on the
+ * home screen with no second place to update. Unweighted on purpose — this is a
+ * mood, not an index, and any weighting would be a claim we can't source.
+ * Indicators moving the wrong way (CO₂ per person) are included at their real
+ * position and pull it down, which is the point of averaging them at all.
+ */
+export const HUMANITY_PROGRESS =
+  WORLD_METRICS.reduce((total, metric) => total + metric.progress, 0) /
+  Math.max(1, WORLD_METRICS.length);

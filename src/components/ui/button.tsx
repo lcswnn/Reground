@@ -67,7 +67,7 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.body,
-    fontSize: 17,
+    fontSize: 18,
   },
   pressed: {
     opacity: 0.75,

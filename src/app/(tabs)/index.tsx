@@ -12,6 +12,7 @@ import {
 import Animated, { useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { HumanityProgress } from '@/components/humanity-progress';
 import { MetricCard } from '@/components/metric-card';
 import { ScrollTopFade } from '@/components/scroll-top-fade';
 import { ThemedText } from '@/components/themed-text';
@@ -19,31 +20,20 @@ import { ErrorState, LoadingState } from '@/components/ui/states';
 import { WorldMetricTile } from '@/components/world-metric-tile';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { WORLD_METRICS, WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchMetrics } from '@/api/metrics';
 import { useAppReady } from '@/lib/app-ready';
 import { formatDay, todayISO } from '@/lib/format';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
-import { useThemePreference } from '@/lib/theme-preference';
 
 const WORLD_PAGES = chunk(WORLD_METRICS, WORLD_METRICS_PER_PAGE);
-
-/** Floor on how long the refresh wheel stays up, so a pull always registers. */
-const MIN_SPINNER_MS = 700;
-
-/**
- * The refresh wheel is the one blue in the app. Two values because a single
- * one cannot clear both fields: the darker reads 4.3:1 on paper, the lighter
- * 8.3:1 on the night background. Both are the palette's sky hue.
- */
-const REFRESH_TINT = { light: '#3E7CA8', dark: '#80B5D9' };
 
 export default function TodayScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session } = useSession();
-  const { isDark } = useThemePreference();
   const { width } = useWindowDimensions();
   // This screen mounts under the splash now, so the bars would otherwise fill
   // while hidden and be sitting full by the time anyone sees them.
@@ -57,7 +47,9 @@ export default function TodayScreen() {
   const scrollOffset = useScrollViewOffset(scrollRef);
 
   const insets = useSafeAreaInsets();
-  const tint = isDark ? REFRESH_TINT.dark : REFRESH_TINT.light;
+  // Same blue as the progress bars — it used to be a hardcoded pair of hexes
+  // here, which is exactly how a palette drifts.
+  const tint = theme.info;
 
   // Each item is a full-width page with the gutter *inside* it, so the list's
   // own width is the page width and `pagingEnabled` lands exactly on each card.
@@ -70,22 +62,7 @@ export default function TodayScreen() {
   const firstName =
     (session?.user.user_metadata?.display_name as string | undefined)?.split(' ')[0] ?? 'friend';
 
-  const [isRefreshing, setIsRefreshing] = useState(false);
-
-  async function refreshAll() {
-    setIsRefreshing(true);
-    try {
-      // Raced against a floor rather than awaited alone: a warm cache answers
-      // in a few frames, and the wheel would be gone before it finished
-      // drawing — which reads as the pull having done nothing at all.
-      await Promise.all([
-        metricsQuery.refetch(),
-        new Promise((resolve) => setTimeout(resolve, MIN_SPINNER_MS)),
-      ]);
-    } finally {
-      setIsRefreshing(false);
-    }
-  }
+  const { isRefreshing, onRefresh } = usePullToRefresh(metricsQuery.refetch);
 
   const metrics = metricsQuery.data ?? [];
 
@@ -98,7 +75,7 @@ export default function TodayScreen() {
         refreshControl={
           <RefreshControl
             refreshing={isRefreshing}
-            onRefresh={() => void refreshAll()}
+            onRefresh={onRefresh}
             // Every other tab puts its scroller inside the SafeAreaView, so the
             // wheel lands below the clock on its own. This screen scrolls its
             // header up past the status bar, which means the scroll view starts
@@ -128,6 +105,10 @@ export default function TodayScreen() {
             {greeting}, {firstName}.
           </ThemedText>
         </SafeAreaView>
+
+        <View style={styles.summarySection}>
+          <HumanityProgress active={isRevealed} />
+        </View>
 
         <View style={styles.worldSection}>
           <View style={styles.sectionHeaderPadded}>
@@ -191,7 +172,7 @@ export default function TodayScreen() {
         {metricsQuery.isPending ? (
           <LoadingState label="Gathering good news…" />
         ) : metricsQuery.error ? (
-          <ErrorState error={metricsQuery.error} onRetry={refreshAll} />
+          <ErrorState error={metricsQuery.error} onRetry={onRefresh} />
         ) : metrics.length > 0 ? (
           <View style={styles.metricsSection}>
             <View style={[styles.sectionHeaderRow, styles.metricsHeader]}>
@@ -291,6 +272,15 @@ const styles = StyleSheet.create({
   },
   sectionHeaderPadded: {
     paddingHorizontal: Spacing.four,
+  },
+  // Keeps the page gutter rather than going full-bleed like the carousels
+  // under it — it's a single card, so it lines up with the header above.
+  summarySection: {
+    paddingHorizontal: Spacing.four,
+    paddingTop: Spacing.four,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+    alignSelf: 'center',
   },
   // Same full-bleed treatment as the long view: header keeps the page gutter,
   // the pager runs edge to edge.

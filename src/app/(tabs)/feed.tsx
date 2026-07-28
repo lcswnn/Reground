@@ -16,6 +16,7 @@ import { ThemedText } from '@/components/themed-text';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { CATEGORIES, CATEGORY_KEYS } from '@/constants/categories';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchFeed } from '@/api/stories';
 import { queryKeys } from '@/lib/query';
@@ -29,7 +30,6 @@ export default function FeedScreen() {
     data,
     error,
     isPending,
-    isRefetching,
     refetch,
     fetchNextPage,
     hasNextPage,
@@ -42,6 +42,8 @@ export default function FeedScreen() {
     initialPageParam: null as string | null,
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
+
+  const { isRefreshing, onRefresh } = usePullToRefresh(refetch);
 
   const stories = data?.pages.flatMap((page) => page.stories) ?? [];
 
@@ -95,9 +97,11 @@ export default function FeedScreen() {
             onEndReachedThreshold={0.5}
             refreshControl={
               <RefreshControl
-                refreshing={isRefetching && !isFetchingNextPage}
-                onRefresh={() => void refetch()}
-                tintColor={theme.brand}
+                refreshing={isRefreshing}
+                onRefresh={onRefresh}
+                tintColor={theme.info}
+                colors={[theme.info]}
+                progressBackgroundColor={theme.surface}
               />
             }
             ListEmptyComponent={

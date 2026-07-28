@@ -41,8 +41,10 @@ const ICONS: Record<string, { default: SFSymbol; selected: SFSymbol }> = {
 const TAB_COLORS: Record<string, ThemeColor> = {
   index: 'brand',
   feed: 'positive',
-  progress: 'decline',
-  profile: 'accent',
+  // The same blue as the progress bars it leads to.
+  progress: 'info',
+  // The same pink as the Humanity progress bar on the home screen.
+  profile: 'accentStrong',
 };
 
 export function TabBar({ state, descriptors, navigation, insets }: BottomTabBarProps) {

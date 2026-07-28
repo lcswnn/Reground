@@ -15,6 +15,7 @@ import { MetricCard } from '@/components/metric-card';
 import { ThemedText } from '@/components/themed-text';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchMetrics } from '@/api/metrics';
 import { queryKeys } from '@/lib/query';
@@ -33,13 +34,12 @@ export default function ProgressScreen() {
     setVisibleIds(viewableItems.map((token) => token.key));
   }, []);
 
-  const {
-    data,
-    error,
-    isPending,
-    isRefetching: isRefreshing,
-    refetch,
-  } = useQuery({ queryKey: queryKeys.metrics, queryFn: fetchMetrics });
+  const { data, error, isPending, refetch } = useQuery({
+    queryKey: queryKeys.metrics,
+    queryFn: fetchMetrics,
+  });
+
+  const { isRefreshing, onRefresh } = usePullToRefresh(refetch);
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
@@ -79,8 +79,10 @@ export default function ProgressScreen() {
             refreshControl={
               <RefreshControl
                 refreshing={isRefreshing}
-                onRefresh={() => void refetch()}
-                tintColor={theme.brand}
+                onRefresh={onRefresh}
+                tintColor={theme.info}
+                colors={[theme.info]}
+                progressBackgroundColor={theme.surface}
               />
             }
             ListEmptyComponent={

@@ -54,16 +54,34 @@ export const Colors = {
     brandStrong: "#e08659",
     brandSoft: "#FBEBE2",
 
-    /** Progress / "up and to the right". Moss olive. */
+    /** Progress / "up and to the right". Moss olive. Carries the bar charts. */
     positive: "#9bb05c",
     positiveSoft: "#EDEBD8",
 
-    /** Used for declines that are *good* (poverty, child mortality). */
-    decline: "#c84949",
-    declineSoft: "#E6F1F8",
+    /**
+     * Data moving the wrong way, wherever it appears. Brick rather than siren:
+     * 5.2:1 here, so it can carry a delta line as well as a bar.
+     */
+    decline: "#B4453F",
+    declineSoft: "#F6E7E6",
+
+    /**
+     * The blue: progress bars, the Progress tab, and the refresh wheel — one
+     * hue for "how far along" throughout. Taken a touch deeper than the wheel's
+     * old #3E7CA8 (4.3:1) so it clears 4.5:1 as text; this is 5.1:1.
+     */
+    info: "#37718F",
+    infoSoft: "#E6F1F8",
 
     /** Secondary accent for humanity/people-flavored surfaces. */
     accent: "#DDBEDC",
+    /**
+     * The readable pink. `accent` is a wash — 1.4:1 on this paper, fine as a
+     * large fill behind something else but invisible as text or as a bar on a
+     * near-white page. This is the same hue taken down to 5.1:1 so it can carry
+     * a number.
+     */
+    accentStrong: "#8E5A8B",
     accentSoft: "#F5EBF4",
 
     /** Form errors. Brick, not siren red — nothing here is an emergency. */
@@ -91,10 +109,18 @@ export const Colors = {
     positive: "#918737",
     positiveSoft: "#262316",
 
-    decline: "#80B5D9",
-    declineSoft: "#14252F",
+    // Was #80B5D9 — a blue under the name `decline`, which is why the wrong
+    // direction read as calm at night and alarming by day. Now red in both.
+    decline: "#E08A85",
+    declineSoft: "#2E1B19",
+
+    info: "#80B5D9",
+    infoSoft: "#14252F",
 
     accent: "#DDBEDC",
+    // No darkening needed at night: the wash itself is 10.6:1 here, so the
+    // strong and soft variants are the same value the light scheme separates.
+    accentStrong: "#DDBEDC",
     accentSoft: "#2A2130",
 
     danger: "#E08A85",

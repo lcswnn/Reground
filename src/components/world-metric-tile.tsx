@@ -29,8 +29,10 @@ export function WorldMetricTile({ metric, active, index }: WorldMetricTileProps)
   const theme = useTheme();
   const fill = useSharedValue(0);
 
-  const accent = metric.isProgress ? theme.positive : theme.textSecondary;
-  const track = metric.isProgress ? theme.positiveSoft : theme.backgroundElement;
+  // Blue is "how far along"; red is the wrong direction. Grey used to carry the
+  // bad cases, which let them pass as merely unremarkable.
+  const accent = metric.isProgress ? theme.info : theme.decline;
+  const track = metric.isProgress ? theme.infoSoft : theme.declineSoft;
 
   useEffect(() => {
     // Bars empty when the page leaves and refill when it returns, so swiping
