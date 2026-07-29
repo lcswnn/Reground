@@ -52,6 +52,14 @@ export interface CuratedStory {
   category: StoryCategory;
   /** 0–100. Drives both the cut and which story gets featured. */
   score: number;
+  /**
+   * The tracked indicator this story counts toward, or null.
+   *
+   * Null is the common case and not a failure: most good news is not measured
+   * by any of the thirteen. An id here is always one from
+   * `data-layer/src/config/metrics.ts`.
+   */
+  metricId: string | null;
 }
 
 /** A curated story with the feed metadata reattached, ready to write. */

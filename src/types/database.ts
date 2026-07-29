@@ -36,6 +36,16 @@ export type Story = {
   published_at: string;
   /** Set on at most one story per day — that day's "daily proof". Null = feed only. */
   featured_date: string | null;
+  /**
+   * The tracked indicator this story counts toward, or null.
+   *
+   * Matches a metric id in the daily humanity artifact. Null on most stories by
+   * design — plenty of good news isn't measured by any tracked indicator — so
+   * anything reading it has to handle its absence as the normal case. Not a
+   * foreign key: the metric set lives in the data layer's config, and the app
+   * resolves the label from the artifact rather than from a table.
+   */
+  metric_id: string | null;
   created_at: string;
 };
 
@@ -94,7 +104,10 @@ export type Database = {
     Tables: {
       stories: {
         Row: Story;
-        Insert: Insert<Story, 'id' | 'created_at' | 'body' | 'image_url' | 'featured_date'>;
+        Insert: Insert<
+          Story,
+          'id' | 'created_at' | 'body' | 'image_url' | 'featured_date' | 'metric_id'
+        >;
         Update: Partial<Story>;
         Relationships: [];
       };

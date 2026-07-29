@@ -69,6 +69,7 @@ export async function writeStories(stories: StoryRow[]): Promise<number> {
     source_name: story.sourceName,
     source_url: story.url,
     published_at: story.publishedAt,
+    metric_id: story.metricId,
   }));
 
   const { error } = await client().from('stories').upsert(rows, { onConflict: 'source_url' });
@@ -104,6 +105,45 @@ export async function featureStory(url: string, date: string): Promise<void> {
     .eq('source_url', url);
 
   if (error) throw new Error(`featureStory failed: ${error.message}`);
+}
+
+export interface StoredStory {
+  id: string;
+  title: string;
+  summary: string;
+  metricId: string | null;
+}
+
+/**
+ * Stories to reconsider for tagging.
+ *
+ * `untaggedOnly` is the cheap default — after adding an indicator, only the
+ * stories that found no home last time can gain one. Pass false to re-examine
+ * everything, which is what you want after loosening the guidance rather than
+ * extending the list.
+ */
+export async function readStoriesForTagging(untaggedOnly = true): Promise<StoredStory[]> {
+  let query = client()
+    .from('stories')
+    .select('id, title, summary, metric_id')
+    .order('published_at', { ascending: false });
+
+  if (untaggedOnly) query = query.is('metric_id', null);
+
+  const { data, error } = await query;
+  if (error) throw new Error(`readStoriesForTagging failed: ${error.message}`);
+
+  return (data ?? []).map((row) => ({
+    id: row.id as string,
+    title: row.title as string,
+    summary: row.summary as string,
+    metricId: row.metric_id as string | null,
+  }));
+}
+
+export async function setStoryMetric(id: string, metricId: string | null): Promise<void> {
+  const { error } = await client().from('stories').update({ metric_id: metricId }).eq('id', id);
+  if (error) throw new Error(`setStoryMetric(${id}) failed: ${error.message}`);
 }
 
 export async function recordRun(

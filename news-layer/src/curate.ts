@@ -1,5 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 
+import { METRICS } from '../../data-layer/src/config/metrics.js';
 import { CATEGORY_VALUES } from './categories.js';
 import type { CuratedStory, FeedItem } from './types.js';
 
@@ -30,6 +31,8 @@ import type { CuratedStory, FeedItem } from './types.js';
 const TRIAGE_MODEL = 'claude-haiku-4-5';
 const WRITER_MODEL = 'claude-opus-5';
 
+const KNOWN_METRIC_IDS = new Set(METRICS.map((metric) => metric.id));
+
 /** Stage 1: keep-or-drop, by index. No prose — that is stage 2's job. */
 interface Verdict {
   id: number;
@@ -43,6 +46,7 @@ interface Written {
   publish: boolean;
   summary: string;
   category: string;
+  metric_id: string;
   duplicate_of: number;
 }
 
@@ -120,6 +124,32 @@ Several outlets often report the same event. When a story reports the same under
 
 Write a summary for every story you publish, including ones you mark as duplicates. Leave summary empty for stories you do not publish.`;
 
+/**
+ * The tracked-indicator half of the writer prompt, built from the live config.
+ *
+ * Rendered from `METRICS` rather than written out here, and paired with an enum
+ * generated from the same array, so adding a fourteenth indicator to
+ * `data-layer/src/config/metrics.ts` is the entire change: the prompt learns
+ * about it, the schema starts accepting it, and the app resolves its label from
+ * the daily artifact. Nothing in this file needs touching.
+ */
+function metricGuidance(): string {
+  const listing = METRICS.map((metric) => {
+    const direction = metric.direction === 'lower_is_better' ? 'lower is better' : 'higher is better';
+    return `- ${metric.id}: ${metric.label} (${direction}, measured in ${metric.unit})`;
+  }).join('\n');
+
+  return `The app also tracks a set of long-run indicators of human progress. Set metric_id to the indicator a story belongs with, so a reader following that indicator can see the news behind the line on its chart.
+
+${listing}
+
+Tag generously. A story does not have to report a change in the measurement itself — the forces that move an indicator belong with it too. Falling solar manufacturing costs, a grid milestone, and a new wind build all belong with electricity from renewables. A malaria vaccine rollout, a new treatment reaching approval, and a country eliminating a disease all belong with child mortality or life expectancy, whichever it bears on more directly. A literacy programme reaching a million children belongs with adult literacy. If you can explain in one sentence why this story is part of that indicator's story, tag it.
+
+Set metric_id to "" only when nothing on the list genuinely fits — a wildlife recovery, a rights ruling, or an archaeological find has no home among these, and an honest blank is better than a stretch. When two indicators fit, pick the one the story bears on most directly.
+
+Never invent an id. Use one from the list exactly as written, or "".`;
+}
+
 const TRIAGE_SCHEMA = {
   type: 'object',
   properties: {
@@ -156,12 +186,20 @@ const WRITER_SCHEMA = {
             description: 'One or two sentences in your own words. Empty when publish is false.',
           },
           category: { type: 'string', enum: CATEGORY_VALUES },
+          metric_id: {
+            type: 'string',
+            // Generated from the same array the prompt is rendered from, so the
+            // model cannot name an indicator that no longer exists — and a new
+            // one becomes selectable the moment it is added to the config.
+            enum: [...METRICS.map((metric) => metric.id), ''],
+            description: 'Tracked indicator this story counts toward, or "" for none.',
+          },
           duplicate_of: {
             type: 'integer',
             description: 'Id of the earlier entry covering the same event, or -1 if none.',
           },
         },
-        required: ['id', 'publish', 'summary', 'category', 'duplicate_of'],
+        required: ['id', 'publish', 'summary', 'category', 'metric_id', 'duplicate_of'],
         additionalProperties: false,
       },
     },
@@ -295,7 +333,7 @@ async function write(survivors: { item: FeedItem; score: number }[]): Promise<Cu
   const response = await client().messages.create({
     model: WRITER_MODEL,
     max_tokens: MAX_TOKENS,
-    system: WRITER_PROMPT,
+    system: `${WRITER_PROMPT}\n\n${metricGuidance()}`,
     output_config: {
       effort: 'medium',
       format: { type: 'json_schema', schema: WRITER_SCHEMA },
@@ -346,6 +384,10 @@ async function write(survivors: { item: FeedItem; score: number }[]): Promise<Cu
       summary: story.summary.trim(),
       category: story.category as CuratedStory['category'],
       score: survivor.score,
+      // The enum should make an unknown id impossible, but this is the value
+      // that reaches a column the app renders a label from — checking it
+      // against the config costs nothing and fails closed to an untagged story.
+      metricId: KNOWN_METRIC_IDS.has(story.metric_id) ? story.metric_id : null,
     };
 
     const key = representative(story.id);
@@ -362,6 +404,83 @@ async function write(survivors: { item: FeedItem; score: number }[]): Promise<Cu
   if (collapsed > 0) console.log(`${collapsed} collapsed as duplicate coverage`);
 
   return [...best.values()];
+}
+
+const TAG_SCHEMA = {
+  type: 'object',
+  properties: {
+    assignments: {
+      type: 'array',
+      items: {
+        type: 'object',
+        properties: {
+          id: { type: 'integer', description: 'The bracketed index of the story.' },
+          metric_id: {
+            type: 'string',
+            enum: [...METRICS.map((metric) => metric.id), ''],
+            description: 'Tracked indicator this story counts toward, or "" for none.',
+          },
+        },
+        required: ['id', 'metric_id'],
+        additionalProperties: false,
+      },
+    },
+  },
+  required: ['assignments'],
+  additionalProperties: false,
+} as const;
+
+/**
+ * Assigns indicators to stories that are already written and stored.
+ *
+ * Separate from `write` because retagging is not re-curating: these stories
+ * were judged and published under whatever prompt was current when they landed,
+ * and the only question being reopened is which indicator they belong with.
+ * Re-running the whole pipeline would re-judge them against today's bar and
+ * quietly rewrite prose the user may already have read.
+ *
+ * This is the job to reach for after adding an indicator to the config — a new
+ * fourteenth metric has no history behind it until something goes back over the
+ * stories that predate it.
+ */
+export async function tagStories(
+  stories: { title: string; summary: string }[],
+): Promise<(string | null)[]> {
+  const listing = stories
+    .map((story, index) => `[${index}] ${story.title}\n    ${story.summary}`)
+    .join('\n\n');
+
+  const response = await client().messages.create({
+    model: WRITER_MODEL,
+    max_tokens: MAX_TOKENS,
+    system: metricGuidance(),
+    output_config: {
+      effort: 'medium',
+      format: { type: 'json_schema', schema: TAG_SCHEMA },
+    },
+    messages: [
+      {
+        role: 'user',
+        content: `Assign an indicator to each story, or "" where none fits.\n\n${listing}`,
+      },
+    ],
+  });
+
+  const parsed = JSON.parse(textOf(WRITER_MODEL, response, 'retag')) as {
+    assignments: { id: number; metric_id: string }[];
+  };
+
+  // Indexed by position rather than returned as a list, so a story the model
+  // skips keeps its existing tag instead of silently becoming null.
+  const assigned: (string | null)[] = stories.map(() => null);
+  for (const assignment of parsed.assignments) {
+    if (!stories[assignment.id]) continue;
+    assigned[assignment.id] = KNOWN_METRIC_IDS.has(assignment.metric_id)
+      ? assignment.metric_id
+      : null;
+  }
+
+  return assigned;
 }
 
 /**

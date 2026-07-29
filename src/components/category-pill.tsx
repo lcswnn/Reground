@@ -29,7 +29,9 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.body,
-    fontSize: 13,
+    // Sits next to the metric tag on a story card, so the two move together —
+    // an uppercase 13 beside a sentence-case 15 reads as a mistake.
+    fontSize: 15,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },

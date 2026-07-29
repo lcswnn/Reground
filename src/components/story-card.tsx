@@ -4,6 +4,7 @@ import { Pressable, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { CategoryPill } from '@/components/category-pill';
+import { MetricTag } from '@/components/metric-tag';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { formatRelative } from '@/lib/format';
@@ -32,7 +33,10 @@ export function StoryCard({ story }: { story: Story }) {
         ) : null}
 
         <View style={styles.body}>
-          <CategoryPill category={story.category} />
+          <View style={styles.tags}>
+            <CategoryPill category={story.category} />
+            <MetricTag metricId={story.metric_id} />
+          </View>
 
           <View style={styles.text}>
             <ThemedText type="defaultSemiBold" style={styles.title} numberOfLines={3}>
@@ -79,6 +83,15 @@ const styles = StyleSheet.create({
   body: {
     padding: Spacing.three,
     gap: Spacing.two,
+  },
+  // Wraps rather than truncating: on a narrow screen a long category and a long
+  // metric label together overflow the row, and dropping to a second line reads
+  // better than an ellipsis on either.
+  tags: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: Spacing.one,
   },
   // The category pill carries 8pt of its own padding, so its label sits 8pt in
   // from its box. Indenting the copy by the same 8 puts every line of text on

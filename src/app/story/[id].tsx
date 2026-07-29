@@ -6,6 +6,7 @@ import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { CategoryPill } from '@/components/category-pill';
+import { MetricTag } from '@/components/metric-tag';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
@@ -118,6 +119,11 @@ export default function StoryScreen() {
         </ThemedText>
 
         {story.body ? <ThemedText type="default">{story.body}</ThemedText> : null}
+
+        {/* Above the source card on purpose: "this counts toward child
+            mortality" is the reason the story is in this app at all, and it
+            belongs with the story rather than with its attribution. */}
+        <MetricTag metricId={story.metric_id} variant="full" />
 
         <View style={[styles.sourceCard, { backgroundColor: theme.backgroundElement }]}>
           <ThemedText type="eyebrow" themeColor="textMuted">
