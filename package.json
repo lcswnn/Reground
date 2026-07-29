@@ -55,7 +55,7 @@
     "data:backfill": "tsx data-layer/src/jobs/backfill.ts",
     "data:refresh": "tsx data-layer/src/jobs/refresh.ts",
     "data:preview": "tsx data-layer/src/jobs/preview.ts",
-    "data:artifact": "tsx data-layer/src/jobs/build-artifact.ts",
+    "data:artifact": "tsx data-layer/src/jobs/build-artifact.ts --out humanity.json",
     "data:publish": "tsx data-layer/src/jobs/publish.ts",
     "news:preview": "tsx news-layer/src/jobs/preview.ts",
     "news:refresh": "tsx news-layer/src/jobs/refresh.ts",

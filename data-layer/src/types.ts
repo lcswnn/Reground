@@ -88,6 +88,16 @@ export interface MetricConfig {
   owidSlug?: string;
   /** Extra grapher params — `literacy` needs age_group and sex, for instance. */
   owidParams?: Record<string, string>;
+  /**
+   * Which data column of the chart to read, when it ships more than one.
+   *
+   * Defaults to the first, which is right for every single-series chart. But
+   * OWID's vaccination chart carries nine antigens side by side, and the one
+   * that means "vaccination coverage" — DTP3, the WHO/UNICEF headline — is the
+   * ninth. Naming it here beats picking a different chart that happens to have
+   * the wanted series first.
+   */
+  owidColumnIndex?: number;
 
   /**
    * Anything dated after this year is forced to `projected` at ingest.

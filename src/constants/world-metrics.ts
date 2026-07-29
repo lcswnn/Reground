@@ -22,7 +22,8 @@ export type WorldCategory =
   | 'environment'
   | 'safety'
   | 'access'
-  | 'education';
+  | 'education'
+  | 'technology';
 
 export const WORLD_CATEGORIES: Record<WorldCategory, string> = {
   health: 'Health',
@@ -31,6 +32,7 @@ export const WORLD_CATEGORIES: Record<WorldCategory, string> = {
   safety: 'Safety',
   access: 'Tech access',
   education: 'Education',
+  technology: 'Technology',
 };
 
 /**
@@ -73,6 +75,9 @@ const METRIC_SUBJECTS: Record<string, string> = {
   'homicide-rate': 'the global homicide rate',
   'internet-access': 'the share of people online',
   'electricity-access': 'the share of people with electricity',
+  'maternal-mortality': 'the rate of mothers dying in childbirth',
+  'vaccination-coverage': 'the share of children fully vaccinated',
+  'solar-price': 'the price of a watt of solar power',
 };
 
 /**

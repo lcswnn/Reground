@@ -85,31 +85,28 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
 
         <ThemedText type="sectionTitle">{card.headline}</ThemedText>
 
-        <View style={styles.figures}>
+        {/* Figures and chart stack, they don't share a row. Side by side, a pair
+            like "428 /100k → 206 /100k" takes most of the width and leaves the
+            sparkline a sliver — the same reason `MetricChartCard` puts its value
+            on its own line and gives the chart the full card. */}
+        <View style={styles.pair}>
           {card.from ? (
-            <View style={styles.pair}>
+            <>
               <Figure label={card.from.year} value={formatAt(card, card.from.value)} muted />
               <ThemedText type="subtitle" themeColor="textMuted" style={styles.arrow}>
                 →
               </ThemedText>
-              <Figure
-                label={card.to.year ?? 'today'}
-                value={formatAt(card, card.to.value)}
-                color={accent}
-              />
-            </View>
-          ) : (
-            <Figure
-              label={card.to.year ?? 'today'}
-              value={formatAt(card, card.to.value)}
-              color={accent}
-            />
-          )}
+            </>
+          ) : null}
 
-          <View style={styles.spark}>
-            <Sparkline values={card.spark} color={accent} height={40} active={active} />
-          </View>
+          <Figure
+            label={card.to.year ?? 'today'}
+            value={formatAt(card, card.to.value)}
+            color={accent}
+          />
         </View>
+
+        <Sparkline values={card.spark} color={accent} height={56} active={active} />
 
         <ThemedText type="small" themeColor="textSecondary">
           {card.detail}
@@ -119,13 +116,11 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
 
         <Pressable
           accessibilityRole="link"
-          accessibilityLabel={`Open the source: ${card.metric.sourceName}`}
+          accessibilityLabel={`Open source: ${card.metric.sourceName}`}
           onPress={() => void Linking.openURL(card.metric.sourceUrl)}
-          hitSlop={8}
-          style={styles.source}>
-          <ThemedText type="small" themeColor="textMuted">
-            Source: {card.metric.sourceName} ↗
-          </ThemedText>
+          hitSlop={6}
+          style={styles.sourceLink}>
+          <ThemedText type="linkPrimary">{card.metric.sourceName} →</ThemedText>
         </Pressable>
       </Animated.View>
     </View>
@@ -250,17 +245,15 @@ const styles = StyleSheet.create({
     letterSpacing: 0.9,
     flexShrink: 1,
   },
-  figures: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    gap: Spacing.three,
-  },
   pair: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     gap: Spacing.two,
   },
   figure: {
+    // Shares the row evenly with the other figure, so neither can push the pair
+    // wider than the card — the values shrink to fit instead.
+    flexShrink: 1,
     gap: Spacing.half,
   },
   figureLabel: {
@@ -269,12 +262,6 @@ const styles = StyleSheet.create({
   arrow: {
     // Sits on the numbers' baseline rather than the labels'.
     paddingBottom: Spacing.four,
-  },
-  spark: {
-    // Takes whatever the figures leave, so a long value pair shortens the chart
-    // instead of pushing it off the card.
-    flex: 1,
-    minWidth: 60,
   },
   reactions: {
     flexDirection: 'row',
@@ -294,7 +281,8 @@ const styles = StyleSheet.create({
   pressed: {
     opacity: 0.75,
   },
-  source: {
-    alignSelf: 'flex-start',
+  // Bottom-right, matching the Progress cards.
+  sourceLink: {
+    alignSelf: 'flex-end',
   },
 });

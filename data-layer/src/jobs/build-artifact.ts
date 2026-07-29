@@ -74,11 +74,15 @@ function describeDelta(observations: Observation[], unit: string): string {
   const magnitude = Math.abs(change);
   const since = Number(from.observedAt.slice(0, 4));
 
-  // Percent-valued metrics read naturally in points; everything else in units.
-  const suffix = unit === '%' ? ' pts' : ` ${unit}`;
   const rounded = magnitude >= 10 ? magnitude.toFixed(0) : magnitude.toFixed(1);
 
-  return `${arrow} ${rounded}${suffix} since ${since}${lastYear === firstYear ? '' : ''}`;
+  // Percent-valued metrics read naturally in points; a currency wants its
+  // symbol in front of the number rather than trailing it as a unit, which is
+  // what turned solar into "11 $/W"; everything else takes its unit as a suffix.
+  const amount =
+    unit === '%' ? `${rounded} pts` : unit === '$/W' ? `$${rounded}/W` : `${rounded} ${unit}`;
+
+  return `${arrow} ${amount} since ${since}${lastYear === firstYear ? '' : ''}`;
 }
 
 /**

@@ -29,6 +29,7 @@ function buildRegistry(): Map<string, SourceAdapter> {
       metricId: metric.id,
       slug: metric.owidSlug,
       params: metric.owidParams,
+      columnIndex: metric.owidColumnIndex,
       observedThroughYear: metric.observedThroughYear,
       unit: metric.unit,
       // Annual sources, polled weekly. Cheap enough to catch an early

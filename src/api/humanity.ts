@@ -122,6 +122,10 @@ export function formatMetricValue(metric: HumanityMetric): string {
       return `${rounded} t`;
     case 'ppm':
       return `${rounded} ppm`;
+    // The currency goes in front of the number, not after it — the default
+    // branch would render solar as "0.26 $/W".
+    case '$/W':
+      return `$${rounded}/W`;
     default:
       return `${rounded} ${unit}`;
   }

@@ -1,7 +1,7 @@
 import type { MetricConfig } from '../types.js';
 
 /**
- * The thirteen indicators, with anchors re-derived from the real series rather
+ * The sixteen indicators, with anchors re-derived from the real series rather
  * than from the hand-authored constants they replace.
  *
  * Every `baselineValue` below is an actual observation at the stated year,
@@ -9,8 +9,13 @@ import type { MetricConfig } from '../types.js';
  * an SDG states a number it is cited, and where it does not, `basis` says so.
  *
  * Weights total 1.00, grouped roughly:
- *   poverty/hunger 0.20 · health 0.18 · education 0.16 · environment 0.16
- *   · climate detractors 0.16 · safety 0.12 · access 0.10
+ *   poverty/hunger 0.18 · health 0.24 · education 0.14 · environment 0.07
+ *   · climate detractors 0.14 · safety 0.11 · access 0.09 · technology 0.03
+ *
+ * Health carries the most because three of the four things this set can say
+ * about a life — whether a child survives it, how long it runs, whether the
+ * mother survives its beginning — are health measures. That is a judgement, not
+ * a derivation, and it is the number most worth arguing with here.
  *
  * Two metrics from the original twelve are gone. Mobile network coverage has no
  * world-level series anywhere in OWID — the nearest is mobile *subscriptions*,
@@ -26,7 +31,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 43.414,
     targetValue: 0,
     direction: 'lower_is_better',
-    weight: 0.11,
+    weight: 0.1,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 10,
@@ -46,7 +51,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 9.352,
     targetValue: 2.5,
     direction: 'lower_is_better',
-    weight: 0.1,
+    weight: 0.09,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 10,
@@ -63,7 +68,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 12.7,
     targetValue: 0,
     direction: 'lower_is_better',
-    weight: 0.09,
+    weight: 0.08,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 10,
@@ -80,7 +85,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 67.76,
     targetValue: 100,
     direction: 'higher_is_better',
-    weight: 0.09,
+    weight: 0.08,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 15,
@@ -98,7 +103,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 63.955,
     targetValue: 80,
     direction: 'higher_is_better',
-    weight: 0.08,
+    weight: 0.07,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 15,
@@ -115,7 +120,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 18.716,
     targetValue: 100,
     direction: 'higher_is_better',
-    weight: 0.08,
+    weight: 0.07,
     polarity: 'contributor',
     // Grows in percentage-point steps off a low base; a compounding fit
     // overstates the near term badly here.
@@ -134,7 +139,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 4.267,
     targetValue: 2.0,
     direction: 'lower_is_better',
-    weight: 0.08,
+    weight: 0.07,
     polarity: 'detractor',
     nowcastMethod: 'linear',
     trailingWindowYears: 10,
@@ -151,7 +156,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 401.59,
     targetValue: 350,
     direction: 'lower_is_better',
-    weight: 0.08,
+    weight: 0.07,
     polarity: 'detractor',
     // Genuinely daily and near-monotonic, so the trend is tight and the
     // projection barely has to work.
@@ -169,7 +174,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 1.302,
     targetValue: 0,
     direction: 'lower_is_better',
-    weight: 0.07,
+    weight: 0.06,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 10,
@@ -186,7 +191,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 6.175,
     targetValue: 12,
     direction: 'higher_is_better',
-    weight: 0.07,
+    weight: 0.06,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 30,
@@ -220,7 +225,7 @@ export const METRICS: MetricConfig[] = [
     baselineValue: 15.6,
     targetValue: 100,
     direction: 'higher_is_better',
-    weight: 0.05,
+    weight: 0.04,
     polarity: 'contributor',
     nowcastMethod: 'linear',
     trailingWindowYears: 10,
@@ -246,6 +251,80 @@ export const METRICS: MetricConfig[] = [
     unit: '%',
     basis:
       'SDG 7.1: universal access to affordable, reliable energy. Replaces "mobile network coverage", which has no world-level series. Baseline is the real 2000 world share (78.2%).',
+  },
+  {
+    id: 'maternal-mortality',
+    label: 'Maternal deaths',
+    category: 'health',
+    baselineValue: 428.5482,
+    targetValue: 70,
+    direction: 'lower_is_better',
+    weight: 0.04,
+    polarity: 'contributor',
+    nowcastMethod: 'linear',
+    // Five, not fifteen. This series fell steeply through 2012 and has been
+    // flat since — 215.5 in 2016 against 212.2 in 2020. A fifteen-year window
+    // fits the old decline and projects it onward, which invents about 45
+    // deaths per 100,000 of progress that stopped happening a decade ago. The
+    // short window tracks the stall, which is the honest reading and also the
+    // more useful one: this is a metric the world is no longer winning.
+    trailingWindowYears: 5,
+    sourceAdapterId: 'owid:maternal-mortality',
+    owidSlug: 'maternal-mortality',
+    unit: '/100k',
+    basis:
+      'SDG 3.1 states the target outright: under 70 maternal deaths per 100,000 live births by 2030. Baseline is the real 1985 world ratio (428.5), the first year of the series. Note the series ends at 2020, so today\'s figure is a six-year projection and its confidence is scored down accordingly.',
+  },
+  {
+    id: 'vaccination-coverage',
+    label: 'Children vaccinated',
+    category: 'health',
+    baselineValue: 20,
+    targetValue: 90,
+    direction: 'higher_is_better',
+    weight: 0.04,
+    polarity: 'contributor',
+    // Plateaued in the high 70s/80s with a COVID dip and recovery. A
+    // compounding fit would read that plateau as continued growth.
+    nowcastMethod: 'linear',
+    trailingWindowYears: 10,
+    sourceAdapterId: 'owid:global-vaccination-coverage',
+    owidSlug: 'global-vaccination-coverage',
+    // The chart carries nine antigens; DTP3 is the ninth and is the one WHO and
+    // UNICEF report as *the* coverage headline. See `owidColumnIndex`.
+    owidColumnIndex: 8,
+    unit: '%',
+    basis:
+      'DTP3 coverage, the WHO/UNICEF headline immunisation measure. Target is 90%, the Immunization Agenda 2030 goal, rather than 100% — no country sustains universal coverage and scoring against it would make a solved problem look permanently unsolved. Baseline is the real 1980 world coverage (20%).',
+  },
+  {
+    id: 'solar-price',
+    label: 'Price of solar power',
+    category: 'technology',
+    // 2010, not 1975. The series starts at $128/W, and against any sane target
+    // that baseline puts today's $0.26 at 99.9% of the span — the metric would
+    // pin full on arrival and never move again. Anchoring inside the era where
+    // the decline is still doing visible work is what keeps the score
+    // informative. The full history is still charted and still carries the
+    // headline; only the scoring anchor is recent.
+    baselineValue: 2.4434,
+    targetValue: 0.1,
+    direction: 'lower_is_better',
+    // The lightest weight in the set, deliberately. Even anchored at 2010 this
+    // sits near its target, so it has little room left to move the composite —
+    // its value to the app is as a story, not as a score.
+    weight: 0.03,
+    polarity: 'contributor',
+    // The one genuinely exponential series in the set — Swanson's law. A linear
+    // fit on a cost curve that falls by a fifth a year projects straight through
+    // zero into negative dollars per watt.
+    nowcastMethod: 'cagr',
+    trailingWindowYears: 10,
+    sourceAdapterId: 'owid:solar-pv-prices',
+    owidSlug: 'solar-pv-prices',
+    unit: '$/W',
+    basis:
+      'No SDG figure. Photovoltaic module price per watt, the clearest single number for "a technology got cheap enough to matter" — down from $128/W in 1975 to $0.26 in 2024. Target is $0.10/W. Baseline is the real 2010 world price ($2.44/W); see the note above on why not 1975.',
   },
 ];
 
