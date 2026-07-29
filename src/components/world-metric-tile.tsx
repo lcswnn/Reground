@@ -9,10 +9,12 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { barFill, formatMetricValue, isRegressing, type HumanityMetric } from '@/api/humanity';
+import { NewDataBadge } from '@/components/new-data-badge';
 import { ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { categoryLabel } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
+import { markMetricSeen } from '@/lib/fresh-data';
 
 const FILL_DURATION = 650;
 /** Per-tile offset, so a page lands as a cascade rather than six bars at once. */
@@ -25,9 +27,11 @@ interface WorldMetricTileProps {
   active: boolean;
   /** Position within the page, used to stagger the fill. */
   index: number;
+  /** Source published a new measurement since this device last saw one. */
+  isNew?: boolean;
 }
 
-export function WorldMetricTile({ metric, active, index }: WorldMetricTileProps) {
+export function WorldMetricTile({ metric, active, index, isNew = false }: WorldMetricTileProps) {
   const theme = useTheme();
   const fill = useSharedValue(0);
 
@@ -58,14 +62,24 @@ export function WorldMetricTile({ metric, active, index }: WorldMetricTileProps)
       : 0;
   }, [active, index, fill]);
 
+  // `active` already means "this tile's page is the one on screen", which is
+  // the same thing as having been looked at. The dot stays for the rest of the
+  // session regardless — this only decides whether it returns next launch.
+  useEffect(() => {
+    if (active && isNew) markMetricSeen(metric);
+  }, [active, isNew, metric]);
+
   const solidStyle = useAnimatedStyle(() => ({ width: `${fill.value * solidEnd * 100}%` }));
   const dottedStyle = useAnimatedStyle(() => ({ width: `${fill.value * dottedEnd * 100}%` }));
 
   return (
     <View style={[styles.tile, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-      <ThemedText type="eyebrow" themeColor="textMuted" numberOfLines={1} style={styles.category}>
-        {categoryLabel(metric.category)}
-      </ThemedText>
+      <View style={styles.categoryRow}>
+        <ThemedText type="eyebrow" themeColor="textMuted" numberOfLines={1} style={styles.category}>
+          {categoryLabel(metric.category)}
+        </ThemedText>
+        {isNew ? <NewDataBadge variant="dot" /> : null}
+      </View>
 
       <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.label}>
         {metric.label}
@@ -109,9 +123,17 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
     minHeight: 168,
   },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
   category: {
     fontSize: 13,
     letterSpacing: 0.9,
+    // Shrinks rather than pushing the dot off the tile when a category name is
+    // long — the label already truncates at one line.
+    flexShrink: 1,
   },
   label: {
     // Holds two lines of label so tiles in a row stay aligned regardless of

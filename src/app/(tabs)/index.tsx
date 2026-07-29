@@ -16,6 +16,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { fetchHumanityArtifact } from '@/api/humanity';
 import { useAppReady } from '@/lib/app-ready';
 import { formatDay, todayISO } from '@/lib/format';
+import { useFreshMetrics } from '@/lib/fresh-data';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
 
@@ -52,6 +53,10 @@ export default function TodayScreen() {
   const worldPages = humanityQuery.data
     ? chunk(humanityQuery.data.metrics, WORLD_METRICS_PER_PAGE)
     : [];
+
+  // Which tiles carry a measurement this device hasn't seen. Not "changed since
+  // yesterday" — every nowcast is, daily, by construction.
+  const freshMetricIds = useFreshMetrics(humanityQuery.data);
 
   const greeting = getGreeting();
   const firstName =
@@ -135,6 +140,7 @@ export default function TodayScreen() {
                           metric={metric}
                           active={pageIndex === worldPage && isRevealed}
                           index={rowIndex * 2 + columnIndex}
+                          isNew={freshMetricIds.has(metric.id)}
                         />
                       ))}
                       {/* Keeps a lone tile on a short final page half-width. */}

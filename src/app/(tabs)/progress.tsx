@@ -10,6 +10,7 @@ import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchHumanityArtifact } from '@/api/humanity';
+import { useFreshMetrics } from '@/lib/fresh-data';
 import { queryKeys } from '@/lib/query';
 
 /** How much of a card has to be on screen before its chart draws itself. */
@@ -32,6 +33,10 @@ export default function ProgressScreen() {
   });
 
   const { isRefreshing, onRefresh } = usePullToRefresh(refetch);
+
+  // Which cards carry a measurement this device hasn't seen. Not "changed since
+  // yesterday" — every nowcast is, daily, by construction.
+  const freshMetricIds = useFreshMetrics(data);
 
   // Longest history first, so the charts that actually earn the name "the long
   // view" lead — CO₂ per person reaches back to 1750, internet access to 2005.
@@ -58,7 +63,11 @@ export default function ProgressScreen() {
             data={metrics}
             keyExtractor={(item) => item.id}
             renderItem={({ item }) => (
-              <MetricChartCard metric={item} active={visibleIds.includes(item.id)} />
+              <MetricChartCard
+                metric={item}
+                active={visibleIds.includes(item.id)}
+                isNew={freshMetricIds.has(item.id)}
+              />
             )}
             contentContainerStyle={styles.list}
             showsVerticalScrollIndicator={false}

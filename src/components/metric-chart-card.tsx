@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import {
@@ -6,16 +7,20 @@ import {
   lastObservedYear,
   type HumanityMetric,
 } from '@/api/humanity';
+import { NewDataBadge } from '@/components/new-data-badge';
 import { Sparkline } from '@/components/sparkline';
 import { ThemedText } from '@/components/themed-text';
 import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { categoryLabel } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
+import { markMetricSeen } from '@/lib/fresh-data';
 
 interface MetricChartCardProps {
   metric: HumanityMetric;
   /** False parks the chart while it's off screen; bars regrow on return. */
   active?: boolean;
+  /** Source published a new measurement since this device last saw one. */
+  isNew?: boolean;
 }
 
 /**
@@ -26,8 +31,14 @@ interface MetricChartCardProps {
  * one renders the served artifact, which is where the real series now live —
  * decades of history per indicator, some of it reaching back to 1750.
  */
-export function MetricChartCard({ metric, active = true }: MetricChartCardProps) {
+export function MetricChartCard({ metric, active = true, isNew = false }: MetricChartCardProps) {
   const theme = useTheme();
+
+  // The list already tracks viewability to decide when a chart draws itself, so
+  // `active` doubles as "this card actually reached the screen".
+  useEffect(() => {
+    if (active && isNew) markMetricSeen(metric);
+  }, [active, isNew, metric]);
 
   // Same convention as the world tiles: red is the wrong direction, and the
   // charts stay green-ish/blue whether the number rises or falls, because what
@@ -43,9 +54,12 @@ export function MetricChartCard({ metric, active = true }: MetricChartCardProps)
     <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
       <View style={styles.header}>
         <View style={styles.headerText}>
-          <ThemedText type="eyebrow" themeColor="textMuted" numberOfLines={1}>
-            {categoryLabel(metric.category)}
-          </ThemedText>
+          <View style={styles.categoryRow}>
+            <ThemedText type="eyebrow" themeColor="textMuted" numberOfLines={1} style={styles.category}>
+              {categoryLabel(metric.category)}
+            </ThemedText>
+            {isNew ? <NewDataBadge variant="pill" /> : null}
+          </View>
           <ThemedText type="smallBold" themeColor="textSecondary" numberOfLines={2}>
             {metric.label}
           </ThemedText>
@@ -105,6 +119,14 @@ const styles = StyleSheet.create({
   headerText: {
     flex: 1,
     gap: Spacing.half,
+  },
+  categoryRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+  },
+  category: {
+    flexShrink: 1,
   },
   deltaPill: {
     paddingHorizontal: Spacing.two,
