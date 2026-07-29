@@ -64,7 +64,7 @@ export default function ProgressScreen() {
     <View style={[styles.root, { backgroundColor: theme.background }]}>
       <SafeAreaView edges={["top"]} style={styles.flex}>
         <View style={styles.header}>
-          <ThemedText type="title">Progress</ThemedText>
+          <ThemedText type="title">Trends</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             The trends that don&rsquo;t make the news, because they happen
             slowly.
