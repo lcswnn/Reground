@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { withAlpha } from '@/lib/color';
 
 /** Scroll distance over which the scrim reaches full strength. */
 const FADE_IN_DISTANCE = 24;
@@ -51,19 +52,6 @@ export function ScrollTopFade({ offset }: ScrollTopFadeProps) {
       />
     </Animated.View>
   );
-}
-
-/**
- * Gradients have to end on a transparent version of the *same* hue. Ending on
- * `transparent` fades toward rgba(0,0,0,0) instead, which greys the midpoint on
- * a warm background.
- */
-function withAlpha(hex: string, alpha: number): string {
-  const value = hex.replace('#', '');
-  const r = parseInt(value.slice(0, 2), 16);
-  const g = parseInt(value.slice(2, 4), 16);
-  const b = parseInt(value.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 const styles = StyleSheet.create({

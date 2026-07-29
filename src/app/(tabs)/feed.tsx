@@ -2,15 +2,16 @@ import { useInfiniteQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
   Pressable,
   RefreshControl,
   ScrollView,
   StyleSheet,
   View,
 } from 'react-native';
+import Animated, { useAnimatedScrollHandler, useSharedValue } from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ScrollHeaderFade } from '@/components/scroll-header-fade';
 import { StoryCard } from '@/components/story-card';
 import { ThemedText } from '@/components/themed-text';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
@@ -44,6 +45,14 @@ export default function FeedScreen() {
   });
 
   const { isRefreshing, onRefresh } = usePullToRefresh(refetch);
+
+  // Drives the scrim under the filter row. A scroll handler rather than
+  // `useScrollViewOffset`, which only accepts an animated ScrollView ref — this
+  // list has to stay a FlatList for windowing over an unbounded feed.
+  const scrollOffset = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler((event) => {
+    scrollOffset.value = event.contentOffset.y;
+  });
 
   const stories = data?.pages.flatMap((page) => page.stories) ?? [];
 
@@ -82,44 +91,54 @@ export default function FeedScreen() {
         ) : error ? (
           <ErrorState error={error} onRetry={() => void refetch()} />
         ) : (
-          <FlatList
-            data={stories}
-            keyExtractor={(item) => item.id}
-            renderItem={({ item }) => <StoryCard story={item} />}
-            // flex-basis 0 rather than the ScrollView default, so the list
-            // takes exactly what the header and filter row leave behind.
-            style={styles.flex}
-            contentContainerStyle={styles.list}
-            showsVerticalScrollIndicator={false}
-            onEndReached={() => {
-              if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
-            }}
-            onEndReachedThreshold={0.5}
-            refreshControl={
-              <RefreshControl
-                refreshing={isRefreshing}
-                onRefresh={onRefresh}
-                tintColor={theme.info}
-                colors={[theme.info]}
-                progressBackgroundColor={theme.surface}
-              />
-            }
-            ListEmptyComponent={
-              <EmptyState
-                title="Nothing here yet"
-                message={
-                  category
-                    ? 'No stories in this category yet. Try another filter.'
-                    : 'Add rows to the stories table and they will show up here.'
-                }
-              />
-            }
-            ListFooterComponent={
-              isFetchingNextPage ? (
-                <ActivityIndicator style={styles.footerSpinner} color={theme.brand} />
-              ) : null
-            }
-          />
+          // The wrapper is what the scrim positions against — absolute inside
+          // the list itself would scroll away with the content.
+          <View style={styles.flex}>
+            <Animated.FlatList
+              data={stories}
+              keyExtractor={(item) => item.id}
+              renderItem={({ item }) => <StoryCard story={item} />}
+              onScroll={onScroll}
+              // 16ms rather than the default 50: the scrim tracks the first
+              // 24pt of travel, which at 50 lands in two visible steps.
+              scrollEventThrottle={16}
+              // flex-basis 0 rather than the ScrollView default, so the list
+              // takes exactly what the header and filter row leave behind.
+              style={styles.flex}
+              contentContainerStyle={styles.list}
+              showsVerticalScrollIndicator={false}
+              onEndReached={() => {
+                if (hasNextPage && !isFetchingNextPage) void fetchNextPage();
+              }}
+              onEndReachedThreshold={0.5}
+              refreshControl={
+                <RefreshControl
+                  refreshing={isRefreshing}
+                  onRefresh={onRefresh}
+                  tintColor={theme.info}
+                  colors={[theme.info]}
+                  progressBackgroundColor={theme.surface}
+                />
+              }
+              ListEmptyComponent={
+                <EmptyState
+                  title="Nothing here yet"
+                  message={
+                    category
+                      ? 'No stories in this category yet. Try another filter.'
+                      : 'Add rows to the stories table and they will show up here.'
+                  }
+                />
+              }
+              ListFooterComponent={
+                isFetchingNextPage ? (
+                  <ActivityIndicator style={styles.footerSpinner} color={theme.brand} />
+                ) : null
+              }
+            />
+
+            <ScrollHeaderFade offset={scrollOffset} />
+          </View>
         )}
       </SafeAreaView>
     </View>
