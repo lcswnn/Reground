@@ -196,6 +196,22 @@ function RootNavigator() {
               name="story/[id]"
               options={{ title: '', headerBackButtonDisplayMode: 'minimal' }}
             />
+            {/* `transparentModal`, not `modal`: the screen draws its own scrim
+                over a still-visible Today, which a sheet presentation would
+                cover with an opaque page. Faded rather than slid up, because
+                what animates is the panel inside it. */}
+            <Stack.Screen
+              name="card"
+              options={{
+                presentation: 'transparentModal',
+                headerShown: false,
+                animation: 'fade',
+                // Otherwise the navigator paints its own background colour
+                // behind the "transparent" screen and the scrim has nothing to
+                // be transparent against.
+                contentStyle: { backgroundColor: 'transparent' },
+              }}
+            />
             <Stack.Screen
               name="settings"
               options={{

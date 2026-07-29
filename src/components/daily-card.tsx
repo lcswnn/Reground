@@ -1,3 +1,5 @@
+import { useRouter } from 'expo-router';
+import { SymbolView } from 'expo-symbols';
 import { useEffect } from 'react';
 import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
@@ -41,6 +43,7 @@ interface DailyCardProps {
  */
 export function DailyCard({ card, active = true, isNew = false }: DailyCardProps) {
   const theme = useTheme();
+  const router = useRouter();
   const { streak, longest, reaction, react } = useDailyStreak(card.date);
 
   // Seeing the card is what counts, not reacting to it — see `recordSeen`. This
@@ -64,9 +67,26 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        <ThemedText type="eyebrow" themeColor="textMuted">
-          Today&rsquo;s card
-        </ThemedText>
+        {/* The header is the way in to the share sheet. Only the label and its
+            chevron are pressable, not the whole row — the streak pill sits in
+            the same line and tapping a counter should not navigate. */}
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Open today’s card to share it"
+          onPress={() => router.push('/card')}
+          hitSlop={8}
+          style={({ pressed }) => [styles.sectionLabel, pressed && styles.pressed]}>
+          <ThemedText type="eyebrow" themeColor="textMuted">
+            Today&rsquo;s card
+          </ThemedText>
+          <SymbolView
+            name="chevron.right"
+            size={11}
+            tintColor={theme.textMuted}
+            fallback={<View />}
+          />
+        </Pressable>
+
         <StreakPill streak={streak} longest={longest} />
       </View>
 
@@ -228,6 +248,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     gap: Spacing.three,
+  },
+  sectionLabel: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: Spacing.one,
+    flexShrink: 1,
   },
   card: {
     borderRadius: Radius.lg,
