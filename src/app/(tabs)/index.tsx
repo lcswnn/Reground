@@ -1,22 +1,22 @@
 import { useQuery } from '@tanstack/react-query';
-import { useState } from 'react';
-import { FlatList, RefreshControl, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { DailyCard } from '@/components/daily-card';
 import { HumanityProgress } from '@/components/humanity-progress';
 import { ScrollTopFade } from '@/components/scroll-top-fade';
 import { SinceYouWereBorn } from '@/components/since-you-were-born';
 import { ThemedText } from '@/components/themed-text';
 import { ErrorState } from '@/components/ui/states';
-import { WorldMetricTile } from '@/components/world-metric-tile';
-import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
-import { WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
+import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchHumanityArtifact } from '@/api/humanity';
 import { fetchProfile } from '@/api/profile';
 import { useAppReady } from '@/lib/app-ready';
+import { selectDailyCard } from '@/lib/daily-card';
 import { formatDay, todayISO } from '@/lib/format';
 import { useFreshMetrics } from '@/lib/fresh-data';
 import { queryKeys } from '@/lib/query';
@@ -24,12 +24,13 @@ import { useSession } from '@/lib/session';
 
 export default function TodayScreen() {
   const theme = useTheme();
+  const router = useRouter();
   const { session } = useSession();
-  const { width } = useWindowDimensions();
   // This screen mounts under the splash now, so the bars would otherwise fill
-  // while hidden and be sitting full by the time anyone sees them.
+  // while hidden and be sitting full by the time anyone sees them. The daily
+  // card additionally uses it to decide the card has actually been *seen*,
+  // which is what the streak counts.
   const isRevealed = useAppReady();
-  const [worldPage, setWorldPage] = useState(0);
 
   // Drives the status-bar scrim: this page scrolls its own header up past the
   // clock, so the text needs something to pass behind.
@@ -41,12 +42,8 @@ export default function TodayScreen() {
   // here, which is exactly how a palette drifts.
   const tint = theme.info;
 
-  // Each item is a full-width page with the gutter *inside* it, so the list's
-  // own width is the page width and `pagingEnabled` lands exactly on each card.
-  const pageWidth = Math.min(width, MaxContentWidth);
-
-  // The headline bar and the world grid both come from this one file — it is
-  // now the only thing this screen fetches.
+  // The headline bar and today's card both come from this one file — it is
+  // still the only thing this screen fetches.
   const humanityQuery = useQuery({
     queryKey: queryKeys.humanity,
     queryFn: fetchHumanityArtifact,
@@ -61,13 +58,28 @@ export default function TodayScreen() {
     enabled: !!userId,
   });
 
-  const worldPages = humanityQuery.data
-    ? chunk(humanityQuery.data.metrics, WORLD_METRICS_PER_PAGE)
-    : [];
-
-  // Which tiles carry a measurement this device hasn't seen. Not "changed since
-  // yesterday" — every nowcast is, daily, by construction.
+  // Which metrics carry a measurement this device hasn't seen. Not "changed
+  // since yesterday" — every nowcast is, daily, by construction.
   const freshMetricIds = useFreshMetrics(humanityQuery.data);
+
+  const birthDate = profileQuery.data?.birth_date ?? null;
+
+  /**
+   * Today's one card.
+   *
+   * Derived, not fetched and not stored: the same date and the same artifact
+   * always produce the same card, so there is nothing to persist and no way for
+   * a pull-to-refresh to reroll it into something else half-read.
+   *
+   * Waits on the profile rather than passing a null birthday through, because
+   * `lifetime` is one of the six framings — computing the card before the
+   * birthday lands would silently skip that angle and then swap the card out
+   * underneath the reader when the query resolved.
+   */
+  const card =
+    humanityQuery.data && !profileQuery.isPending
+      ? selectDailyCard(humanityQuery.data.metrics, { date: todayISO(), birthDate })
+      : null;
 
   const greeting = getGreeting();
   const firstName =
@@ -107,8 +119,9 @@ export default function TodayScreen() {
             type="title"
             style={styles.greeting}
             numberOfLines={1}
-            // With the streak gone the line has the full width, but a long name
-            // can still overrun — shrink rather than truncate someone's name.
+            // The streak sits on the card below rather than up here, so this line
+            // has the full width — but a long name can still overrun, and it
+            // should shrink rather than truncate somebody's name.
             adjustsFontSizeToFit
             minimumFontScale={0.75}>
             {greeting}, {firstName}.
@@ -125,84 +138,46 @@ export default function TodayScreen() {
           </View>
         ) : null}
 
-        {worldPages.length > 0 ? (
-        <View style={styles.worldSection}>
-          <View style={styles.sectionHeaderPadded}>
-            <ThemedText type="eyebrow" themeColor="textMuted">
-              State of the world
-            </ThemedText>
-          </View>
-
-          <FlatList
-            data={worldPages}
-            keyExtractor={(page) => page[0].id}
-            renderItem={({ item: page, index: pageIndex }) => (
-              <View style={[styles.worldPage, { width: pageWidth }]}>
-                {/* Two rows of two, so thirteen indicators page as 4/4/4/1.
-                    Empty rows are dropped: the short final page must not
-                    reserve the gap for a row it doesn't have. */}
-                {[page.slice(0, 2), page.slice(2, 4)]
-                  .filter((row) => row.length > 0)
-                  .map((row, rowIndex) => (
-                    <View key={rowIndex} style={styles.worldRow}>
-                      {row.map((metric, columnIndex) => (
-                        <WorldMetricTile
-                          key={metric.id}
-                          metric={metric}
-                          active={pageIndex === worldPage && isRevealed}
-                          index={rowIndex * 2 + columnIndex}
-                          isNew={freshMetricIds.has(metric.id)}
-                        />
-                      ))}
-                      {/* Keeps a lone tile on a short final page half-width. */}
-                      {row.length === 1 ? <View style={styles.tileSpacer} /> : null}
-                    </View>
-                  ))}
-              </View>
-            )}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            getItemLayout={(_, index) => ({
-              length: pageWidth,
-              offset: pageWidth * index,
-              index,
-            })}
-            onMomentumScrollEnd={(event) =>
-              setWorldPage(Math.round(event.nativeEvent.contentOffset.x / pageWidth))
-            }
+        {/* Under the composite bar: that number is the standing answer to "where
+            do things stand", and this is the one thing worth knowing about it
+            today. The thirteen-tile pager that used to sit here is gone — every
+            one of those tiles lives on the Progress tab with its full history,
+            where a reader who wants the grid can have a better version of it. */}
+        {card ? (
+          <DailyCard
+            card={card}
+            active={isRevealed}
+            isNew={freshMetricIds.has(card.metric.id)}
           />
-
-          {worldPages.length > 1 ? (
-            <View style={styles.dots}>
-              {worldPages.map((page, index) => (
-                <View
-                  key={page[0].id}
-                  style={[
-                    styles.dot,
-                    {
-                      backgroundColor:
-                        index === worldPage ? theme.brandStrong : theme.backgroundSelected,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-          ) : null}
-        </View>
         ) : null}
 
-        {/* Under the world grid on purpose: that section establishes where the
-            indicators stand, and this reframes the same set at the one scale
-            where a slow trend is legible — the reader's own lifetime. */}
+        {/* The way back to the full set, now that Today doesn't carry it. One
+            row rather than a section header: it is a signpost, not content.
+
+            Navigated with `router.push` rather than wrapped in `<Link asChild>`.
+            That is not a preference: `asChild` renders through Radix's `Slot`,
+            which merges the `style` prop by spreading it — and spreading a
+            *function* style, which is what a Pressable needs for its pressed
+            state, yields `{}`. The child arrives with every style silently
+            dropped, which is why this line was sitting unpadded against the left
+            edge no matter what the stylesheet said. */}
+        {humanityQuery.data ? (
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={`See all ${humanityQuery.data.metrics.length} indicators`}
+            onPress={() => router.push('/progress')}
+            style={({ pressed }) => [styles.allMetrics, pressed && styles.pressed]}>
+            <ThemedText type="linkPrimary">
+              See all {humanityQuery.data.metrics.length} indicators →
+            </ThemedText>
+          </Pressable>
+        ) : null}
+
         {/* Waits for the profile before rendering: a birthday that is merely
             still loading would otherwise show the "add your birthday" prompt
             for a moment to people who already have one. */}
         {humanityQuery.data && !profileQuery.isPending ? (
-          <SinceYouWereBorn
-            metrics={humanityQuery.data.metrics}
-            birthDate={profileQuery.data?.birth_date ?? null}
-          />
+          <SinceYouWereBorn metrics={humanityQuery.data.metrics} birthDate={birthDate} />
         ) : null}
       </Animated.ScrollView>
 
@@ -216,14 +191,6 @@ function getGreeting(): string {
   if (hour < 12) return 'Good morning';
   if (hour < 18) return 'Good afternoon';
   return 'Good evening';
-}
-
-function chunk<T>(items: T[], size: number): T[][] {
-  const pages: T[][] = [];
-  for (let index = 0; index < items.length; index += size) {
-    pages.push(items.slice(index, index + size));
-  }
-  return pages;
 }
 
 const styles = StyleSheet.create({
@@ -243,11 +210,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     lineHeight: 36,
   },
-  sectionHeaderPadded: {
-    paddingHorizontal: Spacing.four,
-  },
-  // Keeps the page gutter rather than going full-bleed like the carousels
-  // under it — it's a single card, so it lines up with the header above.
+  // Keeps the page gutter, so it lines up with the header and the card above.
   summarySection: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
@@ -255,34 +218,26 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  // Same full-bleed treatment as the long view: header keeps the page gutter,
-  // the pager runs edge to edge.
-  worldSection: {
+  /**
+   * Centered rather than aligned to a gutter.
+   *
+   * Everything else on this screen is a card with an edge, and a bare text link
+   * left-aligned against those edges reads as a stray line rather than as a
+   * control — it has no container of its own to belong to. Centering is what
+   * makes it legible as a signpost between two sections instead.
+   */
+  allMetrics: {
+    alignItems: 'center',
+    paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
-    gap: Spacing.three,
+    // A bare line of text is a small target; this brings it up to a comfortable
+    // one without needing a box drawn around it.
+    paddingBottom: Spacing.two,
     width: '100%',
     maxWidth: MaxContentWidth,
     alignSelf: 'center',
   },
-  worldPage: {
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.three,
-  },
-  worldRow: {
-    flexDirection: 'row',
-    gap: Spacing.three,
-  },
-  tileSpacer: {
-    flex: 1,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: Spacing.two,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: Radius.pill,
+  pressed: {
+    opacity: 0.7,
   },
 });

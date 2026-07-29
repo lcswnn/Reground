@@ -1,6 +1,7 @@
+import { DateTimePicker } from '@expo/ui/community/datetime-picker';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Alert, ScrollView, StyleSheet, Switch, View } from 'react-native';
+import { Alert, Platform, Pressable, ScrollView, StyleSheet, Switch, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -10,6 +11,7 @@ import { EARLIEST_BIRTHDAY, LATEST_BIRTHDAY } from '@/constants/birthday';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchProfile, updateBirthDate } from '@/api/profile';
+import { useDailyReminder } from '@/lib/daily-reminder';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
 import { useThemePreference } from '@/lib/theme-preference';
@@ -99,6 +101,8 @@ export default function SettingsScreen() {
         </View>
       </View>
 
+      <DailyReminderSection />
+
       <View style={styles.section}>
         <ThemedText type="eyebrow" themeColor="textMuted">
           Your birthday
@@ -157,6 +161,92 @@ export default function SettingsScreen() {
   );
 }
 
+/**
+ * The daily card's reminder.
+ *
+ * Its own component rather than more markup in `SettingsScreen`, because the
+ * time picker needs open/closed state and the screen above already carries the
+ * birthday's — two `pickerOpen` flags in one function is how they end up
+ * accidentally sharing one.
+ *
+ * Hidden entirely where notifications don't exist (web). A switch that cannot do
+ * anything is worse than an absent one.
+ */
+function DailyReminderSection() {
+  const theme = useTheme();
+  const reminder = useDailyReminder();
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  if (!reminder.isSupported) return null;
+
+  // The picker wants a Date; only its clock fields are read back out.
+  const at = new Date();
+  at.setHours(reminder.hour, reminder.minute, 0, 0);
+
+  return (
+    <View style={styles.section}>
+      <ThemedText type="eyebrow" themeColor="textMuted">
+        Daily card
+      </ThemedText>
+
+      <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+        <View style={styles.row}>
+          <View style={styles.rowText}>
+            <ThemedText type="defaultSemiBold">Remind me</ThemedText>
+            <ThemedText type="small" themeColor="textSecondary">
+              One nudge a day, at the same time, when a new card is waiting.
+            </ThemedText>
+          </View>
+
+          <Switch
+            value={reminder.enabled}
+            onValueChange={reminder.setEnabled}
+            accessibilityLabel="Daily card reminder"
+            trackColor={{ true: theme.brand, false: theme.backgroundSelected }}
+            ios_backgroundColor={theme.backgroundSelected}
+          />
+        </View>
+
+        {reminder.enabled ? (
+          <>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Reminder time: ${reminder.timeLabel}`}
+              accessibilityState={{ expanded: pickerOpen }}
+              onPress={() => setPickerOpen((open) => !open)}
+              style={[
+                styles.timeRow,
+                { borderColor: pickerOpen ? theme.brand : theme.border },
+              ]}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Time
+              </ThemedText>
+              <ThemedText type="defaultSemiBold">{reminder.timeLabel}</ThemedText>
+            </Pressable>
+
+            {pickerOpen ? (
+              <View style={Platform.OS === 'ios' ? styles.pickerInline : undefined}>
+                <DateTimePicker
+                  value={at}
+                  mode="time"
+                  accentColor={theme.brand}
+                  onValueChange={(_event, date) => {
+                    reminder.setTime(date.getHours(), date.getMinutes());
+                    // iOS keeps the wheel up so the time can be nudged; the
+                    // Android dialog has already dismissed itself by here.
+                    if (Platform.OS !== 'ios') setPickerOpen(false);
+                  }}
+                  onDismiss={() => setPickerOpen(false)}
+                />
+              </View>
+            ) : null}
+          </>
+        ) : null}
+      </View>
+    </View>
+  );
+}
+
 const styles = StyleSheet.create({
   content: {
     padding: Spacing.four,
@@ -184,5 +274,21 @@ const styles = StyleSheet.create({
   rowText: {
     flex: 1,
     gap: Spacing.half,
+  },
+  // Matches `DateField`'s box, so the two pickers in this screen read as one
+  // control repeated rather than two designs.
+  timeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    height: 52,
+    borderRadius: Radius.md,
+    borderWidth: 1.5,
+    paddingHorizontal: Spacing.three,
+  },
+  // The iOS wheel has no intrinsic height in a flex container.
+  pickerInline: {
+    height: 180,
+    justifyContent: 'center',
   },
 });

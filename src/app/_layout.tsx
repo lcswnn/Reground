@@ -1,5 +1,6 @@
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
+import * as Notifications from 'expo-notifications';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
@@ -8,12 +9,31 @@ import { useEffect, useState } from 'react';
 
 import { AppReadyContext } from '@/lib/app-ready';
 import { prefetchAppData } from '@/lib/bootstrap';
+import { resyncReminder } from '@/lib/daily-reminder';
 import { Colors, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 
 SplashScreen.preventAutoHideAsync();
+
+/**
+ * How the daily reminder behaves when it fires with the app already open.
+ *
+ * A banner, and nothing else. No sound and no badge: the reminder's whole job is
+ * to say "there is one card to look at", and a badge would still be sitting on
+ * the icon after the card had been read — the app has no unread count to be
+ * right about. Set at module scope because the handler has to be registered
+ * before a notification can arrive, which can be before the first render.
+ */
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldPlaySound: false,
+    shouldSetBadge: false,
+    shouldShowBanner: true,
+    shouldShowList: true,
+  }),
+});
 // Without this the splash is swapped out on a single frame, which reads as a
 // jump cut now that it sits over an already-populated screen.
 SplashScreen.setOptions({ fade: true, duration: 350 });
@@ -63,6 +83,16 @@ function RootNavigator() {
   useEffect(() => {
     void SystemUI.setBackgroundColorAsync(palette.background);
   }, [palette.background]);
+
+  /**
+   * The OS schedule and the stored reminder preference drift apart on their own —
+   * a reinstall clears scheduled notifications, and permission can be revoked
+   * from system settings while the app is closed. Re-asserting it once per launch
+   * is cheaper than detecting either case.
+   */
+  useEffect(() => {
+    void resyncReminder();
+  }, []);
 
   // Loaded at runtime rather than through the expo-font config plugin, which
   // would need a native rebuild to pick up.

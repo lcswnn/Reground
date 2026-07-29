@@ -39,7 +39,13 @@
           "resizeMode": "contain"
         }
       ],
-      "expo-sqlite"
+      "expo-sqlite",
+      [
+        "expo-notifications",
+        {
+          "color": "#e08659"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
