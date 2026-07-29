@@ -61,3 +61,33 @@ jobs:
           name: humanity-json
           path: humanity.json
           retention-days: 14
+
+  # A separate job, not another step, and deliberately so. The two pipelines
+  # share a schedule and nothing else: the metrics artifact must still publish
+  # on a morning when every news feed is down, and a story worth reading must
+  # still land on a morning when OWID has changed its CSV format again.
+  news:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      # Guards the feed parser. A malformed <item> that silently yields nothing
+      # looks exactly like a quiet news day, so this runs before the fetch.
+      - name: Test the feed parser
+        run: npm test
+
+      - name: Refresh news
+        run: npm run news:refresh
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
