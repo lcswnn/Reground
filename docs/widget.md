@@ -1,95 +1,79 @@
 # iOS home screen widget
 
-**Status: not built.** This document is the plan, not a description of existing
-code. Nothing in `src/` currently talks to a widget.
+**Status: built.** The target lives in `targets/widget/`, and
+`@bacons/apple-targets` generates a real WidgetKit extension from it at prebuild.
 
-## Why it isn't scaffolded yet
+## What it shows
 
-A home screen widget is not React Native. It is a separate **WidgetKit app
-extension**, written in Swift/SwiftUI, that iOS runs in its own process on its
-own schedule. Your JS bundle never executes inside it. That means:
+- **Small** — the composite score, the progress bar, and the day's indicator.
+- **Medium** — the same, plus that indicator's current value and its computed
+  delta ("↓ 5.6 pts since 1990").
 
-- **It cannot run in Expo Go.** Expo Go is a fixed prebuilt app; it has no
-  extension target for your widget. You need a development build.
-- **It requires native project files.** The project is currently
-  [CNG](https://docs.expo.dev/workflow/continuous-native-generation/)-managed —
-  `/ios` and `/android` are gitignored and generated on demand. Adding a widget
-  means either running `npx expo prebuild` and committing native code, or using
-  a config plugin that generates the target for you.
-- **The two processes share no memory.** The app writes data; the widget reads
-  it later, possibly hours later, with the app not running.
+## The thing that made this simple
 
-None of this is a blocker — it's just genuinely a separate workstream from the
-React Native app, so I did not stub out files that would only look like progress.
+An earlier version of this document recommended building an unauthenticated
+Supabase Edge Function so the widget could fetch without a user session. That is
+no longer necessary and was never built: the humanity artifact is already a
+**public static JSON** on Supabase Storage, so the extension's `TimelineProvider`
+fetches it directly with `URLSession`.
 
-## Recommended approach
+The consequences are worth stating, because they are the whole reason this
+widget is cheap to own:
 
-Use [`@bacons/apple-targets`](https://github.com/EvanBacon/expo-apple-targets),
-the config plugin for adding Apple extension targets to an Expo project without
-ejecting.
+- **No App Group.** The usual widget architecture shares a container because the
+  extension cannot reach the app's session. This one has nothing to share.
+- **No write path from JS.** Nothing in `src/` knows the widget exists.
+- **It never goes stale.** The widget is correct after a fortnight of the app
+  going unopened, which is precisely the case a widget exists to serve.
 
-### 1. Install and configure
+## What is duplicated, and why that is contained
 
-```sh
-npx expo install @bacons/apple-targets
-```
+Swift cannot import the app's TypeScript, so two small things are reimplemented
+in `index.swift`:
 
-Add to `app.json` plugins, and declare an App Group — the shared container that
-lets the app and the widget see the same data:
+- `formatValue` mirrors `formatMetricValue` in `src/api/humanity.ts`. If a unit
+  case changes there, change it here.
+- `metricOfDay` mirrors the *metric* half of `selectDailyCard` — sort by id, index
+  by days since the epoch.
 
-```json
-["@bacons/apple-targets", { "appleTeamId": "YOUR_TEAM_ID" }]
-```
+Deliberately **not** duplicated: the six framing angles. The widget shows the
+indicator and the artifact's own precomputed `delta` string rather than a
+generated headline. This means that on days when the app's fallback scan skips to
+a different metric — which happens when no framing fits that indicator's series —
+the widget and the card name different indicators. Both are individually correct,
+and closing that gap would mean a second copy of the angle engine to keep in step
+forever.
 
-```json
-"ios": {
-  "entitlements": {
-    "com.apple.security.application-groups": ["group.com.lucaswaunn.humanitas"]
-  }
-}
-```
+## Gotchas already hit
 
-### 2. Create the target
+- **`ios.appleTeamId` is required** in `app.json`. Without it the plugin warns and
+  silently generates no target at all — you get a `WidgetKit.framework` reference
+  and an `Info.plist`, but no `PBXNativeTarget`, and nothing to run.
+- **The target name must differ from the app's.** Xcode derives each target's
+  intermediates path from its name, so two targets called `Humanitas` compile
+  their asset catalogs to the same directory and the build fails with "multiple
+  commands produce conflicting outputs". The gallery name comes from
+  `configurationDisplayName` in Swift, not the target name.
+- **`deploymentTarget: '17.0'`**, because `containerBackground(for: .widget)` does
+  not exist below it — and from iOS 17 a widget that fails to declare a container
+  background renders blank rather than merely unstyled.
+- **Top-level `private` types cannot appear in internal declarations.** `Artifact`
+  is internal for exactly this reason.
 
-```
-targets/
-  widget/
-    expo-target.config.js   # type: 'widget'
-    index.swift             # WidgetKit TimelineProvider + SwiftUI view
-    Assets.xcassets
-```
-
-### 3. Share data from JS
-
-The widget cannot call Supabase on your behalf using the app's session — it has
-no access to the JS runtime or the SQLite-backed auth storage. Two options:
-
-**Option A — app writes, widget reads (simplest).** When the app loads the daily
-proof, write it into the shared App Group's `UserDefaults`. The widget reads that
-and renders it. The widget shows whatever the app last saw, so it goes stale if
-the user doesn't open the app for days.
-
-**Option B — widget fetches directly (fresher).** The widget's
-`TimelineProvider` makes its own HTTPS request in Swift. Because the daily proof
-is the same for everyone, you can expose it through an unauthenticated Supabase
-Edge Function that returns today's featured story — no user session needed in
-the widget. This keeps the widget fresh even if the app hasn't been opened.
-
-Option B is the better product; Option A is the faster first version.
-
-### 4. Build and test
+## Build and test
 
 ```sh
-eas build --profile development --platform ios
+npx expo prebuild -p ios
+npx expo run:ios
 ```
 
-Widgets only appear on a real device or simulator running a dev/production
-build. `npx expo start` alone will never show one.
+Then long-press the home screen → **+** → search "Humanitas". Widgets never
+appear under `npx expo start` alone; they need a real build.
 
 ## Scheduling reality check
 
-iOS decides when to refresh widgets. `TimelineProvider` requests a refresh
-cadence, but the system throttles it based on battery, usage patterns, and how
-often the user actually looks at the widget. A "daily proof" widget is a good
-fit — asking for roughly one refresh per day is well within what iOS grants.
-Do not design anything that needs minute-level freshness.
+iOS decides when to refresh widgets. The timeline asks for one every six hours —
+already four times more often than the daily artifact can change, so the extra
+attempts exist to recover from a failed fetch rather than to chase freshness. The
+system throttles this based on battery, usage, and how often the widget is
+actually looked at. Do not design anything needing minute-level freshness.

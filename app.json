@@ -11,6 +11,7 @@
     "ios": {
       "icon": "./assets/icon.png",
       "bundleIdentifier": "com.lucaswaunn.humanitas",
+      "appleTeamId": "FH9MRL7638",
       "supportsTablet": true,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -46,7 +47,8 @@
           "color": "#e08659"
         }
       ],
-      "expo-sharing"
+      "expo-sharing",
+      "@bacons/apple-targets"
     ],
     "experiments": {
       "typedRoutes": true,
