@@ -3,6 +3,7 @@ import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
+import * as SystemUI from 'expo-system-ui';
 import { useEffect, useState } from 'react';
 
 import { AppReadyContext } from '@/lib/app-ready';
@@ -49,6 +50,19 @@ function RootNavigator() {
   const { session, isLoading } = useSession();
   const { isDark } = useThemePreference();
   const palette = isDark ? Colors.dark : Colors.light;
+
+  /**
+   * The root view sits outside the React tree, so no screen's `backgroundColor`
+   * reaches it. `app.json`'s `backgroundColor` covers it from launch, but the
+   * app config has no dark variant — a single build-time value cannot follow
+   * the scheme, and the light one flashes white behind every push transition
+   * and rotation in dark mode. Setting it at runtime is the only way to track
+   * the preference, including the in-app override, which the system doesn't
+   * know about at all.
+   */
+  useEffect(() => {
+    void SystemUI.setBackgroundColorAsync(palette.background);
+  }, [palette.background]);
 
   // Loaded at runtime rather than through the expo-font config plugin, which
   // would need a native rebuild to pick up.

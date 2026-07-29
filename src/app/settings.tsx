@@ -34,6 +34,11 @@ export default function SettingsScreen() {
   // effect, and that effect would wipe a half-made choice on every refetch.
   const [edited, setEdited] = useState<string | null>(null);
 
+  // Owned here rather than inside the field because saving has to close it: a
+  // wheel left standing over a value that is already committed reads as the
+  // save not having taken.
+  const [pickerOpen, setPickerOpen] = useState(false);
+
   const birthday = edited ?? storedBirthday;
   const isChanged = edited !== null && edited !== storedBirthday;
 
@@ -53,8 +58,11 @@ export default function SettingsScreen() {
   const saveBirthday = useMutation({
     mutationFn: (next: string) => updateBirthDate(userId as string, next),
     onSuccess: () => {
-      // Hand the field back to the query now that the two agree.
+      // Hand the field back to the query now that the two agree, and collapse
+      // the picker so the card returns to its resting state. Only on success —
+      // a failed save leaves the wheel up, where the value can be retried.
       setEdited(null);
+      setPickerOpen(false);
       return queryClient.invalidateQueries({ queryKey: queryKeys.profile(userId ?? '') });
     },
   });
@@ -111,6 +119,8 @@ export default function SettingsScreen() {
               label="Birthday"
               value={birthday}
               onChange={setEdited}
+              open={pickerOpen}
+              onOpenChange={setPickerOpen}
               placeholder="When it all started for you"
               minimumDate={EARLIEST_BIRTHDAY}
               maximumDate={LATEST_BIRTHDAY}

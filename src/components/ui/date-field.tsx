@@ -15,6 +15,14 @@ interface DateFieldProps {
   minimumDate?: Date;
   maximumDate?: Date;
   errorText?: string | null;
+  /**
+   * Controlled open state. Omit and the field manages its own, which is what
+   * every form wants until something outside the field needs to close it —
+   * saving, for instance, where leaving the wheel standing over a value that is
+   * already committed reads as the save not having taken.
+   */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -33,9 +41,21 @@ export function DateField({
   minimumDate,
   maximumDate,
   errorText,
+  open: controlledOpen,
+  onOpenChange,
 }: DateFieldProps) {
   const theme = useTheme();
-  const [open, setOpen] = useState(false);
+  const [uncontrolledOpen, setUncontrolledOpen] = useState(false);
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : uncontrolledOpen;
+
+  // The internal state is still updated when uncontrolled, so a form that
+  // passes neither prop behaves exactly as it did before this existed.
+  function setOpen(next: boolean) {
+    if (!isControlled) setUncontrolledOpen(next);
+    onOpenChange?.(next);
+  }
 
   // Android presents a modal dialog that opens on mount and expects the caller
   // to unmount it; iOS and web render inline. Either way it only exists while
@@ -50,7 +70,7 @@ export function DateField({
         accessibilityRole="button"
         accessibilityLabel={value ? `${label}: ${formatBirthday(value)}` : label}
         accessibilityState={{ expanded: open }}
-        onPress={() => setOpen((current) => !current)}
+        onPress={() => setOpen(!open)}
         style={[
           styles.input,
           {

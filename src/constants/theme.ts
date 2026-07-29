@@ -45,6 +45,18 @@ export const Colors = {
      */
     border: "#B8AF9C",
 
+    /**
+     * The tab bar's top edge, and only that.
+     *
+     * Deliberately not `border`: this is the one line in the app that separates
+     * the chrome from the content rather than one card from another, and at
+     * `border`'s 2.1:1 it read as part of the page. Each scheme borrows the
+     * *other* scheme's background — near-black on paper, off-white on night —
+     * which is the strongest either palette can go without introducing a hue
+     * that belongs to neither.
+     */
+    barDivider: "#1A1510",
+
     /** Warm terracotta. The single orange in the app. */
     brand: "#e08659",
     /**
@@ -108,6 +120,9 @@ export const Colors = {
     surface: "#211A13",
 
     border: "#362E24",
+
+    /** See the light scheme: the light background, mirrored. */
+    barDivider: "#FBFAF7",
 
     // The warm pair carries across schemes unchanged — both clear 4.9:1 on this
     // background, so neither needs a night-specific cut.

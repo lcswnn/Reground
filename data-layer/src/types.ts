@@ -171,6 +171,23 @@ export interface ArtifactMetric {
   normalizedObserved: number;
   contribution: number;
   weight: number;
+  /**
+   * The normalisation anchors, so the client can score a value the server never
+   * saw — specifically the reader's birth year, which is per-user and therefore
+   * cannot be precomputed here. Without these the app can compare raw values but
+   * cannot say what they were worth.
+   */
+  baselineValue: number;
+  targetValue: number;
+  /**
+   * Which way this indicator has to move to count as progress.
+   *
+   * Carried into the artifact because `polarity` does not imply it — extreme
+   * poverty is a `contributor` that must fall, CO₂ a `detractor` that must
+   * fall — and the client needs it to judge any comparison it makes itself,
+   * such as "since you were born".
+   */
+  direction: MetricDirection;
   polarity: MetricPolarity;
   unit: string;
   basis: string;

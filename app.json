@@ -7,6 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "humanitas",
     "userInterfaceStyle": "automatic",
+    "backgroundColor": "#FBFAF7",
     "ios": {
       "icon": "./assets/icon.png",
       "bundleIdentifier": "com.lucaswaunn.humanitas",

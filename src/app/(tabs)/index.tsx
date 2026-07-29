@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { HumanityProgress } from '@/components/humanity-progress';
 import { ScrollTopFade } from '@/components/scroll-top-fade';
+import { SinceYouWereBorn } from '@/components/since-you-were-born';
 import { ThemedText } from '@/components/themed-text';
 import { ErrorState } from '@/components/ui/states';
 import { WorldMetricTile } from '@/components/world-metric-tile';
@@ -14,6 +15,7 @@ import { WORLD_METRICS_PER_PAGE } from '@/constants/world-metrics';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchHumanityArtifact } from '@/api/humanity';
+import { fetchProfile } from '@/api/profile';
 import { useAppReady } from '@/lib/app-ready';
 import { formatDay, todayISO } from '@/lib/format';
 import { useFreshMetrics } from '@/lib/fresh-data';
@@ -48,6 +50,15 @@ export default function TodayScreen() {
   const humanityQuery = useQuery({
     queryKey: queryKeys.humanity,
     queryFn: fetchHumanityArtifact,
+  });
+
+  // Only the birthday is wanted, but the profile is already cached by Settings
+  // under this key — a narrower query would just be a second row fetch.
+  const userId = session?.user.id;
+  const profileQuery = useQuery({
+    queryKey: queryKeys.profile(userId ?? ''),
+    queryFn: () => fetchProfile(userId as string),
+    enabled: !!userId,
   });
 
   const worldPages = humanityQuery.data
@@ -179,6 +190,19 @@ export default function TodayScreen() {
             </View>
           ) : null}
         </View>
+        ) : null}
+
+        {/* Under the world grid on purpose: that section establishes where the
+            indicators stand, and this reframes the same set at the one scale
+            where a slow trend is legible — the reader's own lifetime. */}
+        {/* Waits for the profile before rendering: a birthday that is merely
+            still loading would otherwise show the "add your birthday" prompt
+            for a moment to people who already have one. */}
+        {humanityQuery.data && !profileQuery.isPending ? (
+          <SinceYouWereBorn
+            metrics={humanityQuery.data.metrics}
+            birthDate={profileQuery.data?.birth_date ?? null}
+          />
         ) : null}
       </Animated.ScrollView>
 

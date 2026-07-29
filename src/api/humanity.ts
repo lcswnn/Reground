@@ -37,6 +37,24 @@ export interface HumanityMetric {
   /** Signed share of the composite, as a fraction. */
   contribution: number;
   weight: number;
+  /**
+   * The normalisation anchors, for scoring a value the server never saw — the
+   * reader's birth year is per-user and cannot be precomputed.
+   *
+   * Optional for the same reason as `direction`: added after the first
+   * artifacts were published, and the app reads whatever is in the bucket.
+   */
+  baselineValue?: number;
+  targetValue?: number;
+  /**
+   * Which way the indicator has to move to count as progress.
+   *
+   * Optional because it was added after the first artifacts were published, and
+   * the app reads whatever is currently in the bucket — it is absent until the
+   * next `data:artifact` + `data:publish`. Anything using it has to treat that
+   * absence as "don't know", not as a direction.
+   */
+  direction?: 'higher_is_better' | 'lower_is_better';
   polarity: 'contributor' | 'detractor';
   unit: string;
   basis: string;
