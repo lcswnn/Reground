@@ -36,6 +36,29 @@ export function formatDay(iso: string): string {
   });
 }
 
+/**
+ * How old a story is *to this reader* — time since it reached the feed, not
+ * since its source published it.
+ *
+ * The two differ by design. The ingest job windows 36 hours back, so a piece
+ * published yesterday evening is written this morning; dating it "Yesterday"
+ * puts a stale label on something the reader is seeing for the first time, and
+ * now contradicts the feed's own ordering, which is by arrival.
+ *
+ * The later of the two rather than `createdAt` outright: a hand-entered or
+ * backfilled row can carry a `created_at` that precedes its publication date,
+ * and "arrived before it was written" is not a thing to render.
+ */
+export function formatStoryAge(publishedAt: string, createdAt: string): string {
+  const published = Date.parse(publishedAt);
+  const created = Date.parse(createdAt);
+
+  if (!Number.isFinite(created)) return formatRelative(publishedAt);
+  if (!Number.isFinite(published)) return formatRelative(createdAt);
+
+  return formatRelative(created > published ? createdAt : publishedAt);
+}
+
 export function formatRelative(iso: string): string {
   const then = new Date(iso).getTime();
   const days = Math.floor((Date.now() - then) / 86_400_000);

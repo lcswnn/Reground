@@ -19,6 +19,8 @@ export const queryClient = new QueryClient({
 export const queryKeys = {
   dailyProof: ['daily-proof'] as const,
   feed: (category: string | null) => ['feed', category] as const,
+  /** When the ingest job last wrote, for the feed's "New" tags. */
+  latestIngest: ['latest-ingest'] as const,
   /** The served humanity-progress artifact. */
   humanity: ['humanity'] as const,
   metrics: ['metrics'] as const,

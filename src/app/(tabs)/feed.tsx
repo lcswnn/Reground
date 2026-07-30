@@ -1,4 +1,4 @@
-import { useInfiniteQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useQuery } from '@tanstack/react-query';
 import { useState } from 'react';
 import {
   ActivityIndicator,
@@ -19,7 +19,7 @@ import { CATEGORIES, CATEGORY_KEYS } from '@/constants/categories';
 import { BottomTabInset, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
-import { fetchFeed } from '@/api/stories';
+import { fetchFeed, fetchLatestIngestAt, isNewlyIngested } from '@/api/stories';
 import { queryKeys } from '@/lib/query';
 import type { StoryCategory } from '@/types/database';
 
@@ -44,7 +44,18 @@ export default function FeedScreen() {
     getNextPageParam: (lastPage) => lastPage.nextCursor,
   });
 
-  const { isRefreshing, onRefresh } = usePullToRefresh(refetch);
+  // Outside the feed query so switching category filters doesn't refetch it,
+  // and so the answer is the same one for every filter.
+  const { data: latestIngestAt = null, refetch: refetchIngest } = useQuery({
+    queryKey: queryKeys.latestIngest,
+    queryFn: fetchLatestIngestAt,
+  });
+
+  // Both, or a pull that brings down a new batch would render it untagged: the
+  // stories would be current and the timestamp they're compared against stale.
+  const { isRefreshing, onRefresh } = usePullToRefresh(() =>
+    Promise.all([refetch(), refetchIngest()]),
+  );
 
   // Drives the scrim under the filter row. A scroll handler rather than
   // `useScrollViewOffset`, which only accepts an animated ScrollView ref — this
@@ -97,7 +108,9 @@ export default function FeedScreen() {
             <Animated.FlatList
               data={stories}
               keyExtractor={(item) => item.id}
-              renderItem={({ item }) => <StoryCard story={item} />}
+              renderItem={({ item }) => (
+                <StoryCard story={item} isNew={isNewlyIngested(item, latestIngestAt)} />
+              )}
               onScroll={onScroll}
               // 16ms rather than the default 50: the scrim tracks the first
               // 24pt of travel, which at 50 lands in two visible steps.

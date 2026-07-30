@@ -19,7 +19,7 @@ import {
   saveStory,
   unsaveStory,
 } from '@/api/stories';
-import { formatRelative } from '@/lib/format';
+import { formatStoryAge } from '@/lib/format';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
 
@@ -108,7 +108,7 @@ export default function StoryScreen() {
         <View style={styles.metaRow}>
           <CategoryPill category={story.category} />
           <ThemedText type="small" themeColor="textMuted">
-            {formatRelative(story.published_at)}
+            {formatStoryAge(story.published_at, story.created_at)}
           </ThemedText>
         </View>
 

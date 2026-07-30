@@ -7,10 +7,16 @@ import { CategoryPill } from '@/components/category-pill';
 import { MetricTag } from '@/components/metric-tag';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { formatRelative } from '@/lib/format';
+import { formatStoryAge } from '@/lib/format';
 import type { Story } from '@/types/database';
 
-export function StoryCard({ story }: { story: Story }) {
+interface StoryCardProps {
+  story: Story;
+  /** Arrived in the most recent ingest run. Drives the "New" tag. */
+  isNew?: boolean;
+}
+
+export function StoryCard({ story, isNew = false }: StoryCardProps) {
   const theme = useTheme();
 
   return (
@@ -34,6 +40,19 @@ export function StoryCard({ story }: { story: Story }) {
 
         <View style={styles.body}>
           <View style={styles.tags}>
+            {/* Leads the row rather than trailing it: the tag's job is to be
+                caught before the title is read, and the category is what the
+                reader scans for only once they've decided to look. */}
+            {isNew ? (
+              <View
+                accessible
+                accessibilityLabel="New since the last update"
+                style={[styles.newTag, { backgroundColor: theme.brandStrong }]}>
+                <ThemedText type="eyebrow" style={[styles.newTagText, { color: theme.textOnBrand }]}>
+                  New
+                </ThemedText>
+              </View>
+            ) : null}
             <CategoryPill category={story.category} />
             <MetricTag metricId={story.metric_id} />
           </View>
@@ -56,7 +75,7 @@ export function StoryCard({ story }: { story: Story }) {
                 {story.source_name}
               </ThemedText>
               <ThemedText type="small" themeColor="textMuted">
-                {formatRelative(story.published_at)}
+                {formatStoryAge(story.published_at, story.created_at)}
               </ThemedText>
             </View>
           </View>
@@ -100,6 +119,18 @@ const styles = StyleSheet.create({
   text: {
     paddingLeft: Spacing.two,
     gap: Spacing.two,
+  },
+  // Solid brand rather than the soft fill the metric badge uses: this one sits
+  // beside a category pill that is already a tinted box, and a second tinted box
+  // reads as another category rather than as a flag.
+  newTag: {
+    paddingHorizontal: Spacing.one,
+    paddingVertical: 2,
+    borderRadius: Radius.pill,
+  },
+  newTagText: {
+    fontSize: 12,
+    letterSpacing: 0.8,
   },
   title: {
     fontSize: 20,
