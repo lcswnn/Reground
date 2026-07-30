@@ -80,6 +80,21 @@ export type Profile = {
    * existed, so anything reading it has to handle its absence.
    */
   birth_date: string | null;
+  /**
+   * The reader's category weighting for the humanity score, e.g.
+   * `{"health": 20, "basic_needs": 18}`.
+   *
+   * Null until they save one, and that null is meaningful: it distinguishes
+   * "has never set a weighting, use the research defaults" from "deliberately
+   * weighted everything to zero". See `src/state/weighting.ts`.
+   *
+   * Added by `supabase/migrations/0002_category_weights.sql`. Everything that
+   * touches it tolerates the column being absent, so the app runs against a
+   * database where that migration has not been applied yet.
+   */
+  category_weights: Record<string, number> | null;
+  /** When `category_weights` was last written, for last-write-wins across devices. */
+  category_weights_updated_at: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -135,7 +150,13 @@ export type Database = {
         Row: Profile;
         Insert: Insert<
           Profile,
-          'created_at' | 'updated_at' | 'display_name' | 'avatar_url' | 'birth_date'
+          | 'created_at'
+          | 'updated_at'
+          | 'display_name'
+          | 'avatar_url'
+          | 'birth_date'
+          | 'category_weights'
+          | 'category_weights_updated_at'
         >;
         Update: Partial<Profile>;
         Relationships: [];

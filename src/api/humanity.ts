@@ -144,11 +144,49 @@ export function lastObservedYear(metric: HumanityMetric): string {
 
 /**
  * True when an indicator has regressed past its own baseline — worse than where
- * we started, not merely short of the target. Drives both the red accent and
- * which way `barFill` reads.
+ * we started, not merely short of the target. Drives which way `barFill` reads.
+ *
+ * This is a statement about *position*, not about movement, and the two are not
+ * the same question — see `isMovingWrongWay`, which is what the charts colour by.
  */
 export function isRegressing(metric: HumanityMetric): boolean {
   return metric.normalized < 0;
+}
+
+/**
+ * True when the series has moved in the direction that counts as worse.
+ *
+ * Distinct from `isRegressing`, and the distinction is not academic. That one
+ * asks "are we below the baseline"; this asks "which way are we going". They
+ * agree for most indicators and come apart whenever a baseline is anchored at
+ * the bad end of the range rather than at the start of the record.
+ *
+ * Arctic sea ice is exactly that case. Its baseline is the record-low annual
+ * mean, so sitting at the worst level in the satellite record normalises to
+ * roughly 0 — not negative — and `isRegressing` reads false. The chart card
+ * would then paint "↓ 1.9 M km² since 1990" in the improvement colour, which is
+ * the opposite of what happened.
+ *
+ * Falls back to `isRegressing` when `direction` is absent: it is optional in the
+ * artifact, missing from anything published before it was added, and guessing a
+ * direction from the numbers alone would be worse than deferring to position.
+ */
+export function isMovingWrongWay(metric: HumanityMetric): boolean {
+  if (!metric.direction) return isRegressing(metric);
+
+  // Measured points only, matching how the data layer computes `delta` — the
+  // colour and the number in the pill must agree, and a projected tail can point
+  // the other way from the measurements it is drawn from.
+  const measured = metric.series.filter((point) => !point.projected);
+  const points = measured.length >= 2 ? measured : metric.series;
+  if (points.length < 2) return isRegressing(metric);
+
+  const change = points[points.length - 1].v - points[0].v;
+  // Dead flat is not the wrong way. Anything genuinely unchanged reads as
+  // neutral rather than as a problem.
+  if (change === 0) return false;
+
+  return metric.direction === 'higher_is_better' ? change < 0 : change > 0;
 }
 
 /**

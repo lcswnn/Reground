@@ -17,7 +17,7 @@ import '../env.js';
 
 import { adapterFor, ADAPTERS } from '../adapters/registry.js';
 import { isEmberConfigured } from '../adapters/ember.js';
-import { METRICS } from '../config/metrics.js';
+import { METRICS, PENDING_METRICS } from '../config/metrics.js';
 import { readObservations, recordRun, writeObservations } from '../storage/supabase.js';
 
 const force = process.argv.includes('--force');
@@ -96,6 +96,31 @@ async function main() {
       failed += 1;
       await recordRun('ember:monthly-generation', 'failed', 0, (error as Error).message);
       console.error(`FAIL   ember: ${(error as Error).message}`);
+    }
+  }
+
+  // Unscored metrics are ingested too, and this is not optional bookkeeping.
+  //
+  // A metric in PENDING_METRICS has no baseline yet precisely because it has no
+  // history, and history only exists if something has been collecting it. For
+  // Electricity Maps that is not a convenience but the whole game: its free tier
+  // serves a 24-hour window and nothing older, so a day not polled is a day gone
+  // for good. The others are recoverable after the fact and are here for
+  // consistency.
+  //
+  // Failures are logged and counted separately: none of these is on a tile yet,
+  // so an unconfigured key must not turn a healthy run red. That is the same
+  // reasoning as the Ember block above, applied to eight more sources.
+  for (const metric of PENDING_METRICS) {
+    try {
+      const adapter = adapterFor(metric.sourceAdapterId);
+      const written = await writeObservations(await adapter.fetchLatest());
+      await recordRun(adapter.id, 'ok', written);
+      console.log(`ok     ${`${metric.id} (pending)`.padEnd(24)} ${written} rows`);
+    } catch (error) {
+      // Deliberately not counted in `failed` — see above.
+      await recordRun(metric.sourceAdapterId, 'skipped', 0, (error as Error).message);
+      console.log(`skip   ${`${metric.id} (pending)`.padEnd(24)} ${(error as Error).message}`);
     }
   }
 

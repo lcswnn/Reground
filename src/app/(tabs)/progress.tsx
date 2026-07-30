@@ -1,6 +1,13 @@
 import { useQuery } from "@tanstack/react-query";
+import { router } from "expo-router";
 import { useCallback, useState } from "react";
-import { RefreshControl, StyleSheet, View, type ViewToken } from "react-native";
+import {
+  Pressable,
+  RefreshControl,
+  StyleSheet,
+  View,
+  type ViewToken,
+} from "react-native";
 import Animated, {
   useAnimatedScrollHandler,
   useSharedValue,
@@ -69,6 +76,19 @@ export default function ProgressScreen() {
             The trends that don&rsquo;t make the news, because they happen
             slowly.
           </ThemedText>
+
+          {/* The only permanent way in to the weighting screen. The home screen
+              links there too, but only once a weighting exists — which it never
+              will if there is nowhere to make one. */}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityHint="Set how much each category counts toward the humanity score"
+            onPress={() => router.push("/weighting")}
+            hitSlop={8}
+            style={styles.weightingLink}
+          >
+            <ThemedText type="linkPrimary">Weight what matters to you</ThemedText>
+          </Pressable>
         </View>
 
         {isPending ? (
@@ -126,6 +146,10 @@ export default function ProgressScreen() {
 const styles = StyleSheet.create({
   root: { flex: 1 },
   flex: { flex: 1 },
+  weightingLink: {
+    alignSelf: "flex-start",
+    paddingTop: Spacing.two,
+  },
   header: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,

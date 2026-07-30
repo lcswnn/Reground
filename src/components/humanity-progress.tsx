@@ -1,4 +1,5 @@
-import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
+import { useEffect, useMemo, useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 import Animated, {
   Easing,
@@ -13,8 +14,15 @@ import { barFill, isRegressing, lastObservedYear } from '@/api/humanity';
 import { ThemedText } from '@/components/themed-text';
 import { ValueTransition } from '@/components/value-transition';
 import { Radius, Spacing } from '@/constants/theme';
-import { categoryLabel } from '@/constants/world-metrics';
+import { categoryLabel, normalizeCategory } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
+import {
+  computeComposite,
+  defaultWeightsFrom,
+  isDefaultWeighting,
+  toScorable,
+} from '@/lib/scoring';
+import { useWeightingControls } from '@/state/weighting';
 
 /** Slower than a tile's bar: this one is the headline, so it takes its time. */
 const FILL_DURATION = 1100;
@@ -33,10 +41,22 @@ interface HumanityProgressProps {
 /**
  * Every indicator, weighted into one bar.
  *
- * Both the number and its breakdown come from the served artifact — the app
- * does no scoring of its own. The breakdown exists because 29% is a claim that
- * ought to show its work rather than be taken on faith, and because it is the
- * only place the detractors are visible as detractors.
+ * The default number and its breakdown come from the served artifact. The one
+ * exception is a reader's own weighting, which is per-device and therefore
+ * cannot be precomputed — that is recomputed here through `computeComposite`,
+ * the same maths the data layer ran, guarded against drift by a test that
+ * reproduces the published score from the published inputs.
+ *
+ * When a weighting exists it **replaces** the headline rather than appearing
+ * beside it. Someone who has said what matters to them has already answered the
+ * question the default was asking; showing both as equals just asks it twice.
+ * The default stays one line below, and tapping through goes back to the sliders.
+ *
+ * The breakdown exists because a number like this is a claim that ought to show
+ * its work rather than be taken on faith, and because it is the only place the
+ * detractors are visible as detractors. Note it always itemises the *default*
+ * contributions — reweighting changes how much each indicator counts, not what
+ * any of them says.
  */
 export function HumanityProgress({
   artifact,
@@ -49,11 +69,41 @@ export function HumanityProgress({
 
   const score = artifact.compositeScore;
 
+  // The headline stays the artifact's own number — the research weighting is
+  // what "the Humanity Score" means, and recomputing it client-side would only
+  // introduce a way for the two to disagree.
+  //
+  // The reader's own score has to be computed here: their weighting is
+  // per-device and arrives long after the artifact was built. Null whenever they
+  // have not customised, or have dragged everything back to the defaults.
+  const metrics = useMemo(
+    () =>
+      toScorable(artifact.metrics).map((metric) => ({
+        ...metric,
+        category: normalizeCategory(metric.category),
+      })),
+    [artifact],
+  );
+  const defaults = useMemo(() => defaultWeightsFrom(metrics), [metrics]);
+  const { weights, isCustomised } = useWeightingControls(defaults);
+
+  const personalScore = useMemo(() => {
+    if (!isCustomised || isDefaultWeighting(weights, defaults)) return null;
+    return computeComposite(metrics, weights).score;
+  }, [isCustomised, weights, defaults, metrics]);
+
+  // The reader's weighting replaces the headline rather than sitting beside it.
+  // Once someone has said what matters to them, the default weighting is no
+  // longer the number they came for — showing both as equals just asks them to
+  // decide twice. The default stays available on the line beneath.
+  const displayScore = personalScore ?? score;
+  const isPersonal = personalScore !== null;
+
   useEffect(() => {
     fill.value = active
-      ? withTiming(score, { duration: FILL_DURATION, easing: Easing.out(Easing.cubic) })
+      ? withTiming(displayScore, { duration: FILL_DURATION, easing: Easing.out(Easing.cubic) })
       : 0;
-  }, [active, fill, score]);
+  }, [active, fill, displayScore]);
 
   const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
 
@@ -61,12 +111,16 @@ export function HumanityProgress({
   // integer froze the number for weeks at a time. `now` stays rounded because
   // accessibilityValue is announced verbatim and "twenty-eight point six one"
   // is noise in a screen-reader pass.
-  const percent = (score * 100).toFixed(2);
+  const percent = (displayScore * 100).toFixed(2);
 
   // Only worth an arrow if the move survives the two decimals on screen —
   // otherwise the row reads "28.61% → 28.61%".
+  //
+  // Suppressed under a personal weighting: `previousScore` is the last *default*
+  // score this device showed, so comparing it against a reweighted number would
+  // report a move that never happened.
   const previousPercent =
-    previousScore === null ? null : (previousScore * 100).toFixed(2);
+    previousScore === null || isPersonal ? null : (previousScore * 100).toFixed(2);
   const moved = previousPercent !== null && previousPercent !== percent;
   const improved = previousScore !== null && score >= previousScore;
   const count = artifact.metrics.length;
@@ -93,8 +147,8 @@ export function HumanityProgress({
         <View
           accessible
           accessibilityRole="progressbar"
-          accessibilityValue={{ min: 0, max: 100, now: Math.round(score * 100) }}
-          accessibilityLabel={`Humanity progress: ${Math.round(score * 100)} percent, weighted across ${count} indicators.${
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(displayScore * 100) }}
+          accessibilityLabel={`Humanity progress: ${Math.round(displayScore * 100)} percent, ${isPersonal ? 'using your own weighting' : 'weighted'} across ${count} indicators.${
             worst ? ` Held down most by ${worst.label.toLowerCase()}.` : ''
           }`}
           style={styles.summary}>
@@ -129,10 +183,30 @@ export function HumanityProgress({
             />
           </View>
 
-          <ThemedText type="small" themeColor="textSecondary">
-            Weighted across {count} indicators
-            {worst ? `, minus what we are losing on ${worst.label.toLowerCase()}` : ''}.
-          </ThemedText>
+          {isPersonal ? (
+            // Replaces the "weighted across N indicators" line rather than
+            // joining it: under a personal weighting that sentence is no longer
+            // the interesting fact about the number, and the default score is —
+            // it is the only thing left to compare against.
+            <Pressable
+              accessibilityRole="button"
+              accessibilityHint="Opens the screen where you set how much each category matters"
+              onPress={() => router.push('/weighting')}
+              hitSlop={8}
+              style={styles.attribution}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Your weighting, across {count} indicators.{' '}
+              </ThemedText>
+              <ThemedText type="small" themeColor="textMuted">
+                Research default: {(score * 100).toFixed(2)}%
+              </ThemedText>
+            </Pressable>
+          ) : (
+            <ThemedText type="small" themeColor="textSecondary">
+              Weighted across {count} indicators
+              {worst ? `, minus what we are losing on ${worst.label.toLowerCase()}` : ''}.
+            </ThemedText>
+          )}
         </View>
 
         <Pressable
@@ -254,6 +328,11 @@ const styles = StyleSheet.create({
   },
   toggle: {
     alignSelf: 'flex-start',
+  },
+  attribution: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'baseline',
   },
   breakdown: {
     borderTopWidth: 1,

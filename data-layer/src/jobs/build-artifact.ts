@@ -106,6 +106,28 @@ function sourceOf(metric: MetricConfig): { sourceName: string; sourceUrl: string
       return { sourceName: 'NOAA Global Monitoring Laboratory', sourceUrl: 'https://gml.noaa.gov/ccgg/trends/global.html' };
     case 'ember:monthly-generation':
       return { sourceName: 'Ember', sourceUrl: 'https://ember-energy.org/data/monthly-electricity-data/' };
+    case 'nsidc:sea-ice-index-north':
+      return { sourceName: 'NSIDC Sea Ice Index', sourceUrl: 'https://nsidc.org/data/seaice_index' };
+    case 'who:disease-outbreak-news':
+      return { sourceName: 'World Health Organization', sourceUrl: 'https://www.who.int/emergencies/disease-outbreak-news' };
+    case 'unhcr:population':
+      return { sourceName: 'UNHCR Refugee Data Finder', sourceUrl: 'https://www.unhcr.org/refugee-statistics/' };
+    case 'acled:weekly-fatalities':
+      return { sourceName: 'ACLED', sourceUrl: 'https://acleddata.com/' };
+    case 'electricitymaps:carbon-intensity':
+      return { sourceName: 'Electricity Maps', sourceUrl: 'https://app.electricitymaps.com/' };
+    case 'gfw:integrated-alerts':
+      return { sourceName: 'Global Forest Watch', sourceUrl: 'https://www.globalforestwatch.org/' };
+    case 'seed:press-freedom':
+      return { sourceName: 'Reporters Without Borders', sourceUrl: 'https://rsf.org/en/index' };
+    case 'seed:democracy':
+      return { sourceName: 'V-Dem Institute', sourceUrl: 'https://v-dem.net/data/the-v-dem-dataset/' };
+    case 'seed:internet-shutdowns':
+      return { sourceName: 'Access Now #KeepItOn', sourceUrl: 'https://www.accessnow.org/keepiton-data/' };
+    case 'seed:modern-slavery':
+      return { sourceName: 'Walk Free', sourceUrl: 'https://www.walkfree.org/global-slavery-index/' };
+    case 'seed:food-insecurity':
+      return { sourceName: 'IPC / FEWS NET', sourceUrl: 'https://www.ipcinfo.org/' };
     default:
       throw new Error(`No source link known for adapter ${metric.sourceAdapterId}`);
   }

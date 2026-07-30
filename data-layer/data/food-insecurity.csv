@@ -1,0 +1,38 @@
+# FEWS NET / IPC — countries with populations in IPC Phase 3 or worse
+#
+# SOURCE   https://fews.net/  and  https://www.ipcinfo.org/
+# CADENCE  Monthly-ish; FEWS NET publishes country updates continuously and IPC
+#          releases analyses as they are completed.
+# VALUE    Number of countries with a population in IPC/CH Phase 3 (Crisis) or
+#          above. Lower is better.
+#
+# HOW TO UPDATE
+#   1. Open the IPC country analyses map at ipcinfo.org.
+#   2. Count countries with any population in Phase 3+ in the current period.
+#   3. Append: <YYYY-MM>-01,<count>,<url>,<today>
+#   4. Run: npm run data:refresh
+#
+# WHY THIS IS MANUAL
+#   FEWS NET has no public JSON API. It publishes shapefiles and per-country PDF
+#   reports; the IPC has a data portal but its API requires a key issued by
+#   request and its coverage is analysis-by-analysis rather than a world series.
+#   Neither offers "countries in Phase 3+ this month" as a queryable figure —
+#   it is a count someone has to make from the map.
+#
+#   If this becomes worth automating, the tractable route is the IPC's
+#   /api/public/population-tracking-tool endpoint with a requested key, then
+#   counting distinct countries where phase >= 3. That is a real piece of work,
+#   not a fetch call, which is why it is not done here.
+#
+# WATCH OUT
+#   Supplements `undernourishment` (FAO chronic prevalence, annual, slow) rather
+#   than replacing it. Acute food crisis and chronic hunger move differently and
+#   a country can improve on one while worsening on the other.
+#
+#   Coverage grows as IPC adds countries to its analysis programme, so a rising
+#   count partly reflects more countries being assessed. Check the denominator
+#   before reading a trend.
+#
+# This file is intentionally empty of data. `food-insecurity` is not in METRICS
+# until it has rows — see config/metrics.ts.
+observed_at,value,source_url,entered_on

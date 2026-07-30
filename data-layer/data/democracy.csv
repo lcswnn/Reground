@@ -1,0 +1,28 @@
+# V-Dem Liberal Democracy Index — world population-weighted average
+#
+# SOURCE   https://v-dem.net/data/the-v-dem-dataset/
+# CADENCE  Annual, published in March with the Democracy Report.
+# VALUE    v2x_libdem, population-weighted world average, 0-1, higher is better.
+#
+# HOW TO UPDATE
+#   V-Dem is the one source here that could be automated: the full dataset is a
+#   real CSV download, not a PDF. It is on the manual path only because the
+#   download sits behind a registration form and a per-version filename, so a
+#   fetcher would break on every annual release anyway.
+#
+#   1. Download the country-year Core dataset from the URL above.
+#   2. Compute the population-weighted mean of v2x_libdem across countries for
+#      each year, or take the figure from the Democracy Report's headline chart
+#      ("world average, population-weighted") if you would rather not.
+#   3. Append: <year>-01-01,<index>,<url>,<today>
+#   4. Run: npm run data:refresh
+#
+# WATCH OUT
+#   Use the POPULATION-weighted series, not the country-average one. They
+#   diverge sharply — India alone moves the population-weighted figure by more
+#   than a dozen small democracies move the country average — and mixing the two
+#   across years would manufacture a trend that is not there.
+#
+# This file is intentionally empty of data. `democracy-index` is not in METRICS
+# until it has rows — see config/metrics.ts.
+observed_at,value,source_url,entered_on

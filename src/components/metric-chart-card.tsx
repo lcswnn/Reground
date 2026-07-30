@@ -4,7 +4,7 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import {
   formatMetricValue,
   formatValueWithUnit,
-  isRegressing,
+  isMovingWrongWay,
   lastObservedYear,
   type HumanityMetric,
 } from '@/api/humanity';
@@ -52,9 +52,18 @@ export function MetricChartCard({
   // Same convention as the world tiles: red is the wrong direction, and the
   // charts stay green-ish/blue whether the number rises or falls, because what
   // matters is whether the movement is the good one.
-  const regressing = isRegressing(metric);
-  const accent = regressing ? theme.decline : theme.positive;
-  const accentSoft = regressing ? theme.declineSoft : theme.positiveSoft;
+  //
+  // `isMovingWrongWay`, not `isRegressing` — this card's accent colours the
+  // delta pill, and a delta is a statement about movement. Position against the
+  // baseline is the wrong question here: Arctic sea ice sits at the low end of
+  // its own scale, which normalises near zero rather than below it, and colouring
+  // by position painted a 1.9M km² loss green.
+  // This card has no progress bar — that lives in `humanity-progress`, which
+  // still reads by position because "how much of the problem is left" is a
+  // question about position. Here there is only the delta, so only movement.
+  const wrongWay = isMovingWrongWay(metric);
+  const accent = wrongWay ? theme.decline : theme.positive;
+  const accentSoft = wrongWay ? theme.declineSoft : theme.positiveSoft;
 
   const values = metric.series.map((point) => point.v);
   const firstYear = metric.series[0]?.t.slice(0, 4);

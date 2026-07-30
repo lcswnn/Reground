@@ -18,22 +18,81 @@
 /** Categories the artifact's `category` field can carry. */
 export type WorldCategory =
   | 'health'
-  | 'poverty'
+  | 'basic_needs'
+  | 'peace_safety'
   | 'environment'
-  | 'safety'
-  | 'access'
   | 'education'
-  | 'technology';
+  | 'freedom_rights'
+  | 'connection';
 
 export const WORLD_CATEGORIES: Record<WorldCategory, string> = {
   health: 'Health',
-  poverty: 'Poverty',
+  basic_needs: 'Basic needs',
+  peace_safety: 'Peace & safety',
   environment: 'Environment',
-  safety: 'Safety',
-  access: 'Tech access',
   education: 'Education',
-  technology: 'Technology',
+  freedom_rights: 'Freedom & rights',
+  connection: 'Connection',
 };
+
+/**
+ * The seven categories in weight order, heaviest first.
+ *
+ * Mirrors `CATEGORY_ORDER` in the data layer. Duplicated rather than imported
+ * because the data layer is outside the Expo bundle and has its own module
+ * resolution — the same reason the artifact types in `@/api/humanity` are
+ * hand-written rather than shared.
+ */
+export const WORLD_CATEGORY_ORDER: WorldCategory[] = [
+  'health',
+  'basic_needs',
+  'peace_safety',
+  'environment',
+  'education',
+  'freedom_rights',
+  'connection',
+];
+
+/**
+ * One-line framing for each category, shown under its slider.
+ *
+ * Present tense and plain: the weighting screen asks someone to decide how much
+ * a category matters to them, and "Peace, safety and the rule of law" is a
+ * better prompt for that than the bare word "Safety".
+ */
+export const CATEGORY_BLURBS: Record<WorldCategory, string> = {
+  health: 'Whether people survive childhood, childbirth, and preventable disease.',
+  basic_needs: 'Whether people have enough to eat and enough to live on.',
+  peace_safety: 'Whether people are safe from violence, conflict, and each other.',
+  environment: 'Whether the planet stays liveable for the people on it.',
+  education: 'Whether people can read, and how long they stay in school.',
+  freedom_rights: 'Whether people are free, counted, and able to stay home.',
+  connection: 'Whether people have power, internet, and the means to reach each other.',
+};
+
+/**
+ * Category ids used before the seven-category framework replaced them.
+ *
+ * The app reads whatever artifact is currently in the bucket, and an artifact
+ * built before this change carries the old ids. Without this map those tiles
+ * would render a raw `poverty` or `access` as their header until the next
+ * publish — technically the documented fallback behaviour, but avoidable, and
+ * the window is exactly when someone is most likely to be looking.
+ *
+ * Safe to delete once no deployed client can encounter a pre-framework artifact.
+ */
+const LEGACY_CATEGORIES: Record<string, WorldCategory> = {
+  poverty: 'basic_needs',
+  safety: 'peace_safety',
+  access: 'connection',
+  technology: 'connection',
+  rights: 'freedom_rights',
+};
+
+/** Maps a possibly-legacy category id onto the current set. */
+export function normalizeCategory(category: string): string {
+  return LEGACY_CATEGORIES[category] ?? category;
+}
 
 /**
  * Falls back to the raw key rather than rendering `undefined` if the data layer
@@ -41,7 +100,8 @@ export const WORLD_CATEGORIES: Record<WorldCategory, string> = {
  * not be able to blank out a tile's header.
  */
 export function categoryLabel(category: string): string {
-  return WORLD_CATEGORIES[category as WorldCategory] ?? category;
+  const current = normalizeCategory(category);
+  return WORLD_CATEGORIES[current as WorldCategory] ?? current;
 }
 
 /**
@@ -78,6 +138,20 @@ const METRIC_SUBJECTS: Record<string, string> = {
   'maternal-mortality': 'the rate of mothers dying in childbirth',
   'vaccination-coverage': 'the share of children fully vaccinated',
   'solar-price': 'the price of a watt of solar power',
+  'arctic-sea-ice': 'the extent of Arctic sea ice',
+  'forced-displacement': 'the number of people forced from their homes',
+  'disease-outbreaks': 'the number of outbreaks WHO reports each year',
+  // Not yet scored — see PENDING_METRICS in the data layer. Listed here so the
+  // sentence reads correctly the day one of them is promoted, rather than
+  // falling back to a lowercased tile label mid-sentence.
+  'conflict-fatalities': 'the number of people killed in conflict each week',
+  'grid-carbon-intensity': 'the carbon intensity of the electricity grid',
+  'deforestation-alerts': 'the area of forest under deforestation alert',
+  'press-freedom': 'the state of press freedom worldwide',
+  'democracy-index': 'the share of people living under liberal democracy',
+  'internet-shutdowns': 'the number of deliberate internet shutdowns',
+  'modern-slavery': 'the prevalence of modern slavery',
+  'food-insecurity': 'the number of countries in acute food crisis',
 };
 
 /**

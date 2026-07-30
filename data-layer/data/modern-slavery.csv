@@ -1,0 +1,28 @@
+# Walk Free Global Slavery Index — world prevalence
+#
+# SOURCE   https://www.walkfree.org/global-slavery-index/
+# CADENCE  Irregular; editions roughly every 5 years (2013, 2014, 2016, 2018, 2023).
+# VALUE    Estimated people in modern slavery per 1,000 population, worldwide.
+#          Lower is better.
+#
+# HOW TO UPDATE
+#   1. Open the latest edition. The headline is an absolute count ("50 million
+#      people"); the per-1,000 prevalence is in the global findings table.
+#   2. Append: <year>-01-01,<per_1000>,<url>,<today>
+#   3. Run: npm run data:refresh
+#
+# WATCH OUT
+#   Editions are not a time series. Walk Free has changed both methodology and
+#   data sources between editions, and says explicitly that figures should not be
+#   compared across them to infer a trend. This file therefore holds a handful of
+#   points that must not be read as a slope.
+#
+#   That is a genuine problem for this pipeline, which fits trends to series and
+#   projects them forward. If this metric is enabled, give it a long
+#   trailingWindowYears and expect nowcastConfidence to be poor — or treat it as
+#   display-only at weight 0. Do not let a four-point non-comparable series drive
+#   a progress score.
+#
+# This file is intentionally empty of data. `modern-slavery` is not in METRICS
+# until it has rows — see config/metrics.ts.
+observed_at,value,source_url,entered_on

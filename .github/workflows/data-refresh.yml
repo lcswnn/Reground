@@ -34,12 +34,37 @@ jobs:
       - name: Test the scoring model
         run: npm test
 
+      # Every key below is optional. An adapter whose credential is missing
+      # reports itself unavailable and its metric goes stale; the run still
+      # publishes. That is the Ember contract, extended to the newer keyed
+      # sources — one unset secret must not cost the other fifteen metrics.
+      #
+      # NSIDC, WHO and UNHCR need no credential at all and always run.
       - name: Refresh observations
         run: npm run data:refresh
         env:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           EMBER_API_KEY: ${{ secrets.EMBER_API_KEY }}
+          GFW_API_KEY: ${{ secrets.GFW_API_KEY }}
+          ELECTRICITY_MAPS_API_KEY: ${{ secrets.ELECTRICITY_MAPS_API_KEY }}
+          ELECTRICITY_MAPS_ZONE: ${{ vars.ELECTRICITY_MAPS_ZONE }}
+          ACLED_USERNAME: ${{ secrets.ACLED_USERNAME }}
+          ACLED_PASSWORD: ${{ secrets.ACLED_PASSWORD }}
+          ACLED_CLIENT_ID: ${{ secrets.ACLED_CLIENT_ID }}
+
+      # The seeded metrics cannot be fetched — RSF, Walk Free, Access Now and
+      # FEWS NET publish annual PDFs and web maps, not feeds. What this step
+      # automates is the *noticing*: it reports how far past its update window
+      # each CSV has drifted, so a file nobody has touched shows up in the run
+      # log instead of quietly freezing a tile at a two-year-old number.
+      #
+      # Deliberately non-fatal. A stale press-freedom score is not a reason to
+      # skip publishing sixteen other metrics.
+      - name: Check seeded data freshness
+        if: always()
+        continue-on-error: true
+        run: npm run data:seeds:check
 
       - name: Build artifact
         run: npm run data:artifact -- --out humanity.json

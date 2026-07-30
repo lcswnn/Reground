@@ -1,0 +1,29 @@
+# Access Now #KeepItOn — deliberate internet shutdowns per year
+#
+# SOURCE   https://www.accessnow.org/keepiton-data/
+# CADENCE  Annual report (usually Feb-May), with a rolling incident dataset.
+# VALUE    Total documented shutdowns worldwide in the calendar year. Lower is
+#          better.
+#
+# HOW TO UPDATE
+#   1. Open the KeepItOn data page above; the annual report headline is
+#      "N shutdowns in M countries".
+#   2. Append: <year>-01-01,<count>,<url>,<today>
+#   3. Run: npm run data:refresh
+#
+# WATCH OUT
+#   Access Now revises prior years upward as incidents are confirmed late, so
+#   re-enter recent years rather than only appending — the storage layer upserts
+#   on (metric_id, observed_at, source), so correcting an old row is safe and is
+#   the intended workflow.
+#
+#   This counts documented shutdowns, which depends on documentation capacity as
+#   well as on shutdowns. A rise can mean better monitoring. It is still the best
+#   series that exists for this, but it is why the metric is weighted lightly.
+#
+# Distinct from `internet-access` and `electricity-access`, which measure whether
+# infrastructure exists. This measures it being switched off on purpose.
+#
+# This file is intentionally empty of data. `internet-shutdowns` is not in
+# METRICS until it has rows — see config/metrics.ts.
+observed_at,value,source_url,entered_on

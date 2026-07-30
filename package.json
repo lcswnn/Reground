@@ -60,6 +60,7 @@
     "data:preview": "tsx data-layer/src/jobs/preview.ts",
     "data:artifact": "tsx data-layer/src/jobs/build-artifact.ts --out humanity.json",
     "data:publish": "tsx data-layer/src/jobs/publish.ts",
+    "data:seeds:check": "tsx data-layer/src/jobs/check-seeds.ts",
     "news:preview": "tsx news-layer/src/jobs/preview.ts",
     "news:refresh": "tsx news-layer/src/jobs/refresh.ts",
     "news:retag": "tsx news-layer/src/jobs/retag.ts"

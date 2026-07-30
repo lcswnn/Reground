@@ -1,0 +1,23 @@
+# RSF World Press Freedom Index — global score
+#
+# SOURCE   https://rsf.org/en/index
+# CADENCE  Annual, published early May.
+# VALUE    The "Global Score" RSF reports for the world, 0-100, higher is better.
+#          Not an average of the country scores — RSF computes and publishes the
+#          global figure itself. Use theirs.
+#
+# HOW TO UPDATE
+#   1. Open the index for the new year at the URL above.
+#   2. Find the global score on the landing page ("Global Score: NN.NN").
+#   3. Append one row: <year>-01-01,<score>,<url>,<today>
+#   4. Run: npm run data:refresh
+#
+# WATCH OUT
+#   RSF changed methodology in 2022 — the five-indicator model replaced the old
+#   questionnaire, and scores before and after are NOT comparable. Do not
+#   backfill pre-2022 years into this file. The series starts at 2022 for that
+#   reason, which is also why it is short and why the metric is weighted lightly.
+#
+# This file is intentionally empty of data. `press-freedom` is not in METRICS
+# until it has rows — see config/metrics.ts.
+observed_at,value,source_url,entered_on

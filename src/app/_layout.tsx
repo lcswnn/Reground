@@ -13,6 +13,7 @@ import { resyncReminder } from '@/lib/daily-reminder';
 import { Colors, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
+import { useWeightingSync } from '@/state/weighting-sync';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 
 SplashScreen.preventAutoHideAsync();
@@ -70,6 +71,13 @@ function RootNavigator() {
   const { session, isLoading } = useSession();
   const { isDark } = useThemePreference();
   const palette = isDark ? Colors.dark : Colors.light;
+
+  // Reconciles the device's category weighting with the server's copy, so a
+  // reinstall or a second device does not silently fall back to the research
+  // defaults. Mounted here because it needs the session and should run once for
+  // the whole app rather than per screen. Never blocks: it is a background sync
+  // around storage that already works offline.
+  useWeightingSync();
 
   /**
    * The root view sits outside the React tree, so no screen's `backgroundColor`
@@ -219,6 +227,14 @@ function RootNavigator() {
                 headerBackButtonDisplayMode: 'minimal',
                 // iOS already pushes from the right edge; this is what gets
                 // Android to do the same instead of its default fade upward.
+                animation: 'slide_from_right',
+              }}
+            />
+            <Stack.Screen
+              name="weighting"
+              options={{
+                title: 'What matters to you',
+                headerBackButtonDisplayMode: 'minimal',
                 animation: 'slide_from_right',
               }}
             />
