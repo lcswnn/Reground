@@ -236,6 +236,23 @@ function RootNavigator() {
                 title: 'What matters to you',
                 headerBackButtonDisplayMode: 'minimal',
                 animation: 'slide_from_right',
+                // The one screen in the app that turns off swipe-to-go-back.
+                //
+                // It is full of horizontal sliders that run nearly the width of
+                // the screen, so dragging one rightward from near the left edge
+                // lands inside the pop gesture's hit area. That recogniser is
+                // native, and a native gesture beats the JS responder the slider
+                // uses — the slider cannot defend itself, so the screen popped
+                // mid-drag instead of the value moving.
+                //
+                // iOS only, which is where the problem is: this option does
+                // nothing on Android, whose back gesture belongs to the system.
+                // Android's edge zone is narrower and the screen's own 24pt
+                // gutter mostly clears it, so the sliders are usable there —
+                // worth re-checking on a device if it ever feels sticky.
+                //
+                // The header back button still works, so nothing is unreachable.
+                gestureEnabled: false,
               }}
             />
           </Stack.Protected>
