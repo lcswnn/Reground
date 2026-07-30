@@ -9,7 +9,7 @@ import {
 import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+type Variant = 'primary' | 'secondary' | 'positive' | 'ghost';
 
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   title: string;
@@ -28,9 +28,19 @@ export function Button({
   const isDisabled = disabled || loading;
 
   const background =
-    variant === 'primary' ? theme.brand : variant === 'secondary' ? theme.backgroundElement : 'transparent';
+    variant === 'primary'
+      ? theme.brand
+      : variant === 'positive'
+        ? theme.positive
+        : variant === 'secondary'
+          ? theme.backgroundElement
+          : 'transparent';
   const foreground =
-    variant === 'primary' ? theme.textOnBrand : variant === 'ghost' ? theme.textSecondary : theme.text;
+    variant === 'primary' || variant === 'positive'
+      ? theme.textOnBrand
+      : variant === 'ghost'
+        ? theme.textSecondary
+        : theme.text;
 
   return (
     <Pressable

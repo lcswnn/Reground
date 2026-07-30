@@ -3,7 +3,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { CategoryPill } from '@/components/category-pill';
 import { MetricTag } from '@/components/metric-tag';
@@ -142,16 +142,36 @@ export default function StoryScreen() {
 
         <View style={styles.actions}>
           <Button
-            title={isSaved ? 'Saved' : 'Save this'}
-            variant={isSaved ? 'secondary' : 'primary'}
-            onPress={() => toggleSave.mutate(!isSaved)}
-            disabled={toggleSave.isPending || savedIdsQuery.isPending}
-          />
-          <Button
-            title="Read the full report"
-            variant="secondary"
+            title="Read Article"
             onPress={() => void WebBrowser.openBrowserAsync(story.source_url)}
           />
+          <View style={styles.actionRow}>
+            <View style={styles.actionItem}>
+              <Button
+                title={isSaved ? 'Saved' : 'Save'}
+                variant={isSaved ? 'positive' : 'secondary'}
+                onPress={() => toggleSave.mutate(!isSaved)}
+                disabled={toggleSave.isPending || savedIdsQuery.isPending}
+              />
+            </View>
+            <View style={styles.actionItem}>
+              <Button
+                title="Share"
+                variant="secondary"
+                onPress={() => {
+                  // Android ignores `url` entirely, so the link has to ride
+                  // along in `message`; iOS treats a bare `url` as a real link
+                  // (rich previews, "Copy Link", Safari/Reading List targets),
+                  // which putting it in `message` would downgrade to plain text.
+                  void Share.share(
+                    Platform.OS === 'ios'
+                      ? { url: story.source_url, title: story.title }
+                      : { message: `${story.title} — ${story.source_url}` },
+                  );
+                }}
+              />
+            </View>
+          </View>
         </View>
       </View>
     </ScrollView>
@@ -192,5 +212,12 @@ const styles = StyleSheet.create({
   actions: {
     gap: Spacing.two,
     marginTop: Spacing.two,
+  },
+  actionRow: {
+    flexDirection: 'row',
+    gap: Spacing.two,
+  },
+  actionItem: {
+    flex: 1,
   },
 });

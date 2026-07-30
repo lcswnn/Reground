@@ -11,6 +11,7 @@ import Animated, {
 import type { HumanityArtifact, HumanityMetric } from '@/api/humanity';
 import { barFill, isRegressing, lastObservedYear } from '@/api/humanity';
 import { ThemedText } from '@/components/themed-text';
+import { ValueTransition } from '@/components/value-transition';
 import { Radius, Spacing } from '@/constants/theme';
 import { categoryLabel } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
@@ -22,6 +23,11 @@ interface HumanityProgressProps {
   artifact: HumanityArtifact;
   /** False parks the bar empty — same contract as the tiles below it. */
   active?: boolean;
+  /**
+   * The score this device last showed, when a new measurement has since moved
+   * it. Null the rest of the time, which is nearly always.
+   */
+  previousScore?: number | null;
 }
 
 /**
@@ -32,7 +38,11 @@ interface HumanityProgressProps {
  * ought to show its work rather than be taken on faith, and because it is the
  * only place the detractors are visible as detractors.
  */
-export function HumanityProgress({ artifact, active = true }: HumanityProgressProps) {
+export function HumanityProgress({
+  artifact,
+  active = true,
+  previousScore = null,
+}: HumanityProgressProps) {
   const theme = useTheme();
   const fill = useSharedValue(0);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -47,7 +57,18 @@ export function HumanityProgress({ artifact, active = true }: HumanityProgressPr
 
   const fillStyle = useAnimatedStyle(() => ({ width: `${fill.value * 100}%` }));
 
-  const percent = Math.round(score * 100);
+  // Two decimals: at this scale a whole point is a huge move, so rounding to an
+  // integer froze the number for weeks at a time. `now` stays rounded because
+  // accessibilityValue is announced verbatim and "twenty-eight point six one"
+  // is noise in a screen-reader pass.
+  const percent = (score * 100).toFixed(2);
+
+  // Only worth an arrow if the move survives the two decimals on screen —
+  // otherwise the row reads "28.61% → 28.61%".
+  const previousPercent =
+    previousScore === null ? null : (previousScore * 100).toFixed(2);
+  const moved = previousPercent !== null && previousPercent !== percent;
+  const improved = previousScore !== null && score >= previousScore;
   const count = artifact.metrics.length;
 
   // Sorted by absolute impact so the breakdown opens on whatever is moving the
@@ -72,17 +93,29 @@ export function HumanityProgress({ artifact, active = true }: HumanityProgressPr
         <View
           accessible
           accessibilityRole="progressbar"
-          accessibilityValue={{ min: 0, max: 100, now: percent }}
-          accessibilityLabel={`Humanity progress: ${percent} percent, weighted across ${count} indicators.${
+          accessibilityValue={{ min: 0, max: 100, now: Math.round(score * 100) }}
+          accessibilityLabel={`Humanity progress: ${Math.round(score * 100)} percent, weighted across ${count} indicators.${
             worst ? ` Held down most by ${worst.label.toLowerCase()}.` : ''
           }`}
           style={styles.summary}>
           {/* Its own row so the number keeps the top-right corner it had when
               the label shared the line with it. */}
           <View style={styles.header}>
-            <ThemedText type="subtitle" style={{ color: theme.accentStrong }}>
-              {percent}%
-            </ThemedText>
+            {moved ? (
+              <ValueTransition
+                type="subtitle"
+                previous={`${previousPercent}%`}
+                current={`${percent}%`}
+                // Not `accentStrong`: once there are two numbers the second one
+                // is making a claim about direction, and the composite's own
+                // good/bad palette is the one that says it.
+                color={improved ? theme.positive : theme.decline}
+              />
+            ) : (
+              <ThemedText type="subtitle" style={{ color: theme.accentStrong }}>
+                {percent}%
+              </ThemedText>
+            )}
           </View>
 
           {/* Decorative — the wrapper above carries the value for screen readers,

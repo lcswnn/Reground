@@ -3,6 +3,7 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 
 import {
   formatMetricValue,
+  formatValueWithUnit,
   isRegressing,
   lastObservedYear,
   type HumanityMetric,
@@ -10,6 +11,7 @@ import {
 import { NewDataBadge } from '@/components/new-data-badge';
 import { Sparkline } from '@/components/sparkline';
 import { ThemedText } from '@/components/themed-text';
+import { ValueTransition } from '@/components/value-transition';
 import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { categoryLabel } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
@@ -21,6 +23,8 @@ interface MetricChartCardProps {
   active?: boolean;
   /** Source published a new measurement since this device last saw one. */
   isNew?: boolean;
+  /** The value shown before that measurement landed; drives the `→` pair. */
+  previousValue?: number;
 }
 
 /**
@@ -31,7 +35,12 @@ interface MetricChartCardProps {
  * one renders the served artifact, which is where the real series now live —
  * decades of history per indicator, some of it reaching back to 1750.
  */
-export function MetricChartCard({ metric, active = true, isNew = false }: MetricChartCardProps) {
+export function MetricChartCard({
+  metric,
+  active = true,
+  isNew = false,
+  previousValue,
+}: MetricChartCardProps) {
   const theme = useTheme();
 
   // The list already tracks viewability to decide when a chart draws itself, so
@@ -72,9 +81,18 @@ export function MetricChartCard({ metric, active = true, isNew = false }: Metric
         </View>
       </View>
 
-      <ThemedText type="title" style={styles.value}>
-        {formatMetricValue(metric)}
-      </ThemedText>
+      {previousValue === undefined ? (
+        <ThemedText type="title" style={styles.value}>
+          {formatMetricValue(metric)}
+        </ThemedText>
+      ) : (
+        <ValueTransition
+          previous={formatValueWithUnit(previousValue, metric.unit)}
+          current={formatMetricValue(metric)}
+          color={accent}
+          style={styles.value}
+        />
+      )}
 
       <Sparkline values={values} color={accent} active={active} height={56} />
 

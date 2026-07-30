@@ -106,8 +106,14 @@ export async function fetchHumanityArtifact(): Promise<HumanityArtifact> {
  * decisions.
  */
 export function formatMetricValue(metric: HumanityMetric): string {
-  const { currentValue: value, unit } = metric;
+  return formatValueWithUnit(metric.currentValue, metric.unit);
+}
 
+/**
+ * The same formatting for a bare number, so a previously-seen value can be
+ * rendered beside the current one without inventing a synthetic metric.
+ */
+export function formatValueWithUnit(value: number, unit: string): string {
   // Two significant-ish digits below 10, none above 100 — a rate of 3.62 wants
   // its decimals, a percentage of 94.49 does not.
   const rounded =

@@ -18,7 +18,7 @@ import { fetchProfile } from '@/api/profile';
 import { useAppReady } from '@/lib/app-ready';
 import { selectDailyCard } from '@/lib/daily-card';
 import { formatDay, todayISO } from '@/lib/format';
-import { useFreshMetrics } from '@/lib/fresh-data';
+import { useFreshData } from '@/lib/fresh-data';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
 
@@ -60,7 +60,8 @@ export default function TodayScreen() {
 
   // Which metrics carry a measurement this device hasn't seen. Not "changed
   // since yesterday" — every nowcast is, daily, by construction.
-  const freshMetricIds = useFreshMetrics(humanityQuery.data);
+  const fresh = useFreshData(humanityQuery.data);
+  const freshMetricIds = fresh.ids;
 
   const birthDate = profileQuery.data?.birth_date ?? null;
 
@@ -130,7 +131,11 @@ export default function TodayScreen() {
 
         {humanityQuery.data ? (
           <View style={styles.summarySection}>
-            <HumanityProgress artifact={humanityQuery.data} active={isRevealed} />
+            <HumanityProgress
+              artifact={humanityQuery.data}
+              active={isRevealed}
+              previousScore={fresh.previousScore}
+            />
           </View>
         ) : humanityQuery.error ? (
           <View style={styles.summarySection}>

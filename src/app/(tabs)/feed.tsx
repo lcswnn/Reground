@@ -163,12 +163,15 @@ function FilterChip({
       style={[
         styles.chip,
         {
-          backgroundColor: active ? theme.brand : theme.backgroundElement,
+          backgroundColor: active ? theme.info : theme.backgroundElement,
         },
       ]}>
+      {/* `info` flips from a dark blue in light mode to a light one in dark
+          mode, so the label rides on `background` — the one token that is
+          always the opposite end of the scheme — rather than a fixed ink. */}
       <ThemedText
         type="smallBold"
-        style={{ color: active ? theme.textOnBrand : theme.textSecondary }}>
+        style={{ color: active ? theme.background : theme.textSecondary }}>
         {label}
       </ThemedText>
     </Pressable>

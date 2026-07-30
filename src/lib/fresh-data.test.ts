@@ -23,8 +23,8 @@ async function relaunch(): Promise<FreshData> {
   return import('./fresh-data');
 }
 
-function metric(id: string, lastObservedAt: string): HumanityMetric {
-  return { id, lastObservedAt } as HumanityMetric;
+function metric(id: string, lastObservedAt: string, currentValue = 0): HumanityMetric {
+  return { id, lastObservedAt, currentValue } as HumanityMetric;
 }
 
 let run = 0;
@@ -33,6 +33,11 @@ function artifact(...metrics: HumanityMetric[]): HumanityArtifact {
   // `generatedAt` gates re-reconciliation, so each build needs its own.
   run += 1;
   return { generatedAt: `2026-07-${String(run).padStart(2, '0')}T00:00:00.000Z`, metrics } as HumanityArtifact;
+}
+
+/** Same, with a composite score attached. */
+function scored(score: number, ...metrics: HumanityMetric[]): HumanityArtifact {
+  return { ...artifact(...metrics), compositeScore: score };
 }
 
 beforeEach(() => {
@@ -128,5 +133,69 @@ describe('fresh metrics', () => {
     // Pull to refresh, and a new artifact lands.
     app.reconcileFreshMetrics(artifact(metric('undernourishment', '2025-01-01')));
     expect(app.getFreshMetricIds().has('undernourishment')).toBe(true);
+  });
+});
+
+describe('previous values', () => {
+  it('reports the value shown before a new measurement landed', async () => {
+    const first = await relaunch();
+    first.reconcileFreshMetrics(artifact(metric('child-mortality', '2024-01-01', 3.62)));
+
+    const second = await relaunch();
+    second.reconcileFreshMetrics(artifact(metric('child-mortality', '2025-01-01', 3.41)));
+
+    expect(second.getFreshSnapshot().previousValues.get('child-mortality')).toBe(3.62);
+  });
+
+  it('carries none for a metric that is not badged', async () => {
+    const first = await relaunch();
+    first.reconcileFreshMetrics(artifact(metric('co2-concentration', '2026-07-27', 421)));
+
+    const second = await relaunch();
+    second.reconcileFreshMetrics(artifact(metric('co2-concentration', '2026-07-28', 422)));
+
+    // The nowcast moved, but nothing was measured. An arrow here would appear
+    // on every metric, every launch.
+    expect(second.getFreshSnapshot().previousValues.has('co2-concentration')).toBe(false);
+  });
+
+  it('keeps comparing against what the user last actually saw', async () => {
+    const first = await relaunch();
+    first.reconcileFreshMetrics(artifact(metric('child-mortality', '2024-01-01', 3.62)));
+
+    const second = await relaunch();
+    second.reconcileFreshMetrics(artifact(metric('child-mortality', '2025-01-01', 3.41)));
+
+    // Closed the app without scrolling to it; the nowcast drifts on.
+    const third = await relaunch();
+    third.reconcileFreshMetrics(artifact(metric('child-mortality', '2025-01-01', 3.4)));
+
+    expect(third.getFreshSnapshot().previousValues.get('child-mortality')).toBe(3.62);
+  });
+
+  it('tracks the composite score across a measurement', async () => {
+    const first = await relaunch();
+    first.reconcileFreshMetrics(scored(0.2859, metric('child-mortality', '2024-01-01', 3.62)));
+    // Nothing fresh, so nothing to compare against.
+    expect(first.getFreshSnapshot().previousScore).toBe(null);
+
+    const second = await relaunch();
+    second.reconcileFreshMetrics(scored(0.2861, metric('child-mortality', '2025-01-01', 3.41)));
+
+    expect(second.getFreshSnapshot().previousScore).toBe(0.2859);
+  });
+
+  it('freezes the stored score while a badge is live', async () => {
+    const first = await relaunch();
+    first.reconcileFreshMetrics(scored(0.2859, metric('child-mortality', '2024-01-01', 3.62)));
+
+    const second = await relaunch();
+    second.reconcileFreshMetrics(scored(0.2861, metric('child-mortality', '2025-01-01', 3.41)));
+
+    // Still unread on the next launch: the arrow has to still say 0.2859.
+    const third = await relaunch();
+    third.reconcileFreshMetrics(scored(0.2862, metric('child-mortality', '2025-01-01', 3.41)));
+
+    expect(third.getFreshSnapshot().previousScore).toBe(0.2859);
   });
 });

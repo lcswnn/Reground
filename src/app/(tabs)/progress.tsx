@@ -15,7 +15,7 @@ import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
 import { useTheme } from "@/hooks/use-theme";
-import { useFreshMetrics } from "@/lib/fresh-data";
+import { useFreshData } from "@/lib/fresh-data";
 import { queryKeys } from "@/lib/query";
 
 /** How much of a card has to be on screen before its chart draws itself. */
@@ -52,7 +52,7 @@ export default function ProgressScreen() {
 
   // Which cards carry a measurement this device hasn't seen. Not "changed since
   // yesterday" — every nowcast is, daily, by construction.
-  const freshMetricIds = useFreshMetrics(data);
+  const fresh = useFreshData(data);
 
   // Longest history first, so the charts that actually earn the name "the long
   // view" lead — CO₂ per person reaches back to 1750, internet access to 2005.
@@ -86,7 +86,8 @@ export default function ProgressScreen() {
                 <MetricChartCard
                   metric={item}
                   active={visibleIds.includes(item.id)}
-                  isNew={freshMetricIds.has(item.id)}
+                  isNew={fresh.ids.has(item.id)}
+                  previousValue={fresh.previousValues.get(item.id)}
                 />
               )}
               onScroll={onScroll}

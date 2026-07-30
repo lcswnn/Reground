@@ -22,7 +22,14 @@ import type { HumanityArtifact, HumanityMetric } from "@/api/humanity";
  * badge should answer is "did this change since *I* last saw it".
  */
 
-const STORAGE_KEY = "humanitas.seen-observations";
+/**
+ * Bumped from `humanitas.seen-observations` when entries grew from a bare
+ * timestamp to `{ at, value }`. A new key rather than a migration: the module
+ * already handles an unseen metric by recording it silently, so the worst an
+ * upgrading device suffers is one badge-free launch — cheaper than carrying
+ * shape-detection code forever.
+ */
+const STORAGE_KEY = "humanitas.seen-observations.v2";
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 
@@ -41,35 +48,75 @@ const MS_PER_DAY = 24 * 60 * 60 * 1000;
  */
 const MIN_ADVANCE_DAYS = 25;
 
-type SeenMap = Record<string, string>;
+interface SeenEntry {
+  /** `lastObservedAt` as of that sighting. */
+  at: string;
+  /**
+   * The nowcast this device actually *displayed* at that sighting — not
+   * `lastObservedValue`. The cards lead with `currentValue`, so pairing a
+   * stored observation with a displayed nowcast would render an arrow between
+   * two different bases and overstate the jump.
+   */
+  value: number;
+}
+
+interface SeenStore {
+  metrics: Record<string, SeenEntry>;
+  /** Composite score at the last sighting, frozen while any badge is live. */
+  score: number | null;
+}
 
 /** Lazily read; the module owns this object and mutates it in place. */
-let seen: SeenMap | null = null;
+let seen: SeenStore | null = null;
 
 /**
- * Ids to badge this session. Deliberately not recomputed when `seen` changes —
- * see `markMetricSeen` for why the badge has to outlive being marked as read.
+ * What to badge this session, and what the numbers were beforehand.
+ *
+ * One object so `useSyncExternalStore` has a single stable snapshot to hand
+ * back. Deliberately not recomputed when `seen` changes — see `markMetricSeen`
+ * for why the badge has to outlive being marked as read.
  */
-let fresh: ReadonlySet<string> | null = null;
+export interface FreshSnapshot {
+  /** Metric ids carrying a measurement this device hasn't seen. */
+  ids: ReadonlySet<string>;
+  /** For those ids only: the value shown before the new measurement landed. */
+  previousValues: ReadonlyMap<string, number>;
+  /** Composite score before it landed, or null when nothing is fresh. */
+  previousScore: number | null;
+}
+
+let fresh: FreshSnapshot | null = null;
 
 /** The artifact `fresh` was computed from, so a mid-session refresh re-runs. */
 let reconciledAt: string | null = null;
 
 const listeners = new Set<() => void>();
 
-const EMPTY: ReadonlySet<string> = new Set();
+const EMPTY: FreshSnapshot = {
+  ids: new Set(),
+  previousValues: new Map(),
+  previousScore: null,
+};
 
-function readSeen(): SeenMap {
+function readSeen(): SeenStore {
   if (seen) return seen;
 
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
-    seen = parsed && typeof parsed === "object" ? (parsed as SeenMap) : {};
+    const metrics =
+      parsed && typeof parsed === "object" && "metrics" in parsed
+        ? ((parsed as SeenStore).metrics ?? {})
+        : {};
+    const score =
+      parsed && typeof parsed === "object" && "score" in parsed
+        ? ((parsed as SeenStore).score ?? null)
+        : null;
+    seen = { metrics, score };
   } catch {
     // Corrupt JSON, or storage unavailable on web. Starting empty costs one
     // silent seeding pass, which is much better than failing a render.
-    seen = {};
+    seen = { metrics: {}, score: null };
   }
 
   return seen;
@@ -77,7 +124,10 @@ function readSeen(): SeenMap {
 
 function persist(): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(seen ?? {}));
+    localStorage.setItem(
+      STORAGE_KEY,
+      JSON.stringify(seen ?? { metrics: {}, score: null }),
+    );
   } catch {
     // The badge is a nicety. It is not worth an error boundary.
   }
@@ -106,24 +156,46 @@ export function reconcileFreshMetrics(artifact: HumanityArtifact): void {
   if (reconciledAt === artifact.generatedAt) return;
 
   const store = readSeen();
-  const next = new Set(fresh ?? EMPTY);
+  const next = new Set(fresh?.ids ?? EMPTY.ids);
+  const previousValues = new Map(fresh?.previousValues ?? EMPTY.previousValues);
+  // Read before the write below, so a launch that badges nothing still reports
+  // the score it is about to overwrite rather than the one it just stored.
+  const scoreBefore = store.score;
   let dirty = false;
 
   for (const metric of artifact.metrics) {
-    const previous = store[metric.id];
+    const previous = store.metrics[metric.id];
 
-    if (previous && hasAdvanced(previous, metric.lastObservedAt)) {
+    if (previous && hasAdvanced(previous.at, metric.lastObservedAt)) {
       next.add(metric.id);
+      // First badge wins: a metric that stays fresh across several launches
+      // keeps comparing against what the user last actually saw, not against
+      // the intermediate nowcast from the launch in between.
+      if (!previousValues.has(metric.id)) {
+        previousValues.set(metric.id, previous.value);
+      }
       continue;
     }
 
-    if (previous !== metric.lastObservedAt) {
-      store[metric.id] = metric.lastObservedAt;
+    if (previous?.at !== metric.lastObservedAt || previous.value !== metric.currentValue) {
+      store.metrics[metric.id] = { at: metric.lastObservedAt, value: metric.currentValue };
       dirty = true;
     }
   }
 
-  fresh = next;
+  // Frozen for exactly as long as some metric is badged, for the same reason
+  // the per-metric values are: the composite only moved *because* one of those
+  // measurements landed, so the arrow has to survive until they're read.
+  if (next.size === 0 && store.score !== artifact.compositeScore) {
+    store.score = artifact.compositeScore;
+    dirty = true;
+  }
+
+  fresh = {
+    ids: next,
+    previousValues,
+    previousScore: next.size > 0 ? scoreBefore : null,
+  };
   reconciledAt = artifact.generatedAt;
   if (dirty) persist();
 
@@ -140,9 +212,12 @@ export function reconcileFreshMetrics(artifact: HumanityArtifact): void {
  */
 export function markMetricSeen(metric: HumanityMetric): void {
   const store = readSeen();
-  if (store[metric.id] === metric.lastObservedAt) return;
+  const previous = store.metrics[metric.id];
+  if (previous?.at === metric.lastObservedAt && previous.value === metric.currentValue) {
+    return;
+  }
 
-  store[metric.id] = metric.lastObservedAt;
+  store.metrics[metric.id] = { at: metric.lastObservedAt, value: metric.currentValue };
   persist();
 }
 
@@ -153,20 +228,32 @@ function subscribe(listener: () => void): () => void {
   };
 }
 
+/** The badge snapshot. Stable reference, so it is safe as a store snapshot. */
+export function getFreshSnapshot(): FreshSnapshot {
+  return fresh ?? EMPTY;
+}
+
 /** Metric ids to badge. Stable reference, so it is safe as a store snapshot. */
 export function getFreshMetricIds(): ReadonlySet<string> {
-  return fresh ?? EMPTY;
+  return getFreshSnapshot().ids;
+}
+
+/** What's new since this device last looked, and what it read before. */
+export function useFreshData(
+  artifact: HumanityArtifact | undefined,
+): FreshSnapshot {
+  useEffect(() => {
+    if (artifact) reconcileFreshMetrics(artifact);
+  }, [artifact]);
+
+  // `getFreshSnapshot` returns a stable reference — either the module's own
+  // snapshot or the shared empty one — so this never loops.
+  return useSyncExternalStore(subscribe, getFreshSnapshot, getFreshSnapshot);
 }
 
 /** Metric ids carrying a new measurement since this device last saw one. */
 export function useFreshMetrics(
   artifact: HumanityArtifact | undefined,
 ): ReadonlySet<string> {
-  useEffect(() => {
-    if (artifact) reconcileFreshMetrics(artifact);
-  }, [artifact]);
-
-  // `getFreshMetricIds` returns a stable reference — either the module's own
-  // Set or the shared empty one — so this never loops.
-  return useSyncExternalStore(subscribe, getFreshMetricIds, getFreshMetricIds);
+  return useFreshData(artifact).ids;
 }
