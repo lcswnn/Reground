@@ -6,6 +6,7 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { DailyCard } from '@/components/daily-card';
 import { HumanityProgress } from '@/components/humanity-progress';
+import { ReminderPrompt } from '@/components/reminder-prompt';
 import { ScrollTopFade } from '@/components/scroll-top-fade';
 import { SinceYouWereBorn } from '@/components/since-you-were-born';
 import { ThemedText } from '@/components/themed-text';
@@ -128,6 +129,12 @@ export default function TodayScreen() {
             {greeting}, {firstName}.
           </ThemedText>
         </SafeAreaView>
+
+        {/* Asks for notifications in the app's own words, before iOS asks in
+            its. Renders nothing once the reader has answered either way — see
+            `shouldOfferReminder`. Placed above the fold rather than buried,
+            because a permission ask nobody sees is the same as not asking. */}
+        <ReminderPrompt />
 
         {humanityQuery.data ? (
           <View style={styles.summarySection}>

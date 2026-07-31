@@ -11,7 +11,13 @@ import { EARLIEST_BIRTHDAY, LATEST_BIRTHDAY } from '@/constants/birthday';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { fetchProfile, updateBirthDate } from '@/api/profile';
-import { useDailyReminder } from '@/lib/daily-reminder';
+import {
+  formatReminderTime,
+  openNotificationSettings,
+  useDailyReminder,
+  useNotificationPermission,
+} from '@/lib/daily-reminder';
+import { isBlockedBySystem } from '@/lib/notification-ask';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
 import { useThemePreference } from '@/lib/theme-preference';
@@ -175,18 +181,44 @@ export default function SettingsScreen() {
 function DailyReminderSection() {
   const theme = useTheme();
   const reminder = useDailyReminder();
+  const permission = useNotificationPermission();
   const [pickerOpen, setPickerOpen] = useState(false);
+
+  /**
+   * The time being edited, or null when there is no unsaved change.
+   *
+   * Mirrors the birthday field above rather than writing on every turn of the
+   * wheel: the iOS picker fires `onValueChange` continuously as it spins, so
+   * committing there rescheduled the notification dozens of times per drag and
+   * left whatever value the finger happened to lift on. A draft plus an
+   * explicit Save means the wheel is somewhere to think and the reminder only
+   * moves once, when asked.
+   */
+  const [draft, setDraft] = useState<{ hour: number; minute: number } | null>(null);
 
   if (!reminder.isSupported) return null;
 
+  const blocked = isBlockedBySystem({ isSupported: reminder.isSupported, permission });
+
+  const shown = draft ?? { hour: reminder.hour, minute: reminder.minute };
+  const isChanged = draft !== null && (draft.hour !== reminder.hour || draft.minute !== reminder.minute);
+
   // The picker wants a Date; only its clock fields are read back out.
   const at = new Date();
-  at.setHours(reminder.hour, reminder.minute, 0, 0);
+  at.setHours(shown.hour, shown.minute, 0, 0);
+
+  function closePicker() {
+    setPickerOpen(false);
+    // Discards an uncommitted change, which is what closing without saving
+    // should mean — leaving it would make the row show a time that is not the
+    // one scheduled.
+    setDraft(null);
+  }
 
   return (
     <View style={styles.section}>
       <ThemedText type="eyebrow" themeColor="textMuted">
-        Daily card
+        Daily reminder
       </ThemedText>
 
       <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
@@ -194,26 +226,45 @@ function DailyReminderSection() {
           <View style={styles.rowText}>
             <ThemedText type="defaultSemiBold">Remind me</ThemedText>
             <ThemedText type="small" themeColor="textSecondary">
-              One nudge a day, at the same time, when a new card is waiting.
+              One nudge a day, at the same time, when the day&rsquo;s stories and
+              your card are ready.
             </ThemedText>
           </View>
 
           <Switch
             value={reminder.enabled}
             onValueChange={reminder.setEnabled}
-            accessibilityLabel="Daily card reminder"
+            accessibilityLabel="Daily reminder"
+            // A switch that cannot go on should not invite the attempt. The row
+            // below explains why and offers the only thing that can fix it.
+            disabled={blocked}
             trackColor={{ true: theme.brand, false: theme.backgroundSelected }}
             ios_backgroundColor={theme.backgroundSelected}
           />
         </View>
 
-        {reminder.enabled ? (
+        {/* The state the old version handled by silently flipping the switch
+            back, which reads as a bug. Notifications are refused at the OS
+            level, so nothing in this app can turn them on — but it can say so,
+            and it can open the one screen that can. */}
+        {blocked ? (
+          <>
+            <ThemedText type="small" themeColor="textSecondary">
+              Notifications are turned off for Humanitas in your device settings.
+            </ThemedText>
+            <Button
+              title="Open Settings"
+              variant="secondary"
+              onPress={openNotificationSettings}
+            />
+          </>
+        ) : reminder.enabled ? (
           <>
             <Pressable
               accessibilityRole="button"
               accessibilityLabel={`Reminder time: ${reminder.timeLabel}`}
               accessibilityState={{ expanded: pickerOpen }}
-              onPress={() => setPickerOpen((open) => !open)}
+              onPress={() => (pickerOpen ? closePicker() : setPickerOpen(true))}
               style={[
                 styles.timeRow,
                 { borderColor: pickerOpen ? theme.brand : theme.border },
@@ -221,27 +272,42 @@ function DailyReminderSection() {
               <ThemedText type="small" themeColor="textSecondary">
                 Time
               </ThemedText>
-              <ThemedText type="defaultSemiBold">{reminder.timeLabel}</ThemedText>
+              <ThemedText type="defaultSemiBold">
+                {isChanged ? formatReminderTime(shown) : reminder.timeLabel}
+              </ThemedText>
             </Pressable>
 
             {pickerOpen ? (
-              <View style={Platform.OS === 'ios' ? styles.pickerInline : undefined}>
-                <DateTimePicker
-                  value={at}
-                  mode="time"
-                  accentColor={theme.brand}
-                  onValueChange={(_event, date) => {
-                    reminder.setTime(date.getHours(), date.getMinutes());
-                    // iOS keeps the wheel up so the time can be nudged; the
-                    // Android dialog has already dismissed itself by here.
-                    if (Platform.OS !== 'ios') setPickerOpen(false);
+              <>
+                <View style={Platform.OS === 'ios' ? styles.pickerInline : undefined}>
+                  <DateTimePicker
+                    value={at}
+                    mode="time"
+                    accentColor={theme.brand}
+                    onValueChange={(_event, date) => {
+                      setDraft({ hour: date.getHours(), minute: date.getMinutes() });
+                    }}
+                    onDismiss={closePicker}
+                  />
+                </View>
+
+                <Button
+                  title={isChanged ? 'Save time' : 'Saved'}
+                  variant={isChanged ? 'primary' : 'secondary'}
+                  disabled={!isChanged}
+                  onPress={() => {
+                    if (!draft) return;
+                    reminder.setTime(draft.hour, draft.minute);
+                    // Collapse on save, so the wheel standing over a value that
+                    // is already committed cannot read as the save not landing.
+                    closePicker();
                   }}
-                  onDismiss={() => setPickerOpen(false)}
                 />
-              </View>
+              </>
             ) : null}
           </>
         ) : null}
+
       </View>
     </View>
   );
