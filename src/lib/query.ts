@@ -31,4 +31,10 @@ export const queryKeys = {
   profile: (userId: string) => ['profile', userId] as const,
   savedStoryIds: ['saved-story-ids'] as const,
   savedStories: ['saved-stories'] as const,
+  /**
+   * Keyed by date *and* metric, matching how the tally is grouped server-side:
+   * the card is derived per device, so two readers on one day do not always get
+   * the same indicator.
+   */
+  reactionTally: (date: string, metricId: string) => ['reaction-tally', date, metricId] as const,
 };

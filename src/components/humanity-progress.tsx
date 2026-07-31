@@ -202,10 +202,35 @@ export function HumanityProgress({
               </ThemedText>
             </Pressable>
           ) : (
-            <ThemedText type="small" themeColor="textSecondary">
-              Weighted across {count} indicators
-              {worst ? `, minus what we are losing on ${worst.label.toLowerCase()}` : ''}.
-            </ThemedText>
+            /**
+             * The way in to the weighting screen, for somebody who has never
+             * used it.
+             *
+             * This used to be a flat sentence with no link, and the Progress tab
+             * carried the only entry point in the app — which meant the reader
+             * most likely to disagree with this number, the one looking straight
+             * at it on the home screen, had nothing to do about it. Worse, the
+             * personalised version of this line *is* a link, so the affordance
+             * appeared only once you no longer needed telling it existed.
+             *
+             * It matters more than a missing link usually would, because the
+             * headline is an opinion wearing a percentage. "28.61%" is a
+             * weighted judgement about which parts of human progress count, and
+             * a reader who thinks climate should count double is not wrong —
+             * they are the intended user of a control they could not find.
+             */
+            <Pressable
+              accessibilityRole="button"
+              accessibilityHint="Opens the screen where you set how much each category matters"
+              onPress={() => router.push('/weighting')}
+              hitSlop={8}
+              style={styles.attribution}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Weighted across {count} indicators
+                {worst ? `, minus what we are losing on ${worst.label.toLowerCase()}` : ''}.{' '}
+              </ThemedText>
+              <ThemedText type="linkPrimary">Weight it your way →</ThemedText>
+            </Pressable>
           )}
         </View>
 

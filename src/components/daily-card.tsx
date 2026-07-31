@@ -1,3 +1,4 @@
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { useEffect } from 'react';
@@ -5,7 +6,9 @@ import { Linking, Pressable, StyleSheet, View } from 'react-native';
 import Animated, { FadeIn } from 'react-native-reanimated';
 
 import { formatMetricValue } from '@/api/humanity';
+import { fetchReactionTally, submitReaction } from '@/api/reactions';
 import { NewDataBadge } from '@/components/new-data-badge';
+import { ReactionTally } from '@/components/reaction-tally';
 import { Sparkline } from '@/components/sparkline';
 import { DaysPill } from '@/components/days-pill';
 import { ThemedText } from '@/components/themed-text';
@@ -13,6 +16,9 @@ import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { categoryLabel } from '@/constants/world-metrics';
 import { useTheme } from '@/hooks/use-theme';
 import { markMetricSeen } from '@/lib/fresh-data';
+import { queryKeys } from '@/lib/query';
+import { EMPTY_COUNTS } from '@/lib/reaction-tally';
+import { useSession } from '@/lib/session';
 import { REACTIONS, useDailyStreak, markCardSeen, type ReactionId } from '@/lib/streak';
 import type { DailyCard as DailyCardData } from '@/lib/daily-card';
 
@@ -47,6 +53,47 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
   // `total` rather than `streak`: days ever, not days in a row. See `DaysPill`
   // for why the consecutive count stopped being the thing on screen.
   const { total, reaction, react } = useDailyStreak(card.date);
+  const { session } = useSession();
+  const queryClient = useQueryClient();
+  const userId = session?.user.id;
+
+  /**
+   * The shared tally, fetched only once the reader has answered.
+   *
+   * `enabled` on their own reaction rather than on the card being visible: the
+   * numbers are not shown until they have voted, so fetching earlier would be a
+   * request for something nobody is going to see — on every launch, for every
+   * reader, forever.
+   */
+  const { data: tally = EMPTY_COUNTS } = useQuery({
+    queryKey: queryKeys.reactionTally(card.date, card.metric.id),
+    queryFn: () => fetchReactionTally(card.date, card.metric.id),
+    enabled: !!reaction,
+    // Everyone else's answers arrive while this reader is looking at it, and a
+    // tally that never moves defeats the "other people are here" point.
+    staleTime: 60_000,
+  });
+
+  /**
+   * Records the reaction locally first, then shares it.
+   *
+   * The local write is what lights the button, and it must not wait on a
+   * network round trip or depend on one succeeding. A failed upload costs the
+   * reader the tally, never their own answer — which is why this swallows the
+   * error rather than surfacing it.
+   */
+  function onReact(next: ReactionId): void {
+    react(next);
+    if (!userId) return;
+
+    void submitReaction(userId, card.date, card.metric.id, next)
+      .then(() =>
+        queryClient.invalidateQueries({
+          queryKey: queryKeys.reactionTally(card.date, card.metric.id),
+        }),
+      )
+      .catch(() => {});
+  }
 
   // Seeing the card is what counts, not reacting to it — see `recordSeen`. This
   // fires once per day in practice; the store is idempotent within a date, so
@@ -134,7 +181,11 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
           {card.detail}
         </ThemedText>
 
-        <Reactions selected={reaction} onSelect={react} />
+        <Reactions selected={reaction} onSelect={onReact} />
+
+        {/* Only after the reader has answered. Showing the split first would
+            make this a poll to agree with rather than a question to answer. */}
+        {reaction ? <ReactionTally counts={tally} selected={reaction} /> : null}
 
         <Pressable
           accessibilityRole="link"

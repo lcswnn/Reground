@@ -105,6 +105,26 @@ export type SavedStory = {
   created_at: string;
 };
 
+/** Mirrors the check constraint on `card_reactions.reaction`. */
+export type ReactionKind = 'hope' | 'surprised';
+
+/**
+ * One reader's answer to one day's card.
+ *
+ * `card_date` is the reader's *local* date, not a server timestamp: the card is
+ * chosen per-device by local calendar day, so filing a reaction by UTC would
+ * attach it to a card that reader was never shown.
+ */
+export type CardReaction = {
+  user_id: string;
+  card_date: string;
+  /** The indicator the card was about — the tally groups on this and the date. */
+  metric_id: string;
+  reaction: ReactionKind;
+  created_at: string;
+  updated_at: string;
+};
+
 export type StoryRead = {
   user_id: string;
   story_id: string;
@@ -189,12 +209,27 @@ export type Database = {
           },
         ];
       };
+      card_reactions: {
+        Row: CardReaction;
+        Insert: Insert<CardReaction, 'created_at' | 'updated_at'>;
+        Update: Partial<CardReaction>;
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: {
       current_streak: {
         Args: Record<string, never>;
         Returns: number;
+      };
+      /**
+       * Counts only — `security definer`, so it can see past the row-level
+       * policy that hides other readers' reactions, and shaped so that counts
+       * are the only thing it can return.
+       */
+      card_reaction_tally: {
+        Args: { p_date: string; p_metric_id: string };
+        Returns: { reaction: ReactionKind; votes: number }[];
       };
     };
     Enums: {
