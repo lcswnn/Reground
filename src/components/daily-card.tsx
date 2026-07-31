@@ -7,7 +7,7 @@ import Animated, { FadeIn } from 'react-native-reanimated';
 import { formatMetricValue } from '@/api/humanity';
 import { NewDataBadge } from '@/components/new-data-badge';
 import { Sparkline } from '@/components/sparkline';
-import { StreakPill } from '@/components/streak-pill';
+import { DaysPill } from '@/components/days-pill';
 import { ThemedText } from '@/components/themed-text';
 import { MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { categoryLabel } from '@/constants/world-metrics';
@@ -44,7 +44,9 @@ interface DailyCardProps {
 export function DailyCard({ card, active = true, isNew = false }: DailyCardProps) {
   const theme = useTheme();
   const router = useRouter();
-  const { streak, longest, reaction, react } = useDailyStreak(card.date);
+  // `total` rather than `streak`: days ever, not days in a row. See `DaysPill`
+  // for why the consecutive count stopped being the thing on screen.
+  const { total, reaction, react } = useDailyStreak(card.date);
 
   // Seeing the card is what counts, not reacting to it — see `recordSeen`. This
   // fires once per day in practice; the store is idempotent within a date, so
@@ -87,7 +89,7 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
           />
         </Pressable>
 
-        <StreakPill streak={streak} longest={longest} />
+        <DaysPill total={total} />
       </View>
 
       <Animated.View

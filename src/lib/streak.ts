@@ -5,13 +5,23 @@ import { useCallback, useSyncExternalStore } from 'react';
 import { parseISODate, todayISO } from '@/lib/format';
 
 /**
- * The daily-card streak.
+ * How many days the reader has looked at the daily card.
  *
- * Deliberately device-local rather than a table. The app already has a
- * server-side streak — `current_streak` over `story_reads` — and it counts a
- * different thing: days a *story* was opened. Reusing it would make the card's
- * streak jump the moment somebody read an article, which is the fastest way to
- * teach a user that the number is decorative.
+ * `total` is the number the app shows. `current` and `longest` are still
+ * computed and still correct, but nothing renders them any more, and that is
+ * the point rather than an oversight: a consecutive-day streak motivates by
+ * threatening to break, which is a poor fit for an app whose feed ends by
+ * telling you to go outside. `DaysPill` carries the full argument.
+ *
+ * They are kept because `longest` cannot be derived without `current`, both are
+ * covered by the tests below, and a reducer that quietly stops tracking them is
+ * harder to bring back than one that tracks them unread. Anything rendering
+ * `current` again should read `DaysPill` first.
+ *
+ * Deliberately device-local rather than a table. There was also a server-side
+ * streak — `current_streak` over `story_reads` — counting a different thing:
+ * days a *story* was opened. Two numbers both called a streak, disagreeing, was
+ * its own problem; that one is gone and this is the only one left.
  *
  * Local also means the streak survives a dead connection, which matters more
  * here than anywhere else in the app: a streak that breaks because the phone was

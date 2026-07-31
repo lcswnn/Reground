@@ -31,5 +31,4 @@ export const queryKeys = {
   profile: (userId: string) => ['profile', userId] as const,
   savedStoryIds: ['saved-story-ids'] as const,
   savedStories: ['saved-stories'] as const,
-  streak: ['streak'] as const,
 };

@@ -246,8 +246,12 @@ export async function markStoryRead(userId: string, storyId: string): Promise<vo
   if (error) throw error;
 }
 
-export async function fetchCurrentStreak(): Promise<number> {
-  const { data, error } = await supabase.rpc('current_streak');
-  if (error) throw error;
-  return data ?? 0;
-}
+/**
+ * `fetchCurrentStreak` used to live here, reading the `current_streak` RPC over
+ * `story_reads`. Nothing displays a consecutive-day count any more, so it went
+ * with the tile that showed it — see `DaysPill` for why the app stopped keeping
+ * streaks at all.
+ *
+ * The RPC and the `story_reads` rows both remain. The writes are cheap, the
+ * history is worth having, and a database function nobody calls costs nothing.
+ */

@@ -1,11 +1,6 @@
 import { fetchHumanityArtifact } from '@/api/humanity';
 import { fetchProfile } from '@/api/profile';
-import {
-  fetchCurrentStreak,
-  fetchSavedStories,
-  fetchSavedStoryIds,
-  fetchTodaysBatch,
-} from '@/api/stories';
+import { fetchSavedStories, fetchSavedStoryIds, fetchTodaysBatch } from '@/api/stories';
 import { queryClient, queryKeys } from '@/lib/query';
 
 /**
@@ -41,7 +36,6 @@ export function prefetchAppData(userId: string): Promise<unknown> {
     }),
 
     queryClient.prefetchQuery({ queryKey: queryKeys.savedStories, queryFn: fetchSavedStories }),
-    queryClient.prefetchQuery({ queryKey: queryKeys.streak, queryFn: fetchCurrentStreak }),
 
     // Not rendered anywhere on launch, but it decides whether a story shows a
     // filled bookmark — the one piece of state that visibly corrects itself

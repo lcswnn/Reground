@@ -1,4 +1,4 @@
-import { useQueries } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
@@ -10,28 +10,38 @@ import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
 import { BottomTabInset, Fonts, MaxContentWidth, Radius, Spacing } from '@/constants/theme';
 import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
 import { useTheme } from '@/hooks/use-theme';
-import { fetchCurrentStreak, fetchSavedStories } from '@/api/stories';
+import { fetchSavedStories } from '@/api/stories';
 import { queryKeys } from '@/lib/query';
 import { useSession } from '@/lib/session';
+import { useDailyStreak } from '@/lib/streak';
 
 export default function ProfileScreen() {
   const theme = useTheme();
   const router = useRouter();
   const { session } = useSession();
 
-  const [savedQuery, streakQuery] = useQueries({
-    queries: [
-      { queryKey: queryKeys.savedStories, queryFn: fetchSavedStories },
-      { queryKey: queryKeys.streak, queryFn: fetchCurrentStreak },
-    ],
+  const savedQuery = useQuery({
+    queryKey: queryKeys.savedStories,
+    queryFn: fetchSavedStories,
   });
 
   const saved = savedQuery.data ?? [];
-  const streak = streakQuery.data ?? 0;
 
-  const { isRefreshing, onRefresh } = usePullToRefresh(() =>
-    Promise.all([savedQuery.refetch(), streakQuery.refetch()]),
-  );
+  /**
+   * Days ever, from the device, replacing a server-side consecutive-day streak
+   * over `story_reads`.
+   *
+   * Two things wrong with the old tile. It was a streak, which this app has
+   * stopped keeping — see `DaysPill`. And it counted a different thing from the
+   * pill on the home screen, so the same reader could be told "3" here and
+   * something else there, which is how a number stops meaning anything.
+   *
+   * One source now, and it is the local one: it renders on the first frame, it
+   * survives a dead connection, and it costs no request.
+   */
+  const { total } = useDailyStreak();
+
+  const { isRefreshing, onRefresh } = usePullToRefresh(savedQuery.refetch);
 
   const displayName =
     (session?.user.user_metadata?.display_name as string | undefined) ?? 'Friend';
@@ -83,10 +93,7 @@ export default function ProfileScreen() {
           </View>
 
           <View style={styles.stats}>
-            <StatTile
-              value={streakQuery.isPending ? '—' : String(streak)}
-              label={streak === 1 ? 'day streak' : 'day streak'}
-            />
+            <StatTile value={String(total)} label={total === 1 ? 'day here' : 'days here'} />
             <StatTile
               value={savedQuery.isPending ? '—' : String(saved.length)}
               label="saved"

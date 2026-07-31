@@ -74,13 +74,18 @@ export default function StoryScreen() {
     },
   });
 
-  // Fire-and-forget: a failed read log should never block reading the story.
+  /**
+   * Fire-and-forget: a failed read log should never block reading the story.
+   *
+   * No longer invalidates anything on success. It used to refresh a server-side
+   * streak that this write fed; that streak is gone, and the row is kept purely
+   * as history — nothing on screen is derived from it, so there is nothing to
+   * put back in sync.
+   */
   useEffect(() => {
     if (!story || !userId) return;
-    markStoryRead(userId, story.id)
-      .then(() => queryClient.invalidateQueries({ queryKey: queryKeys.streak }))
-      .catch(() => {});
-  }, [story, userId, queryClient]);
+    markStoryRead(userId, story.id).catch(() => {});
+  }, [story, userId]);
 
   if (storyQuery.isPending) return <LoadingState />;
   if (storyQuery.error) {
