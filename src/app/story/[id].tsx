@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 import { Platform, Pressable, ScrollView, Share, StyleSheet, View } from 'react-native';
 
 import { CategoryPill } from '@/components/category-pill';
-import { MetricTag } from '@/components/metric-tag';
+import { StoryTrendCard } from '@/components/story-trend-card';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
@@ -120,10 +120,11 @@ export default function StoryScreen() {
 
         {story.body ? <ThemedText type="default">{story.body}</ThemedText> : null}
 
-        {/* Above the source card on purpose: "this counts toward child
-            mortality" is the reason the story is in this app at all, and it
-            belongs with the story rather than with its attribution. */}
-        <MetricTag metricId={story.metric_id} variant="full" />
+        {/* Above the source card on purpose: the line this story sits on is the
+            reason the story is in this app at all, and it belongs with the
+            story rather than with its attribution. Renders nothing for the many
+            stories no tracked indicator measures. */}
+        <StoryTrendCard metricId={story.metric_id} />
 
         <View style={[styles.sourceCard, { backgroundColor: theme.backgroundElement }]}>
           <ThemedText type="eyebrow" themeColor="textMuted">

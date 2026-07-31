@@ -7,14 +7,19 @@ import { useTheme } from '@/hooks/use-theme';
 import { queryKeys } from '@/lib/query';
 
 /**
- * "Counts toward Child mortality before 5" — the link between a story and the
- * progress indicator it is evidence about.
+ * The indicator a story is evidence about, as a pill on a feed card.
  *
  * The label is resolved from the daily artifact rather than from a table or a
  * constant in the app, and that is the whole reason this component can be left
  * alone as the indicator set grows: a metric added to the data layer's config
  * appears in tomorrow's artifact, the curator starts tagging stories with it,
  * and this renders its label without a release.
+ *
+ * A label and not a link, deliberately. The card this sits on is itself one
+ * large `Link` to the story, and a second tappable target inside it would both
+ * fight that gesture and offer a shortcut past the story to a chart about it.
+ * The way through to the indicator is `StoryTrendCard`, on the story page, where
+ * the reader has actually read the thing the chart is context for.
  *
  * Three ways this renders nothing, all of them normal:
  *
@@ -28,13 +33,7 @@ import { queryKeys } from '@/lib/query';
  *                       loses only its tag, which is why there is no foreign
  *                       key behind this.
  */
-export function MetricTag({
-  metricId,
-  variant = 'compact',
-}: {
-  metricId: string | null;
-  variant?: 'compact' | 'full';
-}) {
+export function MetricTag({ metricId }: { metricId: string | null }) {
   const theme = useTheme();
 
   const { data } = useQuery({
@@ -51,21 +50,11 @@ export function MetricTag({
   const metric = data?.metrics.find((candidate) => candidate.id === metricId);
   if (!metric) return null;
 
-  if (variant === 'compact') {
-    return (
-      <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
-        <Text style={[styles.compactLabel, { color: theme.textSecondary }]} numberOfLines={1}>
-          {metric.label}
-        </Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={[styles.card, { backgroundColor: theme.backgroundElement }]}>
-      <Text style={[styles.eyebrow, { color: theme.textMuted }]}>Counts toward</Text>
-      <Text style={[styles.fullLabel, { color: theme.text }]}>{metric.label}</Text>
-      <Text style={[styles.basis, { color: theme.textSecondary }]}>{metric.delta}</Text>
+    <View style={[styles.pill, { backgroundColor: theme.backgroundElement }]}>
+      <Text style={[styles.compactLabel, { color: theme.textSecondary }]} numberOfLines={1}>
+        {metric.label}
+      </Text>
     </View>
   );
 }
@@ -84,24 +73,5 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.body,
     fontSize: 15,
     letterSpacing: 0.2,
-  },
-  card: {
-    borderRadius: Radius.md,
-    padding: Spacing.three,
-    gap: Spacing.one,
-  },
-  eyebrow: {
-    fontFamily: Fonts.body,
-    fontSize: 13,
-    textTransform: 'uppercase',
-    letterSpacing: 0.7,
-  },
-  fullLabel: {
-    fontFamily: Fonts.body,
-    fontSize: 19,
-  },
-  basis: {
-    fontFamily: Fonts.body,
-    fontSize: 15,
   },
 });

@@ -25,6 +25,11 @@ interface MetricChartCardProps {
   isNew?: boolean;
   /** The value shown before that measurement landed; drives the `→` pair. */
   previousValue?: number;
+  /**
+   * Briefly marked as the card the reader was sent to, after arriving from a
+   * story's trend card. Times out on the Progress screen — see `HIGHLIGHT_MS`.
+   */
+  highlighted?: boolean;
 }
 
 /**
@@ -40,6 +45,7 @@ export function MetricChartCard({
   active = true,
   isNew = false,
   previousValue,
+  highlighted = false,
 }: MetricChartCardProps) {
   const theme = useTheme();
 
@@ -69,7 +75,17 @@ export function MetricChartCard({
   const firstYear = metric.series[0]?.t.slice(0, 4);
 
   return (
-    <View style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+    <View
+      style={[
+        styles.card,
+        {
+          backgroundColor: theme.surface,
+          // Colour only, never width. Thickening the border to mark the card
+          // would reflow it by a point on each edge, and the reflow lands
+          // mid-scroll on exactly the row the scroll is trying to settle on.
+          borderColor: highlighted ? theme.brandStrong : theme.border,
+        },
+      ]}>
       <View style={styles.header}>
         <View style={styles.headerText}>
           <View style={styles.categoryRow}>
