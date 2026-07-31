@@ -2,10 +2,9 @@ import { fetchHumanityArtifact } from '@/api/humanity';
 import { fetchProfile } from '@/api/profile';
 import {
   fetchCurrentStreak,
-  fetchFeed,
   fetchSavedStories,
   fetchSavedStoryIds,
-  type FeedPage,
+  fetchTodaysBatch,
 } from '@/api/stories';
 import { queryClient, queryKeys } from '@/lib/query';
 
@@ -32,13 +31,13 @@ export function prefetchAppData(userId: string): Promise<unknown> {
       queryFn: fetchHumanityArtifact,
     }),
 
-    // The unfiltered feed is the only page the tab opens on; category filters
-    // are a deliberate tap, so those can load on demand.
-    queryClient.prefetchInfiniteQuery({
-      queryKey: queryKeys.feed(null),
-      queryFn: ({ pageParam }) => fetchFeed({ cursor: pageParam, category: null }),
-      initialPageParam: null as string | null,
-      getNextPageParam: (lastPage: FeedPage) => lastPage.nextCursor,
+    // The day's batch is the whole of what the Feed tab shows. The archive and
+    // its category filters are both a deliberate tap past the sign-off, so
+    // neither is worth warming — and warming an unbounded list to make it
+    // arrive faster would be working against the point of the tab.
+    queryClient.prefetchQuery({
+      queryKey: queryKeys.todaysBatch,
+      queryFn: fetchTodaysBatch,
     }),
 
     queryClient.prefetchQuery({ queryKey: queryKeys.savedStories, queryFn: fetchSavedStories }),

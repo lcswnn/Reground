@@ -18,8 +18,11 @@ export const queryClient = new QueryClient({
 /** Centralized so invalidation can't drift from the keys the screens use. */
 export const queryKeys = {
   dailyProof: ['daily-proof'] as const,
+  /** The day's bounded batch — what the Feed tab opens on. */
+  todaysBatch: ['todays-batch'] as const,
+  /** The paginated archive, behind the Feed tab's sign-off. */
   feed: (category: string | null) => ['feed', category] as const,
-  /** When the ingest job last wrote, for the feed's "New" tags. */
+  /** When the ingest job last wrote, for the archive's "New" tags. */
   latestIngest: ['latest-ingest'] as const,
   /** The served humanity-progress artifact. */
   humanity: ['humanity'] as const,

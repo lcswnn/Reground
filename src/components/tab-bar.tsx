@@ -65,6 +65,20 @@ const TAB_COLORS: Record<string, ThemeColor> = {
   profile: "accentStrong",
 };
 
+/**
+ * Which routes get a button. Everything else in the navigator is reachable but
+ * unlisted — `archive` is the only one today.
+ *
+ * An explicit list rather than a check on the descriptor, because expo-router
+ * implements `href: null` by rewriting it into a `tabBarButton` that returns
+ * null plus a `display: 'none'` item style. Both are read by the *default* tab
+ * bar and by nothing else, so a hand-rolled bar like this one receives an
+ * ordinary-looking route and would happily draw a fifth button for it. Naming
+ * the four here means a route added to the layout cannot appear in the bar by
+ * accident, in either direction.
+ */
+const BAR_ROUTES = ["index", "feed", "progress", "profile"];
+
 export function TabBar({
   state,
   descriptors,
@@ -72,6 +86,18 @@ export function TabBar({
   insets,
 }: BottomTabBarProps) {
   const theme = useTheme();
+
+  /**
+   * The route actually on screen, which is not always one with a button.
+   *
+   * Focus is compared by key rather than by position, and that is load-bearing
+   * twice over. The list below is filtered, so an index into it no longer lines
+   * up with `state.index` — and more to the point, when the reader is on the
+   * archive there is no matching key at all and every tab correctly renders
+   * unselected. A bar with nothing lit is the intended state for the one screen
+   * that sits outside the four.
+   */
+  const activeKey = state.routes[state.index]?.key;
 
   return (
     <View
@@ -85,41 +111,43 @@ export function TabBar({
         },
       ]}
     >
-      {state.routes.map((route, index) => {
-        const { options } = descriptors[route.key];
-        const focused = state.index === index;
-        const label = options.title ?? route.name;
-        // `textMuted` rather than a dimmed hue: an unselected tab should read as
-        // grey outright, so the one color in the row is unmistakably the tab
-        // you're on.
-        const color = focused
-          ? theme[TAB_COLORS[route.name] ?? "brand"]
-          : theme.textMuted;
+      {state.routes
+        .filter((route) => BAR_ROUTES.includes(route.name))
+        .map((route) => {
+          const { options } = descriptors[route.key];
+          const focused = route.key === activeKey;
+          const label = options.title ?? route.name;
+          // `textMuted` rather than a dimmed hue: an unselected tab should read
+          // as grey outright, so the one color in the row is unmistakably the
+          // tab you're on.
+          const color = focused
+            ? theme[TAB_COLORS[route.name] ?? "brand"]
+            : theme.textMuted;
 
-        function onPress() {
-          const event = navigation.emit({
-            type: "tabPress",
-            target: route.key,
-            canPreventDefault: true,
-          });
+          function onPress() {
+            const event = navigation.emit({
+              type: "tabPress",
+              target: route.key,
+              canPreventDefault: true,
+            });
 
-          if (!focused && !event.defaultPrevented) {
-            navigation.navigate(route.name, route.params);
+            if (!focused && !event.defaultPrevented) {
+              navigation.navigate(route.name, route.params);
+            }
           }
-        }
 
-        return (
-          <TabItem
-            key={route.key}
-            icon={ICONS[route.name]}
-            label={label}
-            color={color}
-            focused={focused}
-            accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
-            onPress={onPress}
-          />
-        );
-      })}
+          return (
+            <TabItem
+              key={route.key}
+              icon={ICONS[route.name]}
+              label={label}
+              color={color}
+              focused={focused}
+              accessibilityLabel={options.tabBarAccessibilityLabel ?? label}
+              onPress={onPress}
+            />
+          );
+        })}
     </View>
   );
 }

@@ -1,5 +1,6 @@
 import { supabase } from '@/lib/supabase';
 import { todayISO } from '@/lib/format';
+import { ingestDayStart, isIngestFresh } from '@/lib/ingest';
 import type { Story, StoryCategory } from '@/types/database';
 
 export const PAGE_SIZE = 20;
@@ -132,21 +133,57 @@ export async function fetchLatestIngestAt(): Promise<string | null> {
 }
 
 /**
- * How long a batch keeps its "New" tag.
+ * The app-side ceiling on a day's batch.
  *
- * Matches the ingest job's own 36-hour window. The tag means "arrived in the
- * last run", and when the workflow fails or is skipped the honest reading of a
- * three-day-old batch is not "new" — it is the same news the reader has already
- * seen, and labelling it otherwise is how a badge stops meaning anything.
+ * The news layer already caps itself at `DAILY_CAP = 12`, so in normal
+ * operation this never binds. It exists because the Feed tab's entire promise
+ * is that it ends, and a promise that depends on a pipeline in another repo
+ * staying correct is not one the app can make. If the cap upstream ever breaks,
+ * this is what stops the bounded feed from quietly becoming an unbounded one.
  */
-const INGEST_FRESH_HOURS = 36;
+const BATCH_LIMIT = 24;
 
-/** Whether a story arrived in the most recent run, and that run was recent. */
-export function isNewlyIngested(story: Story, latestIngestAt: string | null): boolean {
-  if (!latestIngestAt || story.created_at !== latestIngestAt) return false;
+export interface DailyBatch {
+  stories: Story[];
+  /** When the run behind this batch wrote, or null if nothing has ever run. */
+  ingestedAt: string | null;
+  /**
+   * Whether that run was recent enough to call this batch "today's".
+   *
+   * False means the workflow has been down for a day or more, and the screen
+   * has to say so rather than promising a batch tomorrow morning that nothing
+   * is scheduled to produce.
+   */
+  isFresh: boolean;
+}
 
-  const age = Date.now() - Date.parse(latestIngestAt);
-  return Number.isFinite(age) && age < INGEST_FRESH_HOURS * 60 * 60 * 1000;
+/**
+ * The finite set the Feed tab shows: everything ingested on the same day as the
+ * most recent run.
+ *
+ * No cursor and no pagination, deliberately. This is the one query in the app
+ * whose job is to run out.
+ *
+ * Sorted by publication within the batch — the arrival ordering `fetchFeed`
+ * needs exists to place late-arriving stories against ones the reader has
+ * already scrolled past, and inside a single batch there is no such thing:
+ * every story here arrived at once and none of it has been seen.
+ */
+export async function fetchTodaysBatch(): Promise<DailyBatch> {
+  const latest = await fetchLatestIngestAt();
+  if (!latest) return { stories: [], ingestedAt: null, isFresh: false };
+
+  const { data, error } = await supabase
+    .from('stories')
+    .select('*')
+    .gte('created_at', ingestDayStart(latest))
+    .order('published_at', { ascending: false })
+    .order('id', { ascending: false })
+    .limit(BATCH_LIMIT);
+
+  if (error) throw error;
+
+  return { stories: data ?? [], ingestedAt: latest, isFresh: isIngestFresh(latest) };
 }
 
 export async function fetchStory(id: string): Promise<Story | null> {
