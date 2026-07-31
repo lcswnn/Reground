@@ -72,6 +72,15 @@ jobs:
           EXPO_PUBLIC_SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
 
+      # Runs a second time, and this is the run that matters. The drift guard in
+      # scoring.test.ts compares the client's maths against a built artifact,
+      # which does not exist on a fresh checkout — so on the first pass it skips
+      # itself. Here the artifact is on disk, and a composite the app would
+      # compute differently from the one the server wrote fails before it is
+      # published rather than after.
+      - name: Re-check the model against the built artifact
+        run: npm test
+
       - name: Publish artifact
         run: npm run data:publish
         env:
