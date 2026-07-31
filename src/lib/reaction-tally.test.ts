@@ -1,26 +1,14 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  companyLabel,
-  hasEnoughForPercent,
-  MIN_SAMPLE,
-  reactionPercents,
-  totalVotes,
-} from '@/lib/reaction-tally';
+import { readersLabel, reactionPercents, totalVotes } from '@/lib/reaction-tally';
 
-describe('hasEnoughForPercent', () => {
-  it('is false below the threshold', () => {
-    // The case this whole module exists for. Three people is not 67%.
-    expect(hasEnoughForPercent({ hope: 2, surprised: 1 })).toBe(false);
+describe('totalVotes', () => {
+  it('sums both options', () => {
+    expect(totalVotes({ hope: 7, surprised: 3 })).toBe(10);
   });
 
-  it('is true exactly at the threshold', () => {
-    expect(totalVotes({ hope: MIN_SAMPLE, surprised: 0 })).toBe(MIN_SAMPLE);
-    expect(hasEnoughForPercent({ hope: MIN_SAMPLE, surprised: 0 })).toBe(true);
-  });
-
-  it('is false for an empty tally', () => {
-    expect(hasEnoughForPercent({ hope: 0, surprised: 0 })).toBe(false);
+  it('is zero for an empty tally', () => {
+    expect(totalVotes({ hope: 0, surprised: 0 })).toBe(0);
   });
 });
 
@@ -57,23 +45,18 @@ describe('reactionPercents', () => {
   });
 });
 
-describe('companyLabel', () => {
-  it('handles being the only one so far', () => {
-    expect(companyLabel(1)).toBe('You are the first to react today.');
+describe('readersLabel', () => {
+  it('says so when the reader is alone', () => {
+    // The line that keeps an unfiltered "100%" honest: one person agreeing with
+    // themselves should read as exactly that.
+    expect(readersLabel(1)).toBe('Just you so far today.');
   });
 
-  it('uses the singular for exactly one other', () => {
-    expect(companyLabel(2)).toBe('You and one other person so far today.');
+  it('pluralises above one', () => {
+    expect(readersLabel(4)).toBe('4 readers today.');
   });
 
-  it('counts the others, not the total', () => {
-    // The reader is included in `total` — they had to answer to see this — so
-    // saying "you and 4 others" off a total of 4 would invent a person.
-    expect(companyLabel(4)).toBe('You and 3 others so far today.');
-  });
-
-  it('never renders a negative count', () => {
-    // A tally that has not landed yet, or a stale zero from the server.
-    expect(companyLabel(0)).toBe('You are the first to react today.');
+  it('handles a tally that has not landed', () => {
+    expect(readersLabel(0)).toBe('No answers yet today.');
   });
 });

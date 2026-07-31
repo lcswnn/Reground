@@ -3,6 +3,7 @@ import 'expo-sqlite/localStorage/install';
 import { useCallback, useState, useSyncExternalStore } from 'react';
 
 import { isDefaultWeighting, type CategoryWeights } from '@/lib/scoring';
+import { onScopeChange, readScoped, writeScoped } from '@/lib/user-scope';
 
 /**
  * The reader's own category weighting.
@@ -51,11 +52,24 @@ export const MAX_WEIGHT = 100;
 let state: WeightingState | null = null;
 const listeners = new Set<() => void>();
 
+/**
+ * Drops the cached weighting when the account changes.
+ *
+ * Not merely a display concern. `useWeightingSync` reconciles on sign-in and
+ * `resolveConflict` returns `'local'` whenever the server has nothing — so a
+ * stale in-memory weighting from the previous reader would be pushed into the
+ * new account's profile row and become theirs.
+ */
+onScopeChange(() => {
+  state = null;
+  for (const listener of listeners) listener();
+});
+
 function read(): WeightingState {
   if (state) return state;
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readScoped(STORAGE_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
 
     if (parsed && typeof parsed === 'object') {
@@ -92,7 +106,7 @@ function write(next: WeightingState): void {
   state = next;
 
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    writeScoped(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // The session's state is correct even though it will not survive relaunch.
   }

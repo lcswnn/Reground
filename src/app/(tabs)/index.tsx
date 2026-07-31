@@ -1,27 +1,33 @@
-import { useQuery } from '@tanstack/react-query';
-import { useRouter } from 'expo-router';
-import { Pressable, RefreshControl, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "expo-router";
+import { Pressable, RefreshControl, StyleSheet, View } from "react-native";
+import Animated, {
+  useAnimatedRef,
+  useScrollViewOffset,
+} from "react-native-reanimated";
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from "react-native-safe-area-context";
 
-import { DailyCard } from '@/components/daily-card';
-import { HumanityProgress } from '@/components/humanity-progress';
-import { ReminderPrompt } from '@/components/reminder-prompt';
-import { ScrollTopFade } from '@/components/scroll-top-fade';
-import { SinceYouWereBorn } from '@/components/since-you-were-born';
-import { ThemedText } from '@/components/themed-text';
-import { ErrorState } from '@/components/ui/states';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
-import { useTheme } from '@/hooks/use-theme';
-import { fetchHumanityArtifact } from '@/api/humanity';
-import { fetchProfile } from '@/api/profile';
-import { useAppReady } from '@/lib/app-ready';
-import { selectDailyCard } from '@/lib/daily-card';
-import { formatDay, todayISO } from '@/lib/format';
-import { useFreshData } from '@/lib/fresh-data';
-import { queryKeys } from '@/lib/query';
-import { useSession } from '@/lib/session';
+import { fetchHumanityArtifact } from "@/api/humanity";
+import { fetchProfile } from "@/api/profile";
+import { DailyCard } from "@/components/daily-card";
+import { HumanityProgress } from "@/components/humanity-progress";
+import { ReminderPrompt } from "@/components/reminder-prompt";
+import { ScrollTopFade } from "@/components/scroll-top-fade";
+import { SinceYouWereBorn } from "@/components/since-you-were-born";
+import { ThemedText } from "@/components/themed-text";
+import { ErrorState } from "@/components/ui/states";
+import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useTheme } from "@/hooks/use-theme";
+import { useAppReady } from "@/lib/app-ready";
+import { selectDailyCard } from "@/lib/daily-card";
+import { formatDay, todayISO } from "@/lib/format";
+import { useFreshData } from "@/lib/fresh-data";
+import { queryKeys } from "@/lib/query";
+import { useSession } from "@/lib/session";
 
 export default function TodayScreen() {
   const theme = useTheme();
@@ -54,7 +60,7 @@ export default function TodayScreen() {
   // under this key — a narrower query would just be a second row fetch.
   const userId = session?.user.id;
   const profileQuery = useQuery({
-    queryKey: queryKeys.profile(userId ?? ''),
+    queryKey: queryKeys.profile(userId ?? ""),
     queryFn: () => fetchProfile(userId as string),
     enabled: !!userId,
   });
@@ -80,12 +86,17 @@ export default function TodayScreen() {
    */
   const card =
     humanityQuery.data && !profileQuery.isPending
-      ? selectDailyCard(humanityQuery.data.metrics, { date: todayISO(), birthDate })
+      ? selectDailyCard(humanityQuery.data.metrics, {
+          date: todayISO(),
+          birthDate,
+        })
       : null;
 
   const greeting = getGreeting();
   const firstName =
-    (session?.user.user_metadata?.display_name as string | undefined)?.split(' ')[0] ?? 'friend';
+    (session?.user.user_metadata?.display_name as string | undefined)?.split(
+      " ",
+    )[0] ?? "friend";
 
   const { isRefreshing, onRefresh } = usePullToRefresh(humanityQuery.refetch);
 
@@ -112,8 +123,9 @@ export default function TodayScreen() {
             colors={[tint]}
             progressBackgroundColor={theme.surface}
           />
-        }>
-        <SafeAreaView edges={['top']} style={styles.header}>
+        }
+      >
+        <SafeAreaView edges={["top"]} style={styles.header}>
           <ThemedText type="eyebrow" themeColor="textSecondary">
             {formatDay(todayISO())}
           </ThemedText>
@@ -124,8 +136,15 @@ export default function TodayScreen() {
             // The streak sits on the card below rather than up here, so this line
             // has the full width — but a long name can still overrun, and it
             // should shrink rather than truncate somebody's name.
+            //
+            // The floor drops with the ceiling going up: at 36pt a scale of 0.75
+            // bottoms out at 27, which "Good afternoon, Christopher." still
+            // overruns — and past the floor `numberOfLines={1}` truncates, which
+            // is the one outcome this prop exists to avoid. 0.6 leaves room for
+            // a long name to keep shrinking instead of losing its end.
             adjustsFontSizeToFit
-            minimumFontScale={0.75}>
+            minimumFontScale={0.6}
+          >
             {greeting}, {firstName}.
           </ThemedText>
         </SafeAreaView>
@@ -177,8 +196,12 @@ export default function TodayScreen() {
           <Pressable
             accessibilityRole="link"
             accessibilityLabel={`See all ${humanityQuery.data.metrics.length} indicators`}
-            onPress={() => router.push('/progress')}
-            style={({ pressed }) => [styles.allMetrics, pressed && styles.pressed]}>
+            onPress={() => router.push("/progress")}
+            style={({ pressed }) => [
+              styles.allMetrics,
+              pressed && styles.pressed,
+            ]}
+          >
             <ThemedText type="linkPrimary">
               See all {humanityQuery.data.metrics.length} indicators →
             </ThemedText>
@@ -189,7 +212,10 @@ export default function TodayScreen() {
             still loading would otherwise show the "add your birthday" prompt
             for a moment to people who already have one. */}
         {humanityQuery.data && !profileQuery.isPending ? (
-          <SinceYouWereBorn metrics={humanityQuery.data.metrics} birthDate={birthDate} />
+          <SinceYouWereBorn
+            metrics={humanityQuery.data.metrics}
+            birthDate={birthDate}
+          />
         ) : null}
       </Animated.ScrollView>
 
@@ -200,9 +226,9 @@ export default function TodayScreen() {
 
 function getGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return "Good Morning";
+  if (hour < 18) return "Good Afternoon";
+  return "Good Evening";
 }
 
 const styles = StyleSheet.create({
@@ -214,21 +240,29 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     gap: Spacing.one,
-    width: '100%',
+    width: "100%",
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
+  /**
+   * Larger than `title`'s own 32, rather than the 28 it used to shrink to.
+   *
+   * Safe to set this high because the line already carries
+   * `adjustsFontSizeToFit`: this is a ceiling, not a fixed size. "Good morning,
+   * Al." gets all 36 points, and a long greeting scales itself down to whatever
+   * fits instead of wrapping or truncating.
+   */
   greeting: {
-    fontSize: 28,
-    lineHeight: 36,
+    fontSize: 36,
+    lineHeight: 44,
   },
   // Keeps the page gutter, so it lines up with the header and the card above.
   summarySection: {
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.four,
-    width: '100%',
+    width: "100%",
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   /**
    * Centered rather than aligned to a gutter.
@@ -239,15 +273,15 @@ const styles = StyleSheet.create({
    * makes it legible as a signpost between two sections instead.
    */
   allMetrics: {
-    alignItems: 'center',
+    alignItems: "center",
     paddingHorizontal: Spacing.four,
     paddingTop: Spacing.three,
     // A bare line of text is a small target; this brings it up to a comfortable
     // one without needing a box drawn around it.
     paddingBottom: Spacing.two,
-    width: '100%',
+    width: "100%",
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   pressed: {
     opacity: 0.7,

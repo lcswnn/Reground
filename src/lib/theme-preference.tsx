@@ -4,10 +4,12 @@ import {
   createContext,
   use,
   useCallback,
+  useEffect,
   useMemo,
   useState,
   type PropsWithChildren,
 } from 'react';
+import { Appearance } from 'react-native';
 
 export type ThemePreference = 'light' | 'dark';
 
@@ -54,8 +56,42 @@ export function useThemePreference() {
   return value;
 }
 
+/**
+ * Tells the *native* side which appearance the app is in.
+ *
+ * Everything drawn from JS reads `useTheme`, so the palette has always been
+ * right. UIKit's own views are not drawn from JS and were still following the
+ * phone: a reader with a dark system theme opening the birthday picker in this
+ * app's light mode got a `UIDatePicker` rendering white text on paper — the
+ * month, year and day invisible. Same class of bug in the reminder's time wheel,
+ * text-selection menus, and the keyboard.
+ *
+ * `setColorScheme` overrides the appearance for the whole process, which is
+ * exactly the scope the problem has. It is what makes "appearance is an in-app
+ * setting" true of the parts of the app that are not ours to style.
+ *
+ * Called at module scope as well as from the effect below, because an effect
+ * runs after the first commit and native chrome presented during that first
+ * frame would use the system value.
+ */
+function applyNativeAppearance(preference: ThemePreference): void {
+  try {
+    Appearance.setColorScheme(preference);
+  } catch {
+    // Unimplemented on web, and unavailable in some test environments. The JS
+    // palette is unaffected either way, so there is nothing to recover.
+  }
+}
+
+applyNativeAppearance(readStoredPreference());
+
 export function ThemePreferenceProvider({ children }: PropsWithChildren) {
   const [preference, setStoredPreference] = useState<ThemePreference>(readStoredPreference);
+
+  // Keeps native views in step when the switch is flipped at runtime.
+  useEffect(() => {
+    applyNativeAppearance(preference);
+  }, [preference]);
 
   const setPreference = useCallback((next: ThemePreference) => {
     // State first: the toggle should feel instant even if the write is slow.

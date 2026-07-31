@@ -39,6 +39,23 @@ export async function submitReaction(
 }
 
 /**
+ * Takes the reader's reaction back out of the tally.
+ *
+ * A delete rather than a null column, because the tally counts rows: a
+ * retracted answer left in place would keep inflating the denominator it is no
+ * longer part of, and "1 of 4 readers" would be describing three people.
+ */
+export async function retractReaction(userId: string, cardDate: string): Promise<void> {
+  const { error } = await supabase
+    .from('card_reactions')
+    .delete()
+    .eq('user_id', userId)
+    .eq('card_date', cardDate);
+
+  if (error) throw error;
+}
+
+/**
  * How the day's readers split, for one indicator.
  *
  * Goes through the `card_reaction_tally` function rather than selecting from the

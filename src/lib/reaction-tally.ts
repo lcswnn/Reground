@@ -3,23 +3,16 @@ import type { ReactionId } from '@/lib/streak';
 /**
  * What everyone else made of today's card.
  *
- * The point of the feature is the feeling of not being the only person here, so
- * the honest failure mode matters more than usual: with four users, "100% found
- * this hopeful" is not a finding, it is one person and a rounding error. An app
- * whose entire pitch is *statistics rather than vibes* cannot put a fabricated
- * percentage next to a real one and expect either to be believed.
+ * The percentage shows from the first vote, at any sample size. That is a
+ * deliberate call and not an oversight: an earlier version withheld it below ten
+ * answers on the grounds that "100%" off one person is not a finding. True, but
+ * a feature that shows nothing for the first months of an app's life is a
+ * feature nobody experiences, and the point here is the feeling of not being
+ * alone — which a withheld number cannot deliver.
  *
- * So there are two displays, and which one appears depends on how many people
- * have actually answered:
- *
- *   below `MIN_SAMPLE` — the count. "You and 3 others so far today." True at any
- *                        scale, delivers the same "somebody else is here"
- *                        feeling, and is the state this will be in for a while.
- *   at or above        — percentages, which by then mean something.
- *
- * The lower state is not a placeholder to be tolerated until real numbers
- * arrive. It is the better answer when the sample is small, and it is what makes
- * the percentages trustworthy on the day they do appear.
+ * What keeps it honest instead is the denominator. The card prints how many
+ * people have answered alongside the split, so "100%" is read next to "1 reader
+ * today" and lands as what it is.
  */
 
 export interface ReactionCounts {
@@ -29,23 +22,8 @@ export interface ReactionCounts {
 
 export const EMPTY_COUNTS: ReactionCounts = { hope: 0, surprised: 0 };
 
-/**
- * Answers needed before a percentage is worth printing.
- *
- * Ten is a judgement, not a statistic — no threshold makes a percentage from a
- * self-selected sample rigorous. What it buys is that no single person can move
- * the number by more than ten points, which is enough that the figure describes
- * a group rather than an individual.
- */
-export const MIN_SAMPLE = 10;
-
 export function totalVotes(counts: ReactionCounts): number {
   return counts.hope + counts.surprised;
-}
-
-/** Whether there are enough answers to show percentages rather than a count. */
-export function hasEnoughForPercent(counts: ReactionCounts): boolean {
-  return totalVotes(counts) >= MIN_SAMPLE;
 }
 
 /**
@@ -69,19 +47,18 @@ export function reactionPercents(counts: ReactionCounts): Record<ReactionId, num
 }
 
 /**
- * The line shown while the sample is too small for percentages.
+ * The denominator, printed under the split.
  *
- * Phrased around the reader — "you and 3 others" rather than "4 reactions" —
+ * This is what makes an unfiltered percentage honest rather than a boast: "100%"
+ * above "1 reader today" reads as one person agreeing with themselves, which is
+ * exactly what it is. Without it the same figure claims a consensus.
+ *
+ * Phrased around people rather than votes — "3 readers" not "3 reactions" —
  * because being counted among people is the feeling this exists to produce, and
- * a bare total reads as telemetry.
- *
- * `total` includes the reader, who has necessarily just answered to see this at
- * all, so the others are one fewer.
+ * a bare event count reads as telemetry.
  */
-export function companyLabel(total: number): string {
-  const others = Math.max(0, total - 1);
-
-  if (others === 0) return 'You are the first to react today.';
-  if (others === 1) return 'You and one other person so far today.';
-  return `You and ${others} others so far today.`;
+export function readersLabel(total: number): string {
+  if (total <= 0) return 'No answers yet today.';
+  if (total === 1) return 'Just you so far today.';
+  return `${total} readers today.`;
 }

@@ -3,6 +3,7 @@ import 'expo-sqlite/localStorage/install';
 import { useCallback, useSyncExternalStore } from 'react';
 
 import { parseISODate, todayISO } from '@/lib/format';
+import { onScopeChange, readScoped, writeScoped } from '@/lib/user-scope';
 
 /**
  * How many days the reader has looked at the daily card.
@@ -111,6 +112,21 @@ export function recordSeen(state: StreakState, date: string): StreakState {
   };
 }
 
+/**
+ * Takes back today's reaction.
+ *
+ * Tapping the answer you already gave is how somebody says "actually, no" — and
+ * the alternative, being locked into the first button you touched, makes a
+ * reaction feel like a submitted form. Goes through `recordSeen` for the same
+ * reason `recordReaction` does: un-reacting is still having looked at the card,
+ * and must not un-count the day.
+ */
+export function clearReaction(state: StreakState, date: string): StreakState {
+  const seen = recordSeen(state, date);
+  if (!seen.lastReaction) return seen;
+  return { ...seen, lastReaction: null };
+}
+
 /** Records how the reader felt about today's card. Replaces any earlier tap. */
 export function recordReaction(
   state: StreakState,
@@ -149,11 +165,24 @@ export function isSeenOn(state: StreakState, date: string): boolean {
 let state: StreakState | null = null;
 const listeners = new Set<() => void>();
 
+/**
+ * Drops the cached count when the account changes.
+ *
+ * This store holds two things a second reader on the same phone must not
+ * inherit: how many days *they* have shown up, and — via `lastReaction` — the
+ * answer they gave to today's card, which decides both which button is lit and
+ * whether the shared tally is revealed at all.
+ */
+onScopeChange(() => {
+  state = null;
+  for (const listener of listeners) listener();
+});
+
 function read(): StreakState {
   if (state) return state;
 
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const raw = readScoped(STORAGE_KEY);
     const parsed: unknown = raw ? JSON.parse(raw) : null;
     state =
       parsed && typeof parsed === 'object'
@@ -176,7 +205,7 @@ function write(next: StreakState): void {
 
   state = next;
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(next));
+    writeScoped(STORAGE_KEY, JSON.stringify(next));
   } catch {
     // The write failed but the session's state is correct, so the streak is
     // right until relaunch. Nothing useful to do about it here.
@@ -205,6 +234,10 @@ export function reactToCard(reaction: ReactionId, date = todayISO()): void {
   write(recordReaction(read(), date, reaction));
 }
 
+export function unreactToCard(date = todayISO()): void {
+  write(clearReaction(read(), date));
+}
+
 export interface DailyStreak {
   /** Days in a row, zeroed out once the streak has actually lapsed. */
   streak: number;
@@ -215,6 +248,8 @@ export interface DailyStreak {
   /** Today's reaction, or null if the reader hasn't said anything yet. */
   reaction: ReactionId | null;
   react: (reaction: ReactionId) => void;
+  /** Takes today's reaction back. */
+  unreact: () => void;
 }
 
 export function useDailyStreak(date = todayISO()): DailyStreak {
@@ -227,6 +262,10 @@ export function useDailyStreak(date = todayISO()): DailyStreak {
     [date],
   );
 
+  const unreact = useCallback(() => {
+    unreactToCard(date);
+  }, [date]);
+
   const seenToday = isSeenOn(current, date);
 
   return {
@@ -238,5 +277,6 @@ export function useDailyStreak(date = todayISO()): DailyStreak {
     // yesterday's tap on today's card would look like the app answered for you.
     reaction: seenToday ? current.lastReaction : null,
     react,
+    unreact,
   };
 }

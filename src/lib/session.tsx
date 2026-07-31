@@ -3,6 +3,7 @@ import { createContext, use, useEffect, useMemo, useState, type PropsWithChildre
 
 import { queryClient } from '@/lib/query';
 import { supabase } from '@/lib/supabase';
+import { getScopeUser, setScopeUser } from '@/lib/user-scope';
 
 interface SessionContextValue {
   session: Session | null;
@@ -29,6 +30,37 @@ export function useSession() {
   return value;
 }
 
+/**
+ * Points every per-user cache at the account that just arrived.
+ *
+ * Called from the auth callbacks rather than an effect, so the switch happens in
+ * the same tick the session does and before React re-renders — a screen never
+ * gets a frame showing the previous reader's numbers.
+ *
+ * Two things move together, and both are needed:
+ *
+ *   - **The device stores.** `setScopeUser` re-namespaces `localStorage`, so the
+ *     weighting, the day count and today's vote follow the account rather than
+ *     the phone. Without it, signing in as somebody else inherited all three —
+ *     and the weighting was then uploaded into *their* profile by the sync.
+ *   - **The query cache.** Saved stories and the profile are per-user and come
+ *     from the server, but a cache is a cache: clearing only on `signOut` left
+ *     the previous account's rows readable whenever a session ended some other
+ *     way — an expired refresh token, a password change, the app being killed
+ *     mid-sign-out.
+ *
+ * Guarded on an actual change of account. `onAuthStateChange` also fires on
+ * every token refresh, and clearing the cache hourly would turn a warm app cold
+ * for no reason.
+ */
+function adoptSession(next: Session | null): void {
+  const nextUserId = next?.user.id ?? null;
+  if (nextUserId === getScopeUser()) return;
+
+  queryClient.clear();
+  setScopeUser(nextUserId);
+}
+
 export function SessionProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -38,6 +70,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
 
     supabase.auth.getSession().then(({ data }) => {
       if (!active) return;
+      adoptSession(data.session);
       setSession(data.session);
       setIsLoading(false);
     });
@@ -45,6 +78,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     // Fires for sign-in, sign-out, and every token refresh, so this is the single
     // source of truth once the initial read has resolved.
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
+      adoptSession(next);
       setSession(next);
     });
 
@@ -77,8 +111,10 @@ export function SessionProvider({ children }: PropsWithChildren) {
       async signOut() {
         const { error } = await supabase.auth.signOut();
         if (error) throw error;
-        // Saved stories and streaks are per-user. Without this the next account
-        // to sign in on this device would briefly see the previous one's data.
+        // `adoptSession` clears the cache and re-scopes the device stores when
+        // the auth handler fires. Kept here as well because that fires
+        // asynchronously, and this closes the window where a screen still
+        // mounted could re-read the outgoing account's rows.
         queryClient.clear();
       },
     }),
