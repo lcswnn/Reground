@@ -2,7 +2,11 @@ import { describe, expect, it } from 'vitest';
 
 import { METRICS } from '../src/config/metrics.js';
 import { computeCompositeScore, scoreAt } from '../src/scoring/composite.js';
-import { NORMALIZED_FLOOR, normalizeMetric } from '../src/scoring/normalize.js';
+import {
+  NORMALIZED_FLOOR,
+  normalizeMetric,
+  validateMetricConfigs,
+} from '../src/scoring/normalize.js';
 import type { MetricConfig, Observation } from '../src/types.js';
 
 function config(overrides: Partial<MetricConfig> = {}): MetricConfig {
@@ -421,7 +425,79 @@ describe('composite', () => {
   });
 });
 
+/**
+ * Config errors have to fail loudly and up front.
+ *
+ * Inside `scoreAt` the throw disappears into `safeScoreAt` and surfaces as a
+ * missing delta. Now that absent data is a normal, silent condition, that is
+ * exactly where a real bug would hide.
+ */
+describe('validateMetricConfigs', () => {
+  it('accepts a well-formed set', () => {
+    expect(() =>
+      validateMetricConfigs([
+        config({ id: 'rising' }),
+        config({ id: 'falling', direction: 'lower_is_better', baselineValue: 40, targetValue: 10 }),
+      ]),
+    ).not.toThrow();
+  });
+
+  it('rejects a direction that contradicts the anchors', () => {
+    expect(() => validateMetricConfigs([config({ id: 'wrong', direction: 'lower_is_better' })])).toThrow(
+      /wrong: direction "lower_is_better" contradicts anchors/,
+    );
+  });
+
+  it('rejects a degenerate span', () => {
+    expect(() =>
+      validateMetricConfigs([config({ id: 'flat', baselineValue: 5, targetValue: 5 })]),
+    ).toThrow(/flat: baseline and target are both 5/);
+  });
+
+  it('rejects a non-finite anchor', () => {
+    expect(() =>
+      validateMetricConfigs([config({ id: 'infinite', targetValue: Infinity })]),
+    ).toThrow(/infinite: non-finite anchor/);
+  });
+
+  it('names every offender in one message rather than stopping at the first', () => {
+    let message = '';
+    try {
+      validateMetricConfigs([
+        config({ id: 'ok' }),
+        config({ id: 'bad-direction', direction: 'lower_is_better' }),
+        config({ id: 'bad-span', baselineValue: 3, targetValue: 3 }),
+        config({ id: 'bad-anchor', baselineValue: NaN }),
+      ]);
+    } catch (error) {
+      message = (error as Error).message;
+    }
+
+    expect(message).toMatch(/bad-direction/);
+    expect(message).toMatch(/bad-span/);
+    expect(message).toMatch(/bad-anchor/);
+    expect(message).not.toMatch(/\bok:/);
+  });
+
+  it('does not report a non-finite anchor twice under two headings', () => {
+    let message = '';
+    try {
+      validateMetricConfigs([config({ id: 'nan', baselineValue: NaN })]);
+    } catch (error) {
+      message = (error as Error).message;
+    }
+
+    expect(message.match(/nan:/g)).toHaveLength(1);
+  });
+});
+
 describe('live metric config', () => {
+  it('passes its own anchor validation', () => {
+    // METRICS validates itself at import, so this is really a guard against
+    // that call being deleted — the check that the check is wired up.
+    expect(() => validateMetricConfigs(METRICS)).not.toThrow();
+  });
+
   it('declares weights summing to 1', () => {
     const sum = METRICS.reduce((total, metric) => total + metric.weight, 0);
     expect(Math.abs(sum - 1)).toBeLessThan(0.001);

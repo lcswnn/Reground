@@ -65,3 +65,56 @@ export function normalizeMetric(metric: MetricConfig, value: number): number | n
   // under Object.is and would read as "-0.0%" anywhere it were formatted.
   return Math.min(NORMALIZED_CEILING, Math.max(NORMALIZED_FLOOR, raw)) + 0;
 }
+
+/**
+ * Every way a metric's anchors can be unusable, checked once at config load.
+ *
+ * `normalizeMetric` already refuses these, but it refuses them at scoring time,
+ * deep inside `scoreAt`, where a past date runs through `safeScoreAt` and the
+ * throw is swallowed. A genuine config error therefore surfaced as a missing
+ * delta rather than as a failure — and now that absent data is a normal, silent,
+ * expected condition, a config error would look like more of the same.
+ *
+ * So it is checked up front instead, at import, before anything has been
+ * scored. The throw inside `normalizeMetric` stays as a backstop and should now
+ * be unreachable in practice, which is the point of having both.
+ *
+ * Reports every offending metric in one message rather than stopping at the
+ * first: fixing anchors one failed import at a time is miserable, and a whole
+ * category is usually retuned in one sitting.
+ */
+export function validateMetricConfigs(configs: MetricConfig[]): void {
+  const problems: string[] = [];
+
+  for (const metric of configs) {
+    const { id, baselineValue, targetValue, direction } = metric;
+
+    if (!Number.isFinite(baselineValue) || !Number.isFinite(targetValue)) {
+      problems.push(`${id}: non-finite anchor (baseline ${baselineValue} -> target ${targetValue})`);
+      // The span is meaningless from here, so don't pile a second complaint on
+      // top of the one that actually needs fixing.
+      continue;
+    }
+
+    const span = targetValue - baselineValue;
+
+    if (span === 0) {
+      problems.push(
+        `${id}: baseline and target are both ${baselineValue}, so there is no scale to score against`,
+      );
+      continue;
+    }
+
+    const declaredFall = direction === 'lower_is_better';
+    if (declaredFall !== span < 0) {
+      problems.push(
+        `${id}: direction "${direction}" contradicts anchors ` +
+          `(baseline ${baselineValue} -> target ${targetValue})`,
+      );
+    }
+  }
+
+  if (problems.length > 0) {
+    throw new Error(`Invalid metric config:\n  ${problems.join('\n  ')}`);
+  }
+}

@@ -1,3 +1,4 @@
+import { validateMetricConfigs } from '../scoring/normalize.js';
 import type { MetricConfig, MetricDirection } from '../types.js';
 
 /**
@@ -462,6 +463,16 @@ export const METRICS: MetricConfig[] = [
       'Disease Outbreak News items published by WHO per year, 1996-present. An early-warning signal rather than an outcome: every other health metric here lags by years, and this moves now. Counts reports, not outbreaks or their severity — one imported measles case and an Ebola epidemic are one item each. Shown for context and deliberately given zero weight in the score, because its trend tracks WHO\'s reporting practice at least as strongly as it tracks the world.',
   },
 ];
+
+/**
+ * Anchors checked at import, for the same reason the weight sums are.
+ *
+ * A contradiction between `direction` and the anchors, a zero span or a
+ * non-finite anchor makes a metric unscoreable. Caught here it is a loud failure
+ * naming every offender; caught at scoring time it disappears into
+ * `safeScoreAt` and reads as a missing delta. See `validateMetricConfigs`.
+ */
+validateMetricConfigs(METRICS);
 
 /** Thrown at import time rather than silently mis-scoring. */
 const weightSum = METRICS.reduce((total, metric) => total + metric.weight, 0);
