@@ -5,29 +5,41 @@ import { normalizeMetric } from './normalize.js';
 /**
  * The composite score.
  *
- *   score = Σ contributors (weight × normalized) / Σ contributor weights
- *         − Σ detractors  (weight × (1 − normalized))
+ *   score = Σ (scaled weight × normalized)
  *
- * Three decisions, each arguable:
+ * where the scaled weights sum to 1 across the scored metrics. It is a plain
+ * weighted mean of per-metric progress, and nothing more.
  *
- * **Detractors subtract their shortfall, not their value.** A detractor's
- * normalized value still reads "how close to the target", so subtracting it
- * directly would punish the metric for doing well. What is subtracted is
- * `1 − normalized`: a detractor sitting on its target costs nothing, one at its
- * baseline costs its full weight, and one that has regressed past its baseline
- * — normalized as low as −0.5 — costs up to 1.5× its weight. That last case is
- * how a worsening detractor actively drags the composite down.
+ * **Aggregation is polarity-blind, and must stay that way.** `normalized` is
+ * already direction-corrected upstream — see `normalize.ts`, where progress is
+ * measured as `(value − baseline) / (target − baseline)` and the span is
+ * *signed*. A metric that has to fall has a negative span and a negative
+ * numerator, so an improving value still reads positive. A detractor sitting on
+ * its target and a contributor sitting on its target both read `1`; both at
+ * their baselines both read `0`.
  *
- * **Contributor weights are renormalized by their own sum.** Weights are
- * authored to total 1 across every metric, but if detractors held part of that
- * budget while only ever subtracting, the score could never reach 100% even in
- * a solved world. Dividing by the contributor total restores a reachable
- * ceiling and leaves detractor weights meaning what they appear to mean.
+ * So there is no directional difference left to resolve here. An earlier
+ * version charged detractors `(weight × normalized) − weight`, which is not a
+ * second look at direction but a flat handicap: an all-at-baseline world scored
+ * `−Σ detractor weights` and only read as 0% because the clamp hid it, and a
+ * detractor-only weighting had an arithmetic ceiling of 0% even with every
+ * indicator exactly on target. This matches standard practice — OECD/JRC, HDI
+ * and the Social Progress Index all resolve direction during normalisation and
+ * then aggregate with a plain weighted mean.
  *
- * **The floor is 0, the ceiling is 1.** Detractors can outweigh contributors on
- * paper; a negative score is not a claim this model can support. Note that this
- * clamp is on the *final* number only — it does not stop the score falling, it
- * stops it going below zero.
+ * This is the thing a future reader is most likely to "fix" back. Don't.
+ *
+ * **The clamp is a safety rail, not model logic.** Scaled weights sum to 1 and
+ * `normalizeMetric` bounds every value to `[NORMALIZED_FLOOR, NORMALIZED_CEILING]`
+ * = `[-0.5, 1]`. A weighted mean of values in that range is in that range, so
+ * the pre-clamp total is provably within `[-0.5, 1]`: `Math.min(1, …)` cannot
+ * fire and is kept as defensive code only. `Math.max(0, …)` is the one that can,
+ * and only when metrics have regressed past their own baselines — a negative
+ * score is not a claim this model supports.
+ *
+ * Mirrored in `src/lib/scoring.ts`, which re-scores under reader-chosen category
+ * weights. The two are one model and change together; `defaultWeightsMatchArtifact`
+ * is the guard.
  */
 
 export interface ScoreInputs {
@@ -44,9 +56,7 @@ export function scoreAt(inputs: ScoreInputs): {
 } {
   const { configs, observations, asOf } = inputs;
 
-  const contributorWeight = configs
-    .filter((config) => config.polarity === 'contributor')
-    .reduce((total, config) => total + config.weight, 0);
+  const totalWeight = configs.reduce((total, config) => total + config.weight, 0);
 
   const contributions: MetricContribution[] = configs.map((config) => {
     const series = observations.get(config.id) ?? [];
@@ -60,12 +70,9 @@ export function scoreAt(inputs: ScoreInputs): {
       normalized = normalizeMetric(config, projection.value);
     }
 
-    const contribution =
-      config.polarity === 'contributor'
-        ? contributorWeight > 0
-          ? (config.weight * normalized) / contributorWeight
-          : 0
-        : -(config.weight * (1 - normalized));
+    // Dividing by the total is what makes the scaled weights sum to 1, so the
+    // sum below is a weighted mean rather than a weighted total.
+    const contribution = totalWeight > 0 ? (config.weight * normalized) / totalWeight : 0;
 
     return {
       metricId: config.id,

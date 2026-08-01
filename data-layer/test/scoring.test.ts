@@ -144,9 +144,10 @@ describe('composite', () => {
     expect(belowBaseline).toBeLessThan(atBaseline);
   });
 
-  it('subtracts a detractor rather than averaging it in', () => {
-    const withContributorOnly = [config({ id: 'good', weight: 1 })];
-    const withDetractor = [
+  it('averages a detractor in like any other metric', () => {
+    // `normalized` is already direction-corrected by the signed span, so a
+    // detractor carries no handicap here — it is one more term in the mean.
+    const configs = [
       config({ id: 'good', weight: 0.8 }),
       config({
         id: 'emissions',
@@ -159,17 +160,66 @@ describe('composite', () => {
     ];
 
     const observations = new Map([
-      ['good', series('good', 2020, [80, 80, 80])],
-      ['emissions', series('emissions', 2020, [10, 10, 10])], // at baseline, full penalty
+      ['good', series('good', 2020, [80, 80, 80])], // normalized 0.8
+      ['emissions', series('emissions', 2020, [10, 10, 10])], // at baseline, normalized 0
     ]);
 
-    const clean = scoreAt({ configs: withContributorOnly, observations, asOf }).score;
-    const dirty = scoreAt({ configs: withDetractor, observations, asOf }).score;
-
-    expect(dirty).toBeCloseTo(clean - 0.2, 10);
+    // 0.8 * 0.8 + 0.2 * 0
+    expect(scoreAt({ configs, observations, asOf }).score).toBeCloseTo(0.64, 10);
   });
 
-  it('charges a detractor MORE than its weight once it regresses past baseline', () => {
+  it('scores a detractor sitting on its target as full marks for that weight', () => {
+    // The case the old handicap could not express: a detractor on target used
+    // to cost nothing but could never *earn* anything either, so a world of
+    // solved detractors was capped below 100%.
+    const configs = [
+      config({ id: 'good', weight: 0.8 }),
+      config({
+        id: 'emissions',
+        weight: 0.2,
+        polarity: 'detractor',
+        direction: 'lower_is_better',
+        baselineValue: 10,
+        targetValue: 2,
+      }),
+    ];
+
+    const solved = new Map([
+      ['good', series('good', 2020, [100, 100, 100])],
+      ['emissions', series('emissions', 2020, [2, 2, 2])],
+    ]);
+
+    expect(scoreAt({ configs, observations: solved, asOf }).score).toBeCloseTo(1, 10);
+  });
+
+  it('scores an all-at-baseline world as 0 before the clamp, not by clamping', () => {
+    const configs = [
+      config({ id: 'good', weight: 0.8 }),
+      config({
+        id: 'emissions',
+        weight: 0.2,
+        polarity: 'detractor',
+        direction: 'lower_is_better',
+        baselineValue: 10,
+        targetValue: 2,
+      }),
+    ];
+
+    const atBaseline = new Map([
+      ['good', series('good', 2020, [0, 0, 0])],
+      ['emissions', series('emissions', 2020, [10, 10, 10])],
+    ]);
+
+    const { score, contributions } = scoreAt({ configs, observations: atBaseline, asOf });
+
+    // Contributions sum to the *unclamped* total. Under the old detractor
+    // handicap this read -0.2 and only surfaced as 0 because of `Math.max`.
+    const raw = contributions.reduce((total, entry) => total + entry.contribution, 0);
+    expect(raw).toBe(0);
+    expect(score).toBe(0);
+  });
+
+  it('lets a regressed metric drag the total below its at-baseline level', () => {
     const configs = [
       config({ id: 'good', weight: 0.8 }),
       config({
@@ -194,8 +244,8 @@ describe('composite', () => {
     const a = scoreAt({ configs, observations: atBaseline, asOf }).score;
     const b = scoreAt({ configs, observations: worse, asOf }).score;
 
-    expect(a).toBeCloseTo(0.8, 10); // 1.0 - 0.2
-    expect(b).toBeCloseTo(0.7, 10); // 1.0 - 0.2 * 1.5
+    expect(a).toBeCloseTo(0.8, 10); // 0.8 * 1 + 0.2 * 0
+    expect(b).toBeCloseTo(0.7, 10); // 0.8 * 1 + 0.2 * -0.5
   });
 
   it('clamps the final score at 0 without clamping the pressure that got it there', () => {

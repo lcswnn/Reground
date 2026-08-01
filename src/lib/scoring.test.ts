@@ -6,6 +6,8 @@ import {
   defaultWeightsFrom,
   isDefaultWeighting,
   toScorable,
+  unclampedComposite,
+  type CategoryWeights,
   type ScorableMetric,
 } from './scoring';
 
@@ -31,9 +33,9 @@ function metric(overrides: Partial<ScorableMetric> = {}): ScorableMetric {
 
 describe('computeComposite', () => {
   it('matches a hand-computed case', () => {
-    // Two contributors, equal weight, one category. Contributor weights are
-    // renormalised by their own sum, so the result is the plain mean of the
-    // normalized values regardless of the absolute weights.
+    // Two metrics, equal weight, one category. The rescaled weights sum to 1,
+    // so the result is the plain mean of the normalized values regardless of
+    // the absolute weights.
     const result = computeComposite(
       [
         metric({ id: 'a', weight: 0.1, normalized: 0.8 }),
@@ -79,10 +81,10 @@ describe('computeComposite', () => {
     expect(after.score).toBeLessThan(before.score);
   });
 
-  it('lets a regressed detractor cost more than its own weight', () => {
-    // The whole reason `normalized` floors at -0.5 rather than 0: a detractor at
-    // -0.5 subtracts 1.5x its weight, so it can drag the composite rather than
-    // merely failing to lift it.
+  it('lets a regressed metric pull the composite down, not merely fail to lift it', () => {
+    // The whole reason `normalized` floors at -0.5 rather than 0: a metric that
+    // has gone backwards past its own baseline carries a negative term into the
+    // mean, so it drags rather than contributing nothing.
     const mild = computeComposite(
       [
         metric({ id: 'a', normalized: 1 }),
@@ -99,8 +101,7 @@ describe('computeComposite', () => {
       { health: 50, environment: 50 },
     );
 
-    // Contributor renormalisation puts the contributor at 1.0; the detractor
-    // subtracts 0.5 then 0.75 of the total.
+    // Half the weight each: (1 + 0) / 2, then (1 + -0.5) / 2.
     expect(mild.score).toBeCloseTo(0.5, 6);
     expect(severe.score).toBeCloseTo(0.25, 6);
   });
@@ -158,6 +159,80 @@ describe('computeComposite', () => {
     expect(Number.isFinite(result.score)).toBe(true);
   });
 
+  it('scores every metric on target as exactly 1, detractors included', () => {
+    const result = computeComposite(
+      [
+        metric({ id: 'a', category: 'health', weight: 0.15, normalized: 1 }),
+        metric({ id: 'b', category: 'environment', weight: 0.05, normalized: 1, polarity: 'detractor' }),
+        metric({ id: 'c', category: 'peace_safety', weight: 0.3, normalized: 1, polarity: 'detractor' }),
+      ],
+      { health: 20, environment: 15, peace_safety: 15 },
+    );
+
+    expect(result.score).toBe(1);
+  });
+
+  it('scores every metric at baseline as exactly 0, before any clamping', () => {
+    // The point of asserting the *unclamped* number: under the old detractor
+    // handicap this world scored -(detractor weight) and only read as 0%
+    // because `Math.max(0, …)` hid it.
+    const atBaseline = [
+      metric({ id: 'a', category: 'health', weight: 0.15, normalized: 0 }),
+      metric({ id: 'b', category: 'environment', weight: 0.05, normalized: 0, polarity: 'detractor' }),
+      metric({ id: 'c', category: 'peace_safety', weight: 0.3, normalized: 0, polarity: 'detractor' }),
+    ];
+    const weights = { health: 20, environment: 15, peace_safety: 15 };
+
+    expect(unclampedComposite(atBaseline, weights)).toBe(0);
+    expect(computeComposite(atBaseline, weights).score).toBe(0);
+  });
+
+  it('lets an all-detractor weighting reach 1.0 with those metrics on target', () => {
+    // The reader put everything on categories holding only detractors. Under
+    // the old handicap every term was <= 0 and this read 0% no matter how well
+    // the indicators were doing — an arithmetic ceiling, not a finding.
+    const result = computeComposite(
+      [
+        metric({ id: 'a', category: 'peace_safety', normalized: 1, polarity: 'detractor' }),
+        metric({ id: 'b', category: 'peace_safety', normalized: 1, polarity: 'detractor' }),
+        metric({ id: 'c', category: 'health', normalized: 0.5, polarity: 'contributor' }),
+      ],
+      { peace_safety: 100, health: 0 },
+    );
+
+    expect(result.score).toBe(1);
+  });
+
+  it('reads all-detractor progress as the weighted mean of it', () => {
+    // 0.8 * (0.15/0.20) + 0.2 * (0.05/0.20) = 0.6 + 0.05 = 0.65.
+    const detractors = [
+      metric({ id: 'a', category: 'peace_safety', weight: 0.15, normalized: 0.8, polarity: 'detractor' }),
+      metric({ id: 'b', category: 'peace_safety', weight: 0.05, normalized: 0.2, polarity: 'detractor' }),
+    ];
+
+    expect(computeComposite(detractors, { peace_safety: 100 }).score).toBeCloseTo(0.65, 6);
+
+    const atBaseline = detractors.map((m) => ({ ...m, normalized: 0 }));
+    expect(computeComposite(atBaseline, { peace_safety: 100 }).score).toBe(0);
+
+    const regressed = detractors.map((m) => ({ ...m, normalized: -0.5 }));
+    expect(unclampedComposite(regressed, { peace_safety: 100 })).toBeCloseTo(-0.5, 6);
+    expect(computeComposite(regressed, { peace_safety: 100 }).score).toBe(0);
+  });
+
+  it('treats a detractor as an ordinary term in the mean', () => {
+    // The metric's own weight carries it, and nothing else. 0.9 * 1 + 0.1 * 0.
+    const result = computeComposite(
+      [
+        metric({ id: 'a', category: 'health', weight: 0.1, normalized: 1 }),
+        metric({ id: 'b', category: 'environment', weight: 0.1, normalized: 0, polarity: 'detractor' }),
+      ],
+      { health: 90, environment: 10 },
+    );
+
+    expect(result.score).toBeCloseTo(0.9, 6);
+  });
+
   it('returns zero rather than NaN when every weight is zero', () => {
     const result = computeComposite([metric({ id: 'a' })], { health: 0 });
 
@@ -182,6 +257,79 @@ describe('computeComposite', () => {
 
     const total = result.categories.reduce((sum, entry) => sum + entry.effectiveWeight, 0);
     expect(total).toBeCloseTo(1, 6);
+  });
+});
+
+/**
+ * The bounding argument the doc comment makes, checked rather than asserted.
+ *
+ * Scaled weights sum to 1 and `normalized` is bounded to [-0.5, 1], so a
+ * weighted mean of them is bounded to [-0.5, 1] too. That is what makes
+ * `Math.min(1, …)` unreachable and leaves `Math.max(0, …)` as the only clamp
+ * that can fire.
+ */
+describe('the composite is bounded to [-0.5, 1] before clamping', () => {
+  const CATEGORIES = ['health', 'environment', 'peace_safety', 'education', 'basic_needs'];
+
+  /** Seeded so a failure is reproducible rather than a one-off CI flake. */
+  function rng(seed: number): () => number {
+    let state = seed >>> 0;
+    return () => {
+      state = (state * 1664525 + 1013904223) >>> 0;
+      return state / 0x100000000;
+    };
+  }
+
+  it('never exceeds 1, over randomised metric sets', () => {
+    const random = rng(20260801);
+
+    for (let run = 0; run < 2000; run += 1) {
+      const metrics: ScorableMetric[] = [];
+      const count = 1 + Math.floor(random() * 12);
+
+      for (let index = 0; index < count; index += 1) {
+        metrics.push(
+          metric({
+            id: `m${index}`,
+            category: CATEGORIES[Math.floor(random() * CATEGORIES.length)],
+            // Zero weights included on purpose — `disease-outbreaks` ships at 0.
+            weight: random() < 0.15 ? 0 : random() * 0.3,
+            // The full normalised range, floor and ceiling included.
+            normalized: random() * 1.5 - 0.5,
+            polarity: random() < 0.5 ? 'detractor' : 'contributor',
+          }),
+        );
+      }
+
+      const categoryWeights: CategoryWeights = {};
+      for (const category of CATEGORIES) {
+        categoryWeights[category] = random() < 0.2 ? 0 : random() * 100;
+      }
+
+      const raw = unclampedComposite(metrics, categoryWeights);
+
+      expect(raw).toBeLessThanOrEqual(1 + 1e-12);
+      expect(raw).toBeGreaterThanOrEqual(-0.5 - 1e-12);
+    }
+  });
+
+  it('does reach below 0, which is why the lower clamp is not dead code', () => {
+    const flooredOut = [
+      metric({ id: 'a', category: 'health', normalized: -0.5 }),
+      metric({ id: 'b', category: 'environment', normalized: -0.5, polarity: 'detractor' }),
+    ];
+
+    expect(unclampedComposite(flooredOut, { health: 50, environment: 50 })).toBeCloseTo(-0.5, 6);
+    expect(computeComposite(flooredOut, { health: 50, environment: 50 }).score).toBe(0);
+  });
+
+  it('reaches exactly 1 but never past it, even with every metric on the ceiling', () => {
+    const solved = [
+      metric({ id: 'a', category: 'health', weight: 0.3, normalized: 1 }),
+      metric({ id: 'b', category: 'environment', weight: 0.7, normalized: 1, polarity: 'detractor' }),
+    ];
+
+    expect(unclampedComposite(solved, { health: 10, environment: 90 })).toBeCloseTo(1, 12);
   });
 });
 

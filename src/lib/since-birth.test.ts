@@ -245,8 +245,8 @@ describe('composite scoring mirrors the data layer', () => {
       });
 
       // No composite helper exposes `normalize` directly, so it is exercised
-      // through a single-contributor score, where the two are equal by
-      // construction: one contributor renormalized by its own weight.
+      // through a single-metric score, where the two are equal by construction:
+      // one metric holding the whole weight is its own weighted mean.
       const composite = compositeSinceBirth([asArtifact], '1995-01-01');
       expect(composite).not.toBeNull();
 
@@ -279,25 +279,36 @@ describe('compositeSinceBirth', () => {
     series: [{ t: '1990-01-01', v: 4.2 }],
   });
 
-  it('scores both ends over the same metric set, and floors a negative total', () => {
+  it('scores both ends over the same metric set', () => {
     const result = compositeSinceBirth([poverty, co2], '1995-01-01');
 
-    // from: poverty (40→0 scale) at 30 normalizes to 0.25, and as the only
-    // contributor it is renormalized by its own weight → 0.25. co2 at 4.2 sits
-    // past its own baseline at -0.1, so the detractor costs 0.5 × 1.1 = 0.55.
-    // 0.25 − 0.55 is negative, and the composite floors at 0.
-    expect(result!.fromScore).toBe(0);
+    // from: poverty (40→0 scale) at 30 normalizes to 0.25. co2 (4→2 scale) at
+    // 4.2 sits past its own baseline, at -0.1. Equal weights, so 0.075.
+    expect(result!.fromScore).toBeCloseTo(0.075, 10);
 
-    // to: poverty at 10 → 0.75. co2 at 4.5 → -0.25, costing 0.5 × 1.25 = 0.625.
-    expect(result!.toScore).toBeCloseTo(0.125, 10);
-
-    // The floor is why this is worth asserting: the reader is shown +12.5
-    // points, when the unclamped move was 0.425 → 0.125. A clamp at one end
-    // only is exactly the kind of thing that reads fine and is wrong.
-    expect(result!.deltaPoints).toBeCloseTo(12.5, 10);
+    // to: poverty at 10 → 0.75. co2 at 4.5 → -0.25. Mean of those is 0.25.
+    expect(result!.toScore).toBeCloseTo(0.25, 10);
+    expect(result!.deltaPoints).toBeCloseTo(17.5, 10);
   });
 
-  it('reports a rise when the contributors outrun the detractors', () => {
+  it('floors a negative total at both ends rather than only one', () => {
+    // A clamp that fires at one end and not the other overstates the move, so
+    // it is worth pinning that both ends go through the same clamp.
+    const regressed = [poverty, co2].map((entry) => ({
+      ...entry,
+      // Both well past their own baselines, at each end.
+      currentValue: 200,
+      series: [{ t: '1990-01-01', v: 200 }],
+    }));
+
+    const result = compositeSinceBirth(regressed, '1995-01-01');
+
+    expect(result!.fromScore).toBe(0);
+    expect(result!.toScore).toBe(0);
+    expect(result!.deltaPoints).toBe(0);
+  });
+
+  it('reports a rise when the improving metrics outrun the worsening ones', () => {
     const improving = metric({
       id: 'literacy',
       direction: 'higher_is_better',

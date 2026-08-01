@@ -79,10 +79,13 @@ function normalize(metric: HumanityMetric, value: number): number {
 /**
  * The composite score over a set of already-normalised metrics.
  *
- * Mirrors `scoreAt` in `data-layer/src/scoring/composite.ts`: contributors are
- * renormalised by their own weight total so a solved world can still reach 100%,
- * detractors subtract their shortfall rather than their value, and the result is
- * clamped to 0–1.
+ * Mirrors `scoreAt` in `data-layer/src/scoring/composite.ts`: a weighted mean of
+ * per-metric progress, `Σ (weight × normalized) / Σ weight`, clamped to 0–1.
+ *
+ * Polarity is not read here, and deliberately so — `normalize` above already
+ * resolves direction through the signed span, exactly as the data layer does, so
+ * a detractor on target and a contributor on target both read `1`. See the doc
+ * comment on `computeComposite` in `scoring.ts`.
  *
  * Duplicated rather than shared because that module imports the nowcast and the
  * whole `MetricConfig` shape, neither of which exists in the app bundle. If the
@@ -91,22 +94,13 @@ function normalize(metric: HumanityMetric, value: number): number {
  * that makes the duplication safe rather than merely convenient.
  */
 function scoreOver(metrics: HumanityMetric[], valueOf: (metric: HumanityMetric) => number): number {
-  const contributorWeight = metrics
-    .filter((metric) => metric.polarity === 'contributor')
-    .reduce((total, metric) => total + metric.weight, 0);
+  const totalWeight = metrics.reduce((total, metric) => total + metric.weight, 0);
+  if (totalWeight <= 0) return 0;
 
-  const raw = metrics.reduce((total, metric) => {
-    const normalized = normalize(metric, valueOf(metric));
-
-    const contribution =
-      metric.polarity === 'contributor'
-        ? contributorWeight > 0
-          ? (metric.weight * normalized) / contributorWeight
-          : 0
-        : -(metric.weight * (1 - normalized));
-
-    return total + contribution;
-  }, 0);
+  const raw = metrics.reduce(
+    (total, metric) => total + (metric.weight * normalize(metric, valueOf(metric))) / totalWeight,
+    0,
+  );
 
   return Math.min(1, Math.max(0, raw));
 }

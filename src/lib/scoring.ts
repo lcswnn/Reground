@@ -10,7 +10,7 @@ import type { HumanityMetric } from '@/api/humanity';
  *
  * ## This deliberately mirrors `data-layer/src/scoring/composite.ts`
  *
- * Same formula, same detractor handling, same clamps. Two implementations of one
+ * Same formula, same weight rescaling, same clamps. Two implementations of one
  * model is a real cost and worth naming: if you change the maths there, change
  * it here. The alternative — shipping every metric's raw series to the client
  * and scoring from scratch — is a much larger payload and a second place for the
@@ -127,49 +127,69 @@ function rescaleWeights(
 /**
  * The composite, under the given category weights.
  *
- *   score = Σ contributors (weight × normalized) / Σ contributor weights
- *         − Σ detractors  (weight × (1 − normalized))
+ *   score = Σ (scaled weight × normalized)
  *
- * Detractors subtract their *shortfall*, not their value: one sitting on its
- * target costs nothing, one at its baseline costs its full weight, and one that
- * has regressed past its baseline — `normalized` as low as −0.5 — costs up to
- * 1.5× its weight. That is how the score falls when the world gets worse, and it
- * is the reason this model is not a plain weighted average.
+ * `rescaleWeights` makes the scaled weights sum to 1 across live categories, so
+ * this is a plain weighted mean of per-metric progress — a dot product, nothing
+ * more.
  *
- * Contributor weights are renormalised by their own sum so a solved world can
- * still reach 100% even though detractors hold part of the weight budget.
+ * **Aggregation is polarity-blind, and must stay that way.** `normalized` is
+ * already direction-corrected upstream, in `data-layer/src/scoring/normalize.ts`:
+ * progress is `(value − baseline) / (target − baseline)` with a *signed* span,
+ * so a metric that has to fall has a negative span and a negative numerator and
+ * still reads positive when it improves. A detractor on target and a contributor
+ * on target both read `1`; both at baseline both read `0`. There is no
+ * directional difference left for this function to resolve.
  *
- * The final clamp to 0–1 is on the total only. It does not stop the score
- * falling; it stops it going negative, which is not a claim this model supports.
+ * An earlier version charged detractors `(weight × normalized) − weight`. That
+ * was not a second look at direction, it was a flat handicap — an
+ * all-at-baseline world scored `−Σ detractor weights` and only read as 0%
+ * because the clamp hid it, and an all-detractor weighting had an arithmetic
+ * ceiling of 0% even with every indicator exactly on target. This is the thing a
+ * future reader is most likely to "fix" back. Don't.
+ *
+ * **The clamp is a safety rail, not model logic.** Scaled weights sum to 1 and
+ * `normalized` is bounded to `[-0.5, 1]` by the data layer, so the pre-clamp
+ * total is provably within `[-0.5, 1]`. `Math.min(1, …)` cannot fire and is kept
+ * as defensive code only; `Math.max(0, …)` is the one that can, and only when
+ * metrics have regressed past their own baselines.
  */
 export function computeComposite(
   metrics: ScorableMetric[],
   categoryWeights: CategoryWeights,
 ): CompositeResult {
   const weights = rescaleWeights(metrics, categoryWeights);
-
-  let contributorWeight = 0;
-  for (const metric of metrics) {
-    if (metric.polarity === 'contributor') contributorWeight += weights.get(metric.id) ?? 0;
-  }
-
-  let raw = 0;
-  for (const metric of metrics) {
-    const weight = weights.get(metric.id) ?? 0;
-    if (weight === 0) continue;
-
-    raw +=
-      metric.polarity === 'contributor'
-        ? contributorWeight > 0
-          ? (weight * metric.normalized) / contributorWeight
-          : 0
-        : -(weight * (1 - metric.normalized));
-  }
+  const raw = weightedMean(metrics, weights);
 
   return {
     score: Math.min(1, Math.max(0, raw)),
     categories: summariseCategories(metrics, weights),
   };
+}
+
+function weightedMean(metrics: ScorableMetric[], weights: Map<string, number>): number {
+  let raw = 0;
+  for (const metric of metrics) {
+    raw += (weights.get(metric.id) ?? 0) * metric.normalized;
+  }
+  return raw;
+}
+
+/**
+ * The composite before the clamp.
+ *
+ * Exported so the bounding argument above is testable rather than merely
+ * asserted: `raw <= 1` has to hold for every input — which is what makes
+ * `Math.min(1, …)` unreachable — and `raw < 0` has to stay reachable, which is
+ * what makes `Math.max(0, …)` the clamp that does the work.
+ *
+ * Not used to render anything. The number on screen is always the clamped one.
+ */
+export function unclampedComposite(
+  metrics: ScorableMetric[],
+  categoryWeights: CategoryWeights,
+): number {
+  return weightedMean(metrics, rescaleWeights(metrics, categoryWeights));
 }
 
 function summariseCategories(
