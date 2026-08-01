@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { router } from 'expo-router';
+import { useCallback, useMemo } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -63,6 +64,26 @@ export default function WeightingScreen() {
 
   const { draft, setWeight, commit, reset, isDirty, isCustomised, hasSaved } =
     useWeightingDraft(defaults);
+
+  /**
+   * Save, then go to Today.
+   *
+   * Saving is the moment the score comes into existence, and the card on Today
+   * is the only place it appears — leaving the reader on the sliders after they
+   * commit means the payoff for answering the question happens on a screen they
+   * are not looking at.
+   *
+   * `dismissTo` rather than `back`, because this screen has two entry points:
+   * the card itself and the Progress tab. Popping one screen would return
+   * somebody who came from Progress to Progress, where there is no card to see.
+   */
+  const saveAndReturn = useCallback(() => {
+    commit();
+    // `replace` covers the deep-link case, where this screen is the root and
+    // there is nothing under it to dismiss to.
+    if (router.canDismiss()) router.dismissTo('/');
+    else router.replace('/');
+  }, [commit]);
 
   const defaultResult = useMemo(
     () => computeComposite(metrics, defaults),
@@ -162,12 +183,12 @@ export default function WeightingScreen() {
           <Button
             title={hasSaved && !isDirty ? 'Saved' : 'Save'}
             variant="primary"
-            onPress={commit}
+            onPress={saveAndReturn}
             disabled={hasSaved && !isDirty}
             accessibilityLabel={
               hasSaved && !isDirty
                 ? 'Your weighting is saved'
-                : 'Save your weighting to this device'
+                : 'Save your weighting and return to Today'
             }
           />
 
