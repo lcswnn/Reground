@@ -140,11 +140,28 @@ export interface MetricContribution {
   /** Signed share of the final score. Contributions sum to the unclamped total. */
   contribution: number;
   weight: number;
+  /**
+   * False when the metric could not be placed on its scale at this instant —
+   * no observations, no history reaching back this far, or a `normalizeMetric`
+   * that returned null.
+   *
+   * Such a metric is out of both the numerator and the weight denominator, so
+   * its `contribution` and `normalized` are 0 as placeholders rather than as
+   * findings. Anything reading either has to gate on this first.
+   */
+  hasData: boolean;
   polarity: MetricPolarity;
 }
 
 export interface CompositeResult {
   score: number;
+  /**
+   * Fraction of the total configured *weight* that was actually scored.
+   *
+   * Weight rather than count because four missing trivial metrics are a
+   * different story from one missing heavy one. 1 means every metric landed.
+   */
+  coverage: number;
   perMetricContributions: MetricContribution[];
   direction: 'up' | 'down' | 'flat';
   /** Signed change in score. Null when there is not enough history to say. */
@@ -181,6 +198,15 @@ export interface ArtifactMetric {
   normalizedObserved: number;
   contribution: number;
   weight: number;
+  /**
+   * Whether this metric could be scored at all.
+   *
+   * False means `normalized`, `normalizedObserved` and `contribution` are
+   * placeholder zeros and the metric was excluded from the composite's weight
+   * denominator — not that it is sitting at its baseline. The client mirrors
+   * this on `ScorableMetric` and must not score a metric where it is false.
+   */
+  hasData: boolean;
   /**
    * The normalisation anchors, so the client can score a value the server never
    * saw — specifically the reader's birth year, which is per-user and therefore

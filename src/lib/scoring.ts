@@ -38,28 +38,49 @@ export interface ScorableMetric {
   /** Default weight from the artifact. Relative size within a category. */
   weight: number;
   normalized: number;
+  /**
+   * Whether the metric could be scored at all.
+   *
+   * False means `normalized` is a placeholder zero, not a reading. Such a metric
+   * is dropped before the weights are rescaled, so its share redistributes
+   * across the metrics that do have data rather than counting as no progress.
+   */
+  hasData: boolean;
   polarity: 'contributor' | 'detractor';
 }
 
 export interface CategoryBreakdown {
   categoryId: string;
   /**
-   * Weighted mean of the category's metric `normalized` values, 0–100.
+   * Weighted mean of the category's scored `normalized` values, 0–100.
    *
    * Presented per category on the weighting screen so a slider has something to
-   * be about. Note this is a plain average of progress within the category and
-   * is *not* the category's contribution to the composite — detractors subtract
-   * there and merely score low here.
+   * be about. Since aggregation is polarity-blind this *is* the category's
+   * contribution to the composite, weighted by `effectiveWeight` — the two are
+   * one number now, where under the old detractor handicap they were not.
+   *
+   * Metrics with no data are left out, so this reads over the same set the
+   * composite scored.
    */
   score: number;
   /** Share of the composite this category actually took, after normalisation. */
   effectiveWeight: number;
+  /** How many of the category's metrics were actually scored. */
   metricCount: number;
+  /** How many were skipped for want of data. Sums with `metricCount`. */
+  unscoredMetricCount: number;
 }
 
 export interface CompositeResult {
   /** 0–1, matching the artifact's `compositeScore`. */
   score: number;
+  /**
+   * Fraction of the total configured weight that had data behind it.
+   *
+   * Weight rather than count, for the same reason the data layer reports it that
+   * way: one missing heavy metric is not four missing trivial ones.
+   */
+  coverage: number;
   categories: CategoryBreakdown[];
 }
 
@@ -153,16 +174,28 @@ function rescaleWeights(
  * total is provably within `[-0.5, 1]`. `Math.min(1, …)` cannot fire and is kept
  * as defensive code only; `Math.max(0, …)` is the one that can, and only when
  * metrics have regressed past their own baselines.
+ *
+ * **Metrics with no data are excluded from both sums.** They are filtered out
+ * before the weights are rescaled, so their share redistributes across the
+ * metrics that do have data instead of vanishing into the denominator as zero
+ * progress. `coverage` reports how much of the weight budget that left.
  */
 export function computeComposite(
   metrics: ScorableMetric[],
   categoryWeights: CategoryWeights,
 ): CompositeResult {
-  const weights = rescaleWeights(metrics, categoryWeights);
-  const raw = weightedMean(metrics, weights);
+  const scored = metrics.filter((metric) => metric.hasData);
+  const weights = rescaleWeights(scored, categoryWeights);
+  const raw = weightedMean(scored, weights);
+
+  const configuredWeight = metrics.reduce((total, metric) => total + metric.weight, 0);
+  const scoredWeight = scored.reduce((total, metric) => total + metric.weight, 0);
 
   return {
     score: Math.min(1, Math.max(0, raw)),
+    coverage: configuredWeight > 0 ? scoredWeight / configuredWeight : 0,
+    // Every metric, not just the scored ones — a category needs to be able to
+    // say how many of its indicators are waiting on data.
     categories: summariseCategories(metrics, weights),
   };
 }
@@ -189,7 +222,8 @@ export function unclampedComposite(
   metrics: ScorableMetric[],
   categoryWeights: CategoryWeights,
 ): number {
-  return weightedMean(metrics, rescaleWeights(metrics, categoryWeights));
+  const scored = metrics.filter((metric) => metric.hasData);
+  return weightedMean(scored, rescaleWeights(scored, categoryWeights));
 }
 
 function summariseCategories(
@@ -206,22 +240,30 @@ function summariseCategories(
   const out: CategoryBreakdown[] = [];
 
   for (const [categoryId, bucket] of grouped) {
+    // Only metrics that could be scored. A metric waiting on data has a
+    // placeholder 0 in `normalized`, and averaging that in would report the
+    // category as making no progress on something it has not measured.
+    const scored = bucket.filter((metric) => metric.hasData);
+
     // Weighted by the metrics' own default weights, not a flat mean: within
     // health, child mortality is authored to matter more than vaccination
     // coverage, and a flat average would throw that away. Falls back to a flat
-    // mean when every metric in the category sits at weight 0, so a category
-    // holding only unscored metrics still reports a readable score.
-    const totalWeight = bucket.reduce((sum, metric) => sum + metric.weight, 0);
+    // mean when every scored metric in the category sits at weight 0, so a
+    // category holding only zero-weight metrics still reports a readable score.
+    const totalWeight = scored.reduce((sum, metric) => sum + metric.weight, 0);
     const score =
-      totalWeight > 0
-        ? bucket.reduce((sum, metric) => sum + metric.normalized * metric.weight, 0) / totalWeight
-        : bucket.reduce((sum, metric) => sum + metric.normalized, 0) / bucket.length;
+      scored.length === 0
+        ? 0
+        : totalWeight > 0
+          ? scored.reduce((sum, metric) => sum + metric.normalized * metric.weight, 0) / totalWeight
+          : scored.reduce((sum, metric) => sum + metric.normalized, 0) / scored.length;
 
     out.push({
       categoryId,
       score: score * 100,
       effectiveWeight: bucket.reduce((sum, metric) => sum + (weights.get(metric.id) ?? 0), 0),
-      metricCount: bucket.length,
+      metricCount: scored.length,
+      unscoredMetricCount: bucket.length - scored.length,
     });
   }
 
@@ -235,6 +277,9 @@ export function toScorable(metrics: HumanityMetric[]): ScorableMetric[] {
     category: metric.category,
     weight: metric.weight,
     normalized: metric.normalized,
+    // Absent on artifacts published before the field existed. Those only ever
+    // carried metrics that had been scored, so `true` is the right reading.
+    hasData: metric.hasData ?? true,
     polarity: metric.polarity,
   }));
 }

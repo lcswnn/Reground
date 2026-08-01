@@ -157,6 +157,16 @@ async function main() {
       trailingWindowYears: metric.trailingWindowYears,
     });
 
+    // `normalizeMetric` returns null when the metric cannot be placed on its
+    // scale. The artifact's `normalized` is a plain number the tiles and charts
+    // read, so absence is carried in `hasData` and the number falls back to a
+    // placeholder 0 that consumers must gate on. `scoreAt` reached the same
+    // conclusion independently; trust it, since it is the one that decided
+    // whether the metric was in the composite's denominator.
+    const normalized = normalizeMetric(metric, projection.value);
+    const normalizedObserved = normalizeMetric(metric, projection.lastObservedValue);
+    const hasData = contribution?.hasData ?? normalized !== null;
+
     return {
       id: metric.id,
       label: metric.label,
@@ -166,10 +176,11 @@ async function main() {
       lastObservedAt: projection.lastObservedAt,
       lastObservedValue: projection.lastObservedValue,
       sourceLastUpdated: series[series.length - 1]?.sourceLastUpdated ?? null,
-      normalized: normalizeMetric(metric, projection.value),
-      normalizedObserved: normalizeMetric(metric, projection.lastObservedValue),
+      normalized: normalized ?? 0,
+      normalizedObserved: normalizedObserved ?? 0,
       contribution: contribution?.contribution ?? 0,
       weight: metric.weight,
+      hasData,
       baselineValue: metric.baselineValue,
       targetValue: metric.targetValue,
       direction: metric.direction,

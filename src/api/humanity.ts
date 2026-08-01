@@ -38,6 +38,18 @@ export interface HumanityMetric {
   contribution: number;
   weight: number;
   /**
+   * Whether the metric could be scored at all.
+   *
+   * False means `normalized`, `normalizedObserved` and `contribution` are
+   * placeholder zeros — the metric was excluded from the composite rather than
+   * counted as sitting at its baseline.
+   *
+   * Optional for the same reason as `direction`: added after the first
+   * artifacts were published. Absent means "scored", since an artifact built
+   * before the field existed could only carry metrics that had data.
+   */
+  hasData?: boolean;
+  /**
    * The normalisation anchors, for scoring a value the server never saw — the
    * reader's birth year is per-user and cannot be precomputed.
    *

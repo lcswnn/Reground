@@ -22,12 +22,23 @@ import type { MetricConfig } from '../types.js';
 export const NORMALIZED_FLOOR = -0.5;
 export const NORMALIZED_CEILING = 1;
 
-export function normalizeMetric(metric: MetricConfig, value: number): number {
+/**
+ * Progress from baseline toward target, or `null` when the metric cannot be
+ * placed on its scale at all.
+ *
+ * `null` is not a score and must never be coerced into one. `0` in this model
+ * is a claim — "sitting exactly at baseline, no progress made" — and a metric we
+ * cannot measure has made no such claim. Collapsing the two biases the composite
+ * downward, and does it invisibly, because a metric scoring 0 for want of data
+ * reads identically to one genuinely stuck. Callers exclude `null` metrics from
+ * both the numerator and the weight denominator and report coverage separately.
+ */
+export function normalizeMetric(metric: MetricConfig, value: number): number | null {
   const span = metric.targetValue - metric.baselineValue;
 
-  // No scale to place the value on. Return the pessimistic end rather than
-  // inventing progress from a degenerate config.
-  if (span === 0 || !Number.isFinite(span)) return 0;
+  // A degenerate config gives no scale to place the value on, so there is no
+  // progress to report either way. See above for why this is not 0.
+  if (span === 0 || !Number.isFinite(span)) return null;
 
   // The subtraction handles both directions unaided: when a metric is meant to
   // fall, numerator and denominator are both negative and the ratio comes out
@@ -43,7 +54,9 @@ export function normalizeMetric(metric: MetricConfig, value: number): number {
     );
   }
 
-  if (!Number.isFinite(value)) return 0;
+  // A nowcast that came back NaN or Infinity has told us nothing about this
+  // metric, which is different from telling us nothing has improved.
+  if (!Number.isFinite(value)) return null;
 
   const raw = (value - metric.baselineValue) / span;
 

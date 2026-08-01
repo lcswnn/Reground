@@ -250,8 +250,13 @@ describe('composite scoring mirrors the data layer', () => {
       const composite = compositeSinceBirth([asArtifact], '1995-01-01');
       expect(composite).not.toBeNull();
 
-      const expected = Math.min(1, Math.max(0, normalizeMetric(testCase.config, testCase.value)));
-      expect(composite!.toScore).toBeCloseTo(expected, 10);
+      // Every case here is a well-formed config with a finite value, so the
+      // data layer must be able to place it. A null would mean the fixture is
+      // wrong, not that the two disagree.
+      const normalized = normalizeMetric(testCase.config, testCase.value);
+      expect(normalized).not.toBeNull();
+
+      expect(composite!.toScore).toBeCloseTo(Math.min(1, Math.max(0, normalized!)), 10);
     });
   }
 });

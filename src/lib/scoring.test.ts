@@ -26,6 +26,7 @@ function metric(overrides: Partial<ScorableMetric> = {}): ScorableMetric {
     category: 'health',
     weight: 0.1,
     normalized: 0.5,
+    hasData: true,
     polarity: 'contributor',
     ...overrides,
   };
@@ -254,9 +255,92 @@ describe('computeComposite', () => {
     // 0.8 * 0.75 + 0.4 * 0.25 = 0.7
     expect(health?.score).toBeCloseTo(70, 4);
     expect(health?.metricCount).toBe(2);
+    expect(health?.unscoredMetricCount).toBe(0);
 
     const total = result.categories.reduce((sum, entry) => sum + entry.effectiveWeight, 0);
     expect(total).toBeCloseTo(1, 6);
+  });
+});
+
+/**
+ * Absent data is not zero progress.
+ *
+ * A metric with no measurement behind it leaves both the numerator and the
+ * weight denominator. Scoring it as 0 would say "no progress made on this",
+ * which is a claim about the world rather than a statement about our coverage.
+ */
+describe('computeComposite — metrics with no data', () => {
+  it('redistributes an unscored metrics weight rather than counting it as zero', () => {
+    const scoredOnly = computeComposite(
+      [metric({ id: 'a', category: 'health', weight: 0.1, normalized: 0.8 })],
+      { health: 20, environment: 15 },
+    );
+
+    const withPending = computeComposite(
+      [
+        metric({ id: 'a', category: 'health', weight: 0.1, normalized: 0.8 }),
+        metric({ id: 'b', category: 'environment', weight: 0.1, normalized: 0, hasData: false }),
+      ],
+      { health: 20, environment: 15 },
+    );
+
+    // 0.8 either way. If the pending metric were counted as zero progress this
+    // would read 0.457 — the environment slider dragging the score down for a
+    // metric nobody has measured.
+    expect(withPending.score).toBeCloseTo(0.8, 6);
+    expect(withPending.score).toBeCloseTo(scoredOnly.score, 6);
+  });
+
+  it('reports coverage as the fraction of weight that had data', () => {
+    const result = computeComposite(
+      [
+        metric({ id: 'heavy', category: 'health', weight: 0.8, normalized: 0.5 }),
+        metric({ id: 'light', category: 'environment', weight: 0.2, hasData: false }),
+      ],
+      { health: 50, environment: 50 },
+    );
+
+    // By weight, not by count — half the metrics are missing but only a fifth
+    // of the budget is, and 80% coverage is the honest way to say that.
+    expect(result.coverage).toBeCloseTo(0.8, 6);
+    expect(result.score).toBeCloseTo(0.5, 6);
+  });
+
+  it('reports full coverage for an artifact whose metrics all scored', () => {
+    const result = computeComposite([metric({ id: 'a' }), metric({ id: 'b' })], { health: 20 });
+
+    expect(result.coverage).toBe(1);
+  });
+
+  it('leaves unscored metrics out of the category score and counts them separately', () => {
+    const result = computeComposite(
+      [
+        metric({ id: 'a', category: 'health', weight: 0.1, normalized: 0.9 }),
+        metric({ id: 'b', category: 'health', weight: 0.1, normalized: 0, hasData: false }),
+      ],
+      { health: 20 },
+    );
+
+    const health = result.categories.find((entry) => entry.categoryId === 'health');
+
+    // 90, not 45. The placeholder zero is not a reading.
+    expect(health?.score).toBeCloseTo(90, 6);
+    expect(health?.metricCount).toBe(1);
+    expect(health?.unscoredMetricCount).toBe(1);
+  });
+
+  it('returns 0 and no coverage when nothing at all could be scored', () => {
+    const result = computeComposite(
+      [
+        metric({ id: 'a', category: 'health', hasData: false }),
+        metric({ id: 'b', category: 'environment', hasData: false }),
+      ],
+      { health: 50, environment: 50 },
+    );
+
+    expect(result.score).toBe(0);
+    expect(result.coverage).toBe(0);
+    expect(Number.isNaN(result.score)).toBe(false);
   });
 });
 

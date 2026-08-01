@@ -14,7 +14,6 @@ import { adapterFor } from '../adapters/registry.js';
 import { METRICS } from '../config/metrics.js';
 import { nowcast } from '../nowcast/index.js';
 import { computeCompositeScore } from '../scoring/composite.js';
-import { normalizeMetric } from '../scoring/normalize.js';
 import type { Observation } from '../types.js';
 
 async function main() {
@@ -30,8 +29,9 @@ async function main() {
 
   console.log(`\nComposite: ${(composite.score * 100).toFixed(1)}%   direction=${composite.direction}`);
   console.log(
-    `Δ week ${fmtDelta(composite.deltaVsLastWeek)}   Δ month ${fmtDelta(composite.deltaVsLastMonth)}\n`,
+    `Δ week ${fmtDelta(composite.deltaVsLastWeek)}   Δ month ${fmtDelta(composite.deltaVsLastMonth)}`,
   );
+  console.log(`Coverage:  ${(composite.coverage * 100).toFixed(1)}% of the weight budget\n`);
 
   console.log(
     'metric                 w     latest      now(proj)   norm     contrib   conf  lastObs',
@@ -40,7 +40,15 @@ async function main() {
 
   for (const entry of composite.perMetricContributions) {
     const metric = METRICS.find((candidate) => candidate.id === entry.metricId)!;
-    const series = observations.get(metric.id)!;
+    const series = observations.get(metric.id) ?? [];
+
+    // Unscored metrics stay in the listing rather than being dropped — the
+    // whole point of tracking `hasData` is that missing weight is visible.
+    if (!entry.hasData) {
+      console.log(`${metric.id.padEnd(20)} ${metric.weight.toFixed(2)}       — no data —`);
+      continue;
+    }
+
     const projection = nowcast(series, asOf, {
       method: metric.nowcastMethod,
       trailingWindowYears: metric.trailingWindowYears,
@@ -53,7 +61,7 @@ async function main() {
       `${metric.id.padEnd(20)} ${metric.weight.toFixed(2)}  ` +
         `${latest.value.toFixed(2).padStart(9)}  ` +
         `${projection.value.toFixed(2).padStart(9)}${projection.isProjected ? '*' : ' '}  ` +
-        `${normalizeMetric(metric, projection.value).toFixed(3).padStart(7)}  ` +
+        `${entry.normalized.toFixed(3).padStart(7)}  ` +
         `${(entry.contribution * 100).toFixed(2).padStart(8)}  ` +
         `${projection.confidence.toFixed(2)}  ${projection.lastObservedAt.slice(0, 7)}` +
         `${metric.polarity === 'detractor' ? '   [detractor]' : ''}`,

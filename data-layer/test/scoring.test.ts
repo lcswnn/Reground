@@ -38,6 +38,14 @@ function series(metricId: string, startYear: number, values: number[]): Observat
   }));
 }
 
+/** A series carrying no observed point, which `nowcast` refuses to project from. */
+function projectedSeries(metricId: string, startYear: number, values: number[]): Observation[] {
+  return series(metricId, startYear, values).map((observation) => ({
+    ...observation,
+    provenance: 'projected' as const,
+  }));
+}
+
 describe('normalizeMetric — higher_is_better', () => {
   const rising = config();
 
@@ -92,6 +100,33 @@ describe('normalizeMetric — lower_is_better', () => {
     expect(() =>
       normalizeMetric(config({ direction: 'lower_is_better' }), 50),
     ).toThrow(/contradicts anchors/);
+  });
+});
+
+/**
+ * `null` is "cannot be placed on its scale", and it is emphatically not 0.
+ *
+ * 0 in this model is a claim — sitting exactly at baseline, no progress made —
+ * and returning it for a metric we could not measure biases the composite
+ * downward invisibly, because the two then read identically.
+ */
+describe('normalizeMetric — unscoreable', () => {
+  it('returns null for a degenerate span rather than the pessimistic end', () => {
+    expect(normalizeMetric(config({ baselineValue: 5, targetValue: 5 }), 5)).toBeNull();
+    expect(normalizeMetric(config({ baselineValue: 0, targetValue: Infinity }), 5)).toBeNull();
+  });
+
+  it('returns null for a non-finite value', () => {
+    expect(normalizeMetric(config(), NaN)).toBeNull();
+    expect(normalizeMetric(config(), Infinity)).toBeNull();
+  });
+
+  it('still throws on a config contradiction — that is a bug, not missing data', () => {
+    // The two must not collapse into one signal. Absence is now a normal,
+    // silent, expected condition; a contradiction has to stay loud.
+    expect(() => normalizeMetric(config({ direction: 'lower_is_better' }), NaN)).toThrow(
+      /contradicts anchors/,
+    );
   });
 });
 
@@ -267,6 +302,96 @@ describe('composite', () => {
     ]);
 
     expect(scoreAt({ configs, observations, asOf }).score).toBe(0);
+  });
+
+  it('excludes a metric with no observations instead of scoring it as zero', () => {
+    const configs = [
+      config({ id: 'measured', weight: 0.5 }),
+      config({ id: 'pending', weight: 0.5 }),
+    ];
+
+    // Only one of the two has a series behind it.
+    const observations = new Map([['measured', series('measured', 2020, [80, 80, 80])]]);
+
+    const { score, coverage, contributions } = scoreAt({ configs, observations, asOf });
+
+    // 0.8, not 0.4. The unmeasured half leaves the denominator too.
+    expect(score).toBeCloseTo(0.8, 10);
+    expect(coverage).toBeCloseTo(0.5, 10);
+
+    // It still appears, so the UI can say "no data yet" rather than dropping it.
+    const pending = contributions.find((entry) => entry.metricId === 'pending')!;
+    expect(pending.hasData).toBe(false);
+    expect(pending.contribution).toBe(0);
+    expect(contributions.find((entry) => entry.metricId === 'measured')!.hasData).toBe(true);
+  });
+
+  it('reports full coverage when every metric has data', () => {
+    const configs = [config({ id: 'a', weight: 0.5 }), config({ id: 'b', weight: 0.5 })];
+    const observations = new Map([
+      ['a', series('a', 2020, [50, 50, 50])],
+      ['b', series('b', 2020, [50, 50, 50])],
+    ]);
+
+    expect(scoreAt({ configs, observations, asOf }).coverage).toBeCloseTo(1, 10);
+  });
+
+  it('measures coverage by weight, not by count', () => {
+    // Three metrics, one of them holding 80% of the budget. Losing that one is
+    // not "a third missing", which is the whole reason coverage is weighted.
+    const configs = [
+      config({ id: 'heavy', weight: 0.8 }),
+      config({ id: 'light-a', weight: 0.1 }),
+      config({ id: 'light-b', weight: 0.1 }),
+    ];
+
+    const observations = new Map([
+      ['light-a', series('light-a', 2020, [50, 50, 50])],
+      ['light-b', series('light-b', 2020, [50, 50, 50])],
+    ]);
+
+    expect(scoreAt({ configs, observations, asOf }).coverage).toBeCloseTo(0.2, 10);
+  });
+
+  it('marks a metric whose nowcast throws unscored, rather than failing the run', () => {
+    // `nowcast` throws when a series carries no *observed* point to project
+    // from — an all-projected series does that, and OWID republishes other
+    // people's nowcasts, so it is reachable. Caught per metric, that metric
+    // drops out and the rest of the model still produces a number. Before, it
+    // propagated out of `scoreAt` and took the whole run with it.
+    const configs = [
+      config({ id: 'measured', weight: 0.5 }),
+      config({ id: 'unprojectable', weight: 0.5 }),
+    ];
+
+    const observations = new Map([
+      ['measured', series('measured', 2016, [10, 15, 20, 25, 30, 35, 40, 45, 50, 55])],
+      ['unprojectable', projectedSeries('unprojectable', 2020, [40, 41, 42])],
+    ]);
+
+    const result = computeCompositeScore({ configs, observations, asOf: new Date('2026-06-01') });
+
+    expect(result.coverage).toBeCloseTo(0.5, 10);
+    expect(result.deltaVsLastWeek).not.toBeNull();
+    expect(result.deltaVsLastMonth).not.toBeNull();
+
+    const entry = result.perMetricContributions.find((c) => c.metricId === 'unprojectable')!;
+    expect(entry.hasData).toBe(false);
+  });
+
+  it('reports a null delta when nothing at all could be scored', () => {
+    // A composite over zero weight is 0 by arithmetic, not by finding.
+    // Differencing against it would report the arrival of data as a collapse.
+    const configs = [config({ id: 'late', weight: 1 })];
+    const observations = new Map([['late', projectedSeries('late', 2020, [40, 41])]]);
+
+    const result = computeCompositeScore({ configs, observations, asOf: new Date('2026-06-01') });
+
+    expect(result.coverage).toBe(0);
+    expect(result.score).toBe(0);
+    expect(result.deltaVsLastWeek).toBeNull();
+    expect(result.deltaVsLastMonth).toBeNull();
+    expect(result.direction).toBe('flat');
   });
 
   it('reports direction and deltas', () => {
