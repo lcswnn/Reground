@@ -12,7 +12,9 @@ export default function TabsLayout() {
     <Tabs screenOptions={{ headerShown: false }} tabBar={(props) => <TabBar {...props} />}>
       <Tabs.Screen name="index" options={{ title: 'Today' }} />
       <Tabs.Screen name="feed" options={{ title: 'Feed' }} />
-      <Tabs.Screen name="progress" options={{ title: 'Progress' }} />
+      {/* The route stays `progress` — it is the URL, the file name and what
+          every `router.push` in the app refers to. Only the label changes. */}
+      <Tabs.Screen name="progress" options={{ title: 'Trends' }} />
       <Tabs.Screen name="profile" options={{ title: 'You' }} />
 
       {/* In the navigator, absent from the bar. `href: null` is what keeps the

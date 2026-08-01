@@ -6,6 +6,7 @@ import {
   saveRemoteWeighting,
 } from '@/api/weighting';
 import { useSession } from '@/lib/session';
+import { getScopeUser } from '@/lib/user-scope';
 import {
   adoptRemoteWeighting,
   getWeightingState,
@@ -21,7 +22,7 @@ import {
  *   - **On sign-in**, reconciles the two copies. A fresh install has no local
  *     weighting and adopts the server's, which is the entire point of this file:
  *     reinstalling the app, or signing in on a second phone, must not silently
- *     drop someone back to the research defaults.
+ *     drop someone back to having no weighting at all.
  *   - **On save**, pushes the new weighting up, via the hook registered in
  *     `state/weighting.ts`.
  *
@@ -70,17 +71,35 @@ export function useWeightingSync(): void {
 
     void (async () => {
       const remote = await fetchRemoteWeighting(userId);
-      // Read the store at resolve time rather than through a hook: this must see
-      // whatever is current when the network call lands, not what was there when
-      // the effect was scheduled.
+
+      /**
+       * Both halves of this matter, and `active` alone is not enough.
+       *
+       * The reader can sign out and into another account while the request
+       * above is in flight. `setScopeUser` runs synchronously inside the
+       * Supabase auth callback, but this continuation is a microtask and the
+       * effect cleanup that clears `active` only runs after React re-renders —
+       * so there is a real window where the device already belongs to B while
+       * this closure still thinks it is reconciling A.
+       *
+       * Left unguarded, both branches below are wrong in that window, in
+       * opposite directions: `remote` would store A's weighting into B's
+       * namespace and put it on B's home screen, and `local` would upload
+       * whatever the store now holds for B into A's profile row.
+       */
+      if (!active || getScopeUser() !== userId) return;
+
+      // Read the store only once the account is confirmed, and at resolve time
+      // rather than through a hook: this must see whatever is current when the
+      // network call lands, not what was there when the effect was scheduled.
       const local = getWeightingState();
-      if (!active) return;
 
       switch (resolveConflict(local, remote)) {
         case 'remote':
           // Keeps the server's timestamp, so a later comparison on another
-          // device still reads the true time of the edit.
-          adoptRemoteWeighting(remote!.weights, remote!.updatedAt);
+          // device still reads the true time of the edit. Re-checks the scope
+          // itself — belt and braces on the write that caused the leak.
+          adoptRemoteWeighting(userId, remote!.weights, remote!.updatedAt);
           break;
 
         case 'local':

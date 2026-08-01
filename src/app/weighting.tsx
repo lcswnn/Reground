@@ -25,16 +25,25 @@ import { useWeightingDraft } from '@/state/weighting';
 /**
  * "Weight what matters to you".
  *
- * Seven sliders, a live composite, and a reset. The score at the top recomputes
- * on every drag through `computeComposite`, which is the same maths the data
- * layer used to produce the number in the artifact — see `src/lib/scoring.ts`
- * for why there are two implementations and what guards them against drifting.
+ * Seven sliders, a live composite, and a way to clear it. The score at the top
+ * recomputes on every drag through `computeComposite`, which is the same maths
+ * the data layer used to produce the number in the artifact — see
+ * `src/lib/scoring.ts` for why there are two implementations and what guards
+ * them against drifting.
  *
- * The framing is deliberately not "tune this until you like the number". Both
- * scores are shown side by side precisely so that moving a slider reads as
- * "here is what the world looks like if I care most about X", not as a way to
- * make the world look better. It is entirely possible — and honest — to
- * construct a weighting that scores worse than the default.
+ * ## There is no default score here either
+ *
+ * This screen used to show the research weighting's number beside the reader's,
+ * with the gap between them in points. That framing was meant to stop the
+ * sliders reading as "tune until you like the number", but it did it by making
+ * the app's own weighting the baseline every answer was scored against — and
+ * there is no correct weighting to be up or down against. Today makes no such
+ * claim, and neither does this.
+ *
+ * What is left is one number, theirs, and it does not appear until they have
+ * moved something. The opening slider positions still come from the data
+ * layer's weights, because a slider has to start somewhere, but where it starts
+ * is not an answer and is never scored as one — see `saveAndReturn`.
  */
 export default function WeightingScreen() {
   const theme = useTheme();
@@ -57,13 +66,25 @@ export default function WeightingScreen() {
     [data],
   );
 
-  // Derived from the artifact rather than hardcoded here: the data layer owns
-  // the research defaults, and duplicating them in the UI is how the reset
-  // button ends up restoring last quarter's weighting.
+  // Where the sliders open, derived from the artifact rather than hardcoded
+  // here: the data layer owns those weights, and duplicating them in the UI is
+  // how a clear ends up restoring last quarter's positions.
   const defaults = useMemo(() => defaultWeightsFrom(metrics), [metrics]);
 
-  const { draft, setWeight, commit, reset, isDirty, isCustomised, hasSaved } =
+  const { draft, setWeight, commit, reset, adoptDefaults, isDirty, isCustomised, hasSaved } =
     useWeightingDraft(defaults);
+
+  /**
+   * Whether there is an answer on screen worth scoring.
+   *
+   * Two ways to have one: the reader moved something, or they previously saved
+   * a weighting — including by asking for the research one, which lands as a
+   * saved weighting that happens to equal the opening positions. Without the
+   * `hasSaved` half, someone who deliberately took the research weighting would
+   * come back to this screen and be told to move a slider, as though they had
+   * never answered.
+   */
+  const hasAnswer = isCustomised || hasSaved;
 
   /**
    * Save, then go to Today.
@@ -73,22 +94,48 @@ export default function WeightingScreen() {
    * commit means the payoff for answering the question happens on a screen they
    * are not looking at.
    *
+   * ## Saving the starting position clears the weighting instead
+   *
+   * The sliders open somewhere, and where they open is not an answer — nobody
+   * chose it. So committing a draft that still matches those positions would
+   * manufacture a weighting out of the reader having touched nothing, and put a
+   * number on Today that is the app's opinion wearing their name.
+   *
+   * `reset` rather than `commit` in that case, which is also what makes reset
+   * followed by save land back on the opening prompt rather than on a score.
+   * The consequence is deliberate: to get a number, you have to actually move
+   * something.
+   *
    * `dismissTo` rather than `back`, because this screen has two entry points:
    * the card itself and the Progress tab. Popping one screen would return
    * somebody who came from Progress to Progress, where there is no card to see.
    */
-  const saveAndReturn = useCallback(() => {
-    commit();
+  const returnToToday = useCallback(() => {
     // `replace` covers the deep-link case, where this screen is the root and
     // there is nothing under it to dismiss to.
     if (router.canDismiss()) router.dismissTo('/');
     else router.replace('/');
-  }, [commit]);
+  }, []);
 
-  const defaultResult = useMemo(
-    () => computeComposite(metrics, defaults),
-    [metrics, defaults],
-  );
+  const saveAndReturn = useCallback(() => {
+    if (hasAnswer) commit();
+    else reset();
+    returnToToday();
+  }, [hasAnswer, commit, reset, returnToToday]);
+
+  /**
+   * "Use the research weighting", for a reader who would rather not decide.
+   *
+   * The opt-in half of the same principle. Not deciding is a legitimate
+   * position, and this app's job is to stop *assuming* that position on
+   * everybody's behalf, not to withhold it from someone who asks. Pressing this
+   * is asking — which is exactly what the sliders sitting untouched is not.
+   */
+  const useResearchWeighting = useCallback(() => {
+    adoptDefaults();
+    returnToToday();
+  }, [adoptDefaults, returnToToday]);
+
   const userResult = useMemo(() => computeComposite(metrics, draft), [metrics, draft]);
 
   const scoreByCategory = useMemo(
@@ -98,11 +145,6 @@ export default function WeightingScreen() {
 
   if (isPending) return <LoadingState />;
   if (error) return <ErrorState error={error} onRetry={() => void refetch()} />;
-
-  // Someone can drag a slider back to where it started, and showing "Your score"
-  // against an identical number would be noise.
-  const differs = isCustomised;
-  const delta = userResult.score - defaultResult.score;
 
   return (
     <SafeAreaView style={{ flex: 1 }} edges={['bottom']}>
@@ -117,35 +159,42 @@ export default function WeightingScreen() {
           </ThemedText>
         </View>
 
+        {/**
+         * One score, and it is the reader's.
+         *
+         * This used to show the research weighting's number beside theirs, with
+         * the difference in points between them. The comparison was well meant —
+         * it framed a drag as "here is the world if I care most about X" rather
+         * than as a way to make the number go up — but it also made the app's
+         * own weighting the thing every reader's answer was measured against,
+         * which is the claim the whole feature is trying not to make. There is
+         * no correct weighting to be up or down against.
+         *
+         * Nothing at all until they have moved something, for the same reason
+         * Today shows no number until then: the opening slider positions are
+         * where the sliders open, not an answer, and scoring them would put the
+         * app's opinion on screen under the reader's name.
+         */}
         <View style={[styles.scoreCard, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-          <View style={styles.scoreRow}>
+          {hasAnswer ? (
             <View style={styles.scoreCell}>
               <ThemedText type="small" themeColor="textMuted">
-                Humanity Score
+                Your score
               </ThemedText>
-              <ThemedText type="title">{(defaultResult.score * 100).toFixed(1)}%</ThemedText>
+              <ThemedText type="title" style={{ color: theme.info }}>
+                {(userResult.score * 100).toFixed(1)}%
+              </ThemedText>
               <ThemedText type="small" themeColor="textMuted">
-                research default
+                across {metrics.length} indicators
               </ThemedText>
             </View>
-
-            {differs ? (
-              <View style={styles.scoreCell}>
-                <ThemedText type="small" themeColor="textMuted">
-                  Your score
-                </ThemedText>
-                <ThemedText type="title" style={{ color: theme.info }}>
-                  {(userResult.score * 100).toFixed(1)}%
-                </ThemedText>
-                <ThemedText
-                  type="small"
-                  style={{ color: delta >= 0 ? theme.positive : theme.decline }}>
-                  {delta >= 0 ? '+' : '−'}
-                  {Math.abs(delta * 100).toFixed(1)} pts
-                </ThemedText>
-              </View>
-            ) : null}
-          </View>
+          ) : (
+            <View style={styles.scoreCell}>
+              <ThemedText type="small" themeColor="textSecondary">
+                Move a slider to see your score — or take the research weighting below.
+              </ThemedText>
+            </View>
+          )}
         </View>
 
         <View style={styles.sliders}>
@@ -167,19 +216,10 @@ export default function WeightingScreen() {
         </View>
 
         <View style={styles.actions}>
-          {/* Enabled when nothing has been saved yet, even with the sliders
-              untouched.
-
-              Since the home screen stopped showing a default score, this button
-              is the only way a score comes to exist — and a reader who looks at
-              the research weighting and decides they agree with it has made a
-              real choice, not a null one. Gating Save on `isDirty` alone left
-              exactly that person stuck: nothing to save, so nothing to score,
-              so the home card kept asking a question they had already answered.
-
-              They still have to press it. Saving on arrival would put a number
-              on the home screen that nobody chose, which is the thing this
-              whole change removes. */}
+          {/* Pressable whenever there is something to record, including on a
+              first visit with the sliders untouched — where it clears rather
+              than saves, and returns to the opening prompt. See
+              `saveAndReturn`. */}
           <Button
             title={hasSaved && !isDirty ? 'Saved' : 'Save'}
             variant="primary"
@@ -194,8 +234,8 @@ export default function WeightingScreen() {
 
           {/* The button's own label already says "Saved" when there is nothing
               pending, so this line exists for the cases that label cannot
-              cover: a weighting saved on some earlier visit, and a first visit
-              where the defaults are on screen but are not yet anyone's answer. */}
+              cover: a weighting saved on some earlier visit, and a visit where
+              the sliders sit where they opened and so say nothing yet. */}
           <ThemedText
             type="small"
             themeColor="textMuted"
@@ -204,15 +244,40 @@ export default function WeightingScreen() {
               ? 'Unsaved changes — your score updates live, but only Save keeps it.'
               : hasSaved
                 ? 'Your weighting is saved on this device.'
-                : 'Move the sliders, or save these as they are. Either way, Save is what puts a score on your home screen.'}
+                : 'Move a slider to set your own, or take the research weighting as it stands.'}
           </ThemedText>
 
+          {/**
+           * The opt-in route back to the published weighting.
+           *
+           * Offered rather than assumed. Not everybody wants to arbitrate what
+           * human progress consists of before they can see a number, and that is
+           * a reasonable place to stand — the objection was only ever to the app
+           * deciding it for them silently. Pressing this is a decision; the
+           * sliders sitting where they opened is not.
+           *
+           * Hidden once they have their own weighting saved, where it would read
+           * as an invitation to discard it. `Clear my weighting` is the way back
+           * from there, and this reappears after it.
+           */}
+          {hasSaved ? null : (
+            <Button
+              title="Use the research weighting"
+              variant="secondary"
+              onPress={useResearchWeighting}
+              accessibilityLabel="Score using the published research weighting instead of your own"
+            />
+          )}
+
+          {/* "Clear", not "reset to defaults" — there is no default weighting
+              to go back to any more. This drops the reader's answer and returns
+              the sliders to where they opened. */}
           <Button
-            title="Reset to defaults"
+            title="Clear my weighting"
             variant="secondary"
             onPress={reset}
             disabled={!isCustomised && !hasSaved}
-            accessibilityLabel="Reset all category weights to the research defaults"
+            accessibilityLabel="Clear your weighting and return the sliders to where they started"
           />
         </View>
 

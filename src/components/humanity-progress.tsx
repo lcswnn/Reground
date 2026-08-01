@@ -47,9 +47,9 @@ interface HumanityProgressProps {
  * So the card holds an empty bar and an invitation until the reader has said
  * what matters to them, and only then does it hold a score. The number that
  * appears is theirs. `artifact.compositeScore` is deliberately not read by this
- * component — the research weighting still exists, and the weighting screen
- * shows it as a reference point beside the live one, but that is a comparison
- * offered to someone who has opted in, not a claim made to someone who has not.
+ * component, and it is not shown on the weighting screen either — the data
+ * layer's weights survive only as the positions the sliders open at, which is
+ * not a claim about anything and is never scored as one.
  *
  * The score is computed here rather than served because a weighting is
  * per-device and arrives long after the artifact was built. It runs through
@@ -92,11 +92,11 @@ export function HumanityProgress({
   const defaults = useMemo(() => defaultWeightsFrom(metrics), [metrics]);
   const { weights, isCustomised } = useWeightingControls(defaults);
 
-  // Note this does not check whether the weighting differs from the defaults.
-  // Someone who opened the sliders, considered them and saved the research
-  // weighting has made the same choice as someone who redistributed everything;
-  // sending them back to the prompt would treat agreement as if it were
-  // silence.
+  // `isCustomised` is "a weighting has been saved", and the weighting screen
+  // only saves one when the reader actually moved a slider — clearing instead
+  // when the draft still matches the positions the sliders opened at. So this
+  // is false in exactly the cases where there is no answer to show: a reader
+  // who has never been to the sliders, and one who cleared what they had.
   const result = useMemo(
     () => (isCustomised ? computeComposite(metrics, weights) : null),
     [isCustomised, weights, metrics],

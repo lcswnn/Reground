@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { AppReadyContext } from '@/lib/app-ready';
 import { prefetchAppData } from '@/lib/bootstrap';
 import { resyncReminder } from '@/lib/daily-reminder';
-import { Colors, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
+import { Colors, Fonts, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
 import { useWeightingSync } from '@/state/weighting-sync';
@@ -197,7 +197,35 @@ function RootNavigator() {
     <ThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <AppReadyContext value={isRevealed}>
-        <Stack screenOptions={{ headerShadowVisible: false }}>
+        {/* Header titles in the app's own face rather than the system's.
+            "Settings" and "What matters to you" were the only headings in the
+            app still rendering in system-ui, which read as somebody else's
+            screen bolted onto this one.
+
+            Set once on the navigator instead of per screen, so a stack screen
+            added later inherits it rather than reintroducing the mismatch.
+
+            22pt sits between `sectionTitle` and `subtitle` in the type scale
+            rather than on either. Libertinus runs small for its point size —
+            the same reason `small` is 17 rather than 14 — so matching
+            `sectionTitle`'s 20 read a step under the headings on the pages
+            below it, which is backwards for a title.
+
+            `fontWeight: 'normal'` is load-bearing, not decoration. React
+            Navigation's default header title is semibold, and RN cannot
+            synthesize weights for a custom family — `Fonts.display` is already
+            the bold file, so leaving a weight on it makes iOS fall back to the
+            system face and undo the whole point. See the note on `Fonts` in
+            `constants/theme.ts`. */}
+        <Stack
+          screenOptions={{
+            headerShadowVisible: false,
+            headerTitleStyle: {
+              fontFamily: Fonts.display,
+              fontSize: 22,
+              fontWeight: 'normal',
+            },
+          }}>
           <Stack.Protected guard={!!session}>
             <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
             <Stack.Screen

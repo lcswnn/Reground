@@ -3,7 +3,7 @@ import 'expo-sqlite/localStorage/install';
 import { useCallback, useState, useSyncExternalStore } from 'react';
 
 import { isDefaultWeighting, type CategoryWeights } from '@/lib/scoring';
-import { onScopeChange, readScoped, writeScoped } from '@/lib/user-scope';
+import { getScopeUser, onScopeChange, readScoped, writeScoped } from '@/lib/user-scope';
 
 /**
  * The reader's own category weighting.
@@ -153,7 +153,7 @@ export function saveWeights(weights: CategoryWeights, defaults: CategoryWeights)
   pusher?.(cleaned, updatedAt);
 }
 
-/** Drops the reader's weighting entirely, restoring the research defaults. */
+/** Drops the reader's weighting entirely, returning the sliders to where they open. */
 export function resetWeighting(): void {
   write({ ...EMPTY_WEIGHTING });
   pusher?.(null, null);
@@ -181,14 +181,37 @@ export function registerWeightingSync(next: WeightingPusher | null): void {
 }
 
 /**
- * Adopts a weighting that came from the server.
+ * Adopts a weighting that came from the server, for the account it belongs to.
  *
  * Separate from `saveWeights` because it must not stamp a new `updatedAt` — the
  * timestamp is what decides which device wrote last, and overwriting it on
  * arrival would make every sync look like the newest edit and let a stale device
  * win the next comparison.
+ *
+ * ## Why this takes a user id
+ *
+ * This is the one write to the store that arrives *asynchronously*, long after
+ * whatever asked for it. In between, the reader can sign out and sign in as
+ * somebody else — and a write is not addressed to an account, it lands in
+ * whichever namespace `writeScoped` is pointing at when it runs. So a response
+ * fetched for A, arriving a moment after B signs in, would be stored as B's
+ * weighting and shown on B's home screen.
+ *
+ * That is not hypothetical ordering paranoia. `setScopeUser` runs synchronously
+ * inside the Supabase auth callback, while the effect that would cancel this
+ * runs only after React re-renders — so the cancellation flag genuinely can
+ * still be unset at the moment the scope has already moved.
+ *
+ * The caller passes the id it fetched for, and this refuses if the device is no
+ * longer that account. Returns whether the write landed.
  */
-export function adoptRemoteWeighting(weights: CategoryWeights, updatedAt: string | null): void {
+export function adoptRemoteWeighting(
+  userId: string,
+  weights: CategoryWeights,
+  updatedAt: string | null,
+): boolean {
+  if (getScopeUser() !== userId) return false;
+
   const cleaned: CategoryWeights = {};
   for (const [key, value] of Object.entries(weights)) {
     if (typeof value === 'number' && Number.isFinite(value)) {
@@ -196,8 +219,10 @@ export function adoptRemoteWeighting(weights: CategoryWeights, updatedAt: string
     }
   }
 
-  if (Object.keys(cleaned).length === 0) return;
+  if (Object.keys(cleaned).length === 0) return false;
+
   write({ weights: cleaned, updatedAt });
+  return true;
 }
 
 /**
@@ -326,14 +351,39 @@ export function useWeightingDraft(defaults: CategoryWeights) {
     setDraft({ ...defaults });
   }, [defaults]);
 
+  /**
+   * Takes the data layer's own weighting as a deliberate answer.
+   *
+   * The distinction this exists to preserve: the sliders opening at these
+   * weights is not a choice, and is never scored as one — but *asking* for them
+   * is. Someone who would rather be tracked against the published research than
+   * decide for themselves has made a real decision, and this is how they record
+   * it. It is opt-in and it is a button they have to find and press, which is
+   * the whole difference from showing the number by default.
+   *
+   * Saves rather than merely moving the sliders, and saves `defaults` rather
+   * than `draft` — pressing this after dragging things around means "no, use
+   * theirs", not "keep what I was fiddling with".
+   */
+  const adoptDefaults = useCallback(() => {
+    saveWeights(defaults, defaults);
+    setDraft({ ...defaults });
+  }, [defaults]);
+
   return {
     draft,
     setWeight,
     commit,
     reset,
+    adoptDefaults,
     /** Draft differs from what is stored — the Save button's enabled state. */
     isDirty: !isDefaultWeighting(draft, savedWeights, 0.001),
-    /** Draft differs from the research defaults — drives "Your score". */
+    /**
+     * Draft differs from the positions the sliders opened at.
+     *
+     * Drives whether there is a score to show at all. An untouched draft is not
+     * an answer, so the weighting screen clears rather than saves it.
+     */
     isCustomised: !isDefaultWeighting(draft, defaults),
     savedAt: stored.updatedAt,
     hasSaved: stored.weights !== null,

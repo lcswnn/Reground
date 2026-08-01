@@ -21,8 +21,12 @@ import { MAX_WEIGHT, MIN_WEIGHT } from '@/state/weighting';
  * provider and no setup.
  *
  * The track reports two things at once, which is why it is custom: the *fill* is
- * the reader's weight, and a thin marker shows where the research default sits,
- * so "how far have I moved this" is visible without remembering the original.
+ * the reader's weight, and a thin marker shows where the slider opened, so "how
+ * far have I moved this" is visible without remembering the original.
+ *
+ * The marker is a positional reference, not a recommendation — the app shows no
+ * score for those starting positions anywhere, and saving them unmoved is
+ * treated as no answer rather than as agreement.
  */
 
 export interface WeightSliderProps {
@@ -30,7 +34,7 @@ export interface WeightSliderProps {
   blurb?: string;
   /** 0–100. */
   value: number;
-  /** The research default, marked on the track. */
+  /** Where this slider opened, marked on the track. */
   defaultValue: number;
   /** The category's current score, 0–100, shown alongside. */
   score: number | null;

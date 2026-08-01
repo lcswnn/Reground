@@ -1,18 +1,21 @@
-import { useQuery } from '@tanstack/react-query';
-import { RefreshControl, StyleSheet, View } from 'react-native';
-import Animated, { useAnimatedRef, useScrollViewOffset } from 'react-native-reanimated';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useQuery } from "@tanstack/react-query";
+import { RefreshControl, StyleSheet, View } from "react-native";
+import Animated, {
+  useAnimatedRef,
+  useScrollViewOffset,
+} from "react-native-reanimated";
+import { SafeAreaView } from "react-native-safe-area-context";
 
-import { FeedEndCard } from '@/components/feed-end-card';
-import { ScrollHeaderFade } from '@/components/scroll-header-fade';
-import { StoryCard } from '@/components/story-card';
-import { ThemedText } from '@/components/themed-text';
-import { EmptyState, ErrorState, LoadingState } from '@/components/ui/states';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
-import { usePullToRefresh } from '@/hooks/use-pull-to-refresh';
-import { useTheme } from '@/hooks/use-theme';
-import { fetchTodaysBatch } from '@/api/stories';
-import { queryKeys } from '@/lib/query';
+import { fetchTodaysBatch } from "@/api/stories";
+import { FeedEndCard } from "@/components/feed-end-card";
+import { ScrollHeaderFade } from "@/components/scroll-header-fade";
+import { StoryCard } from "@/components/story-card";
+import { ThemedText } from "@/components/themed-text";
+import { EmptyState, ErrorState, LoadingState } from "@/components/ui/states";
+import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { usePullToRefresh } from "@/hooks/use-pull-to-refresh";
+import { useTheme } from "@/hooks/use-theme";
+import { queryKeys } from "@/lib/query";
 
 /**
  * The day's news, and then the end of it.
@@ -56,15 +59,15 @@ export default function FeedScreen() {
 
   return (
     <View style={[styles.root, { backgroundColor: theme.background }]}>
-      <SafeAreaView edges={['top']} style={styles.flex}>
+      <SafeAreaView edges={["top"]} style={styles.flex}>
         <View style={styles.header}>
-          <ThemedText type="title">Good news</ThemedText>
+          <ThemedText type="title">Positive News Feed</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {/* The count goes first, before a single story is read. Being told
                 up front that there are nine is what makes reaching the ninth
                 feel like finishing rather than like running out. */}
             {count === 0
-              ? 'Progress from across the world, with sources.'
+              ? "Progress from across the world, with sources."
               : data?.isFresh
                 ? `${count} today — and that's the whole feed.`
                 : `${count} in the latest batch.`}
@@ -92,7 +95,8 @@ export default function FeedScreen() {
                   colors={[theme.info]}
                   progressBackgroundColor={theme.surface}
                 />
-              }>
+              }
+            >
               {count === 0 ? (
                 <EmptyState
                   title="Nothing here yet"
@@ -133,9 +137,9 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.three,
     paddingBottom: Spacing.two,
     gap: Spacing.one,
-    width: '100%',
+    width: "100%",
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
   list: {
     // Deliberately not the page gutter: a card carries its own 16pt body
@@ -145,8 +149,8 @@ const styles = StyleSheet.create({
     paddingTop: Spacing.two,
     gap: Spacing.three,
     paddingBottom: BottomTabInset + Spacing.five,
-    width: '100%',
+    width: "100%",
     maxWidth: MaxContentWidth,
-    alignSelf: 'center',
+    alignSelf: "center",
   },
 });

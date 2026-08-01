@@ -85,8 +85,8 @@ export type Profile = {
    * `{"health": 20, "basic_needs": 18}`.
    *
    * Null until they save one, and that null is meaningful: it distinguishes
-   * "has never set a weighting, use the research defaults" from "deliberately
-   * weighted everything to zero". See `src/state/weighting.ts`.
+   * "has not answered, so show no score at all" from "deliberately weighted
+   * everything to zero". See `src/state/weighting.ts`.
    *
    * Added by `supabase/migrations/0002_category_weights.sql`. Everything that
    * touches it tolerates the column being absent, so the app runs against a

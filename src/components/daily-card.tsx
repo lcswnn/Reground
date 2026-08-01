@@ -146,8 +146,11 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
   return (
     <View style={styles.section}>
       <View style={styles.sectionHeader}>
-        {/* The header is the way in to the share sheet. Only the label and its
-            chevron are pressable, not the whole row — the streak pill sits in
+        {/* The header label is the *accessible* way in to the share sheet. The
+            card below is tappable too, but that tap target is deliberately
+            invisible to screen readers — see the comment on it — so this is the
+            affordance VoiceOver actually reaches. Only the label and its
+            chevron are pressable, not the whole row: the streak pill sits in
             the same line and tapping a counter should not navigate. */}
         <Pressable
           accessibilityRole="button"
@@ -169,79 +172,109 @@ export function DailyCard({ card, active = true, isNew = false }: DailyCardProps
         <DaysPill total={total} />
       </View>
 
-      <Animated.View
-        // Keyed on the card so a day rollover animates in as a new card rather
-        // than mutating the old one's text in place.
-        key={card.key}
-        entering={FadeIn.duration(280)}
-        style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
-        <View style={styles.categoryRow}>
-          <ThemedText type="eyebrow" themeColor="textMuted" numberOfLines={1} style={styles.category}>
-            {categoryLabel(card.metric.category)}
+      {/**
+       * The whole card opens the share sheet.
+       *
+       * The chevron in the header was the only way in, which put the app's most
+       * shareable object behind the smallest target on the screen. A card that
+       * looks like a card should behave like one.
+       *
+       * The controls inside keep working untouched, and not by exception: React
+       * Native hands a touch to the innermost view that claims it, so the
+       * reaction bubbles and the source link become the responder for taps that
+       * land on them and this handler never fires. Everything else — the
+       * headline, the figures, the sparkline, the padding between them — falls
+       * through to here.
+       *
+       * `accessible={false}` matters. A Pressable defaults to collapsing its
+       * subtree into one element on iOS, which would take the reaction buttons
+       * and the source link away from VoiceOver entirely. Leaving this node
+       * invisible to the accessibility tree keeps those children individually
+       * focusable; the labelled button in the header above is the equivalent
+       * affordance, so nothing is lost by not exposing this one.
+       */}
+      <Pressable accessible={false} onPress={() => router.push('/card')}>
+        <Animated.View
+          // Keyed on the card so a day rollover animates in as a new card rather
+          // than mutating the old one's text in place.
+          key={card.key}
+          entering={FadeIn.duration(280)}
+          style={[styles.card, { backgroundColor: theme.surface, borderColor: theme.border }]}>
+          <View style={styles.categoryRow}>
+            <ThemedText
+              type="eyebrow"
+              themeColor="textMuted"
+              numberOfLines={1}
+              style={styles.category}>
+              {categoryLabel(card.metric.category)}
+            </ThemedText>
+            {isNew ? <NewDataBadge variant="dot" /> : null}
+          </View>
+
+          <ThemedText type="sectionTitle">{card.headline}</ThemedText>
+
+          {/* Figures and chart stack, they don't share a row. Side by side, a
+              pair like "428 /100k → 206 /100k" takes most of the width and
+              leaves the sparkline a sliver — the same reason `MetricChartCard`
+              puts its value on its own line and gives the chart the full card. */}
+          <View style={styles.pair}>
+            {card.from ? (
+              <>
+                <Figure label={card.from.year} value={formatAt(card, card.from.value)} muted />
+                <ThemedText type="subtitle" themeColor="textMuted" style={styles.arrow}>
+                  →
+                </ThemedText>
+              </>
+            ) : null}
+
+            <Figure
+              label={card.to.year ?? 'today'}
+              value={formatAt(card, card.to.value)}
+              color={accent}
+            />
+          </View>
+
+          <Sparkline values={card.spark} color={accent} height={56} active={active} />
+
+          <ThemedText type="small" themeColor="textSecondary">
+            {card.detail}
           </ThemedText>
-          {isNew ? <NewDataBadge variant="dot" /> : null}
-        </View>
 
-        <ThemedText type="sectionTitle">{card.headline}</ThemedText>
+          {/* The percentages live inside the buttons themselves once there are
+              enough of them — see `Reactions`. What is left down here is the
+              small-sample case, where a percentage would be a fiction and the
+              honest thing to report is how many people have answered. */}
+          <Reactions
+            selected={reaction}
+            onSelect={onReact}
+            counts={tally}
+            withdrew={withdrew}
+          />
 
-        {/* Figures and chart stack, they don't share a row. Side by side, a pair
-            like "428 /100k → 206 /100k" takes most of the width and leaves the
-            sparkline a sliver — the same reason `MetricChartCard` puts its value
-            on its own line and gives the chart the full card. */}
-        <View style={styles.pair}>
-          {card.from ? (
-            <>
-              <Figure label={card.from.year} value={formatAt(card, card.from.value)} muted />
-              <ThemedText type="subtitle" themeColor="textMuted" style={styles.arrow}>
-                →
+          {/* The denominator. Without it an unfiltered percentage claims a
+              consensus it may not have — "100%" over "Just you so far today"
+              reads as what it actually is. */}
+          {reaction && totalVotes(tally) > 0 ? (
+            <Animated.View entering={FadeIn.duration(320).delay(160)}>
+              <ThemedText type="small" themeColor="textMuted" style={styles.company}>
+                {readersLabel(totalVotes(tally))}
               </ThemedText>
-            </>
+            </Animated.View>
           ) : null}
 
-          <Figure
-            label={card.to.year ?? 'today'}
-            value={formatAt(card, card.to.value)}
-            color={accent}
-          />
-        </View>
-
-        <Sparkline values={card.spark} color={accent} height={56} active={active} />
-
-        <ThemedText type="small" themeColor="textSecondary">
-          {card.detail}
-        </ThemedText>
-
-        {/* The percentages live inside the buttons themselves once there are
-            enough of them — see `Reactions`. What is left down here is the
-            small-sample case, where a percentage would be a fiction and the
-            honest thing to report is how many people have answered. */}
-        <Reactions
-          selected={reaction}
-          onSelect={onReact}
-          counts={tally}
-          withdrew={withdrew}
-        />
-
-        {/* The denominator. Without it an unfiltered percentage claims a
-            consensus it may not have — "100%" over "Just you so far today"
-            reads as what it actually is. */}
-        {reaction && totalVotes(tally) > 0 ? (
-          <Animated.View entering={FadeIn.duration(320).delay(160)}>
-            <ThemedText type="small" themeColor="textMuted" style={styles.company}>
-              {readersLabel(totalVotes(tally))}
-            </ThemedText>
-          </Animated.View>
-        ) : null}
-
-        <Pressable
-          accessibilityRole="link"
-          accessibilityLabel={`Open source: ${card.metric.sourceName}`}
-          onPress={() => void Linking.openURL(card.metric.sourceUrl)}
-          hitSlop={6}
-          style={styles.sourceLink}>
-          <ThemedText type="linkPrimary">{card.metric.sourceName} →</ThemedText>
-        </Pressable>
-      </Animated.View>
+          {/* Claims its own taps, so it opens the source rather than the share
+              sheet. That is the one thing on the card that has somewhere else
+              to go. */}
+          <Pressable
+            accessibilityRole="link"
+            accessibilityLabel={`Open source: ${card.metric.sourceName}`}
+            onPress={() => void Linking.openURL(card.metric.sourceUrl)}
+            hitSlop={6}
+            style={styles.sourceLink}>
+            <ThemedText type="linkPrimary">{card.metric.sourceName} →</ThemedText>
+          </Pressable>
+        </Animated.View>
+      </Pressable>
     </View>
   );
 }
