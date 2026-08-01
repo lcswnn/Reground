@@ -157,11 +157,7 @@ export default function TodayScreen() {
 
         {humanityQuery.data ? (
           <View style={styles.summarySection}>
-            <HumanityProgress
-              artifact={humanityQuery.data}
-              active={isRevealed}
-              previousScore={fresh.previousScore}
-            />
+            <HumanityProgress artifact={humanityQuery.data} active={isRevealed} />
           </View>
         ) : humanityQuery.error ? (
           <View style={styles.summarySection}>

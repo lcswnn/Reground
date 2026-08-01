@@ -88,9 +88,11 @@ export default function WeightingScreen() {
       <ScrollView contentContainerStyle={styles.content}>
         <View style={styles.intro}>
           <ThemedText type="small" themeColor="textMuted">
-            The default weighting comes from the OECD Better Life Index, the UN
-            Sustainable Development Goals, Doughnut Economics and Bhutan&apos;s Gross National
-            Happiness Index. Move a slider to score the world by what matters to you.
+            There is no single right answer to how much each of these counts, so the app does
+            not pick one for you. The starting position below comes from the OECD Better Life
+            Index, the UN Sustainable Development Goals, Doughnut Economics and Bhutan&apos;s
+            Gross National Happiness Index — a reference point, not a verdict. Move the sliders
+            to score the world by what matters to you.
           </ThemedText>
         </View>
 
@@ -144,23 +146,35 @@ export default function WeightingScreen() {
         </View>
 
         <View style={styles.actions}>
+          {/* Enabled when nothing has been saved yet, even with the sliders
+              untouched.
+
+              Since the home screen stopped showing a default score, this button
+              is the only way a score comes to exist — and a reader who looks at
+              the research weighting and decides they agree with it has made a
+              real choice, not a null one. Gating Save on `isDirty` alone left
+              exactly that person stuck: nothing to save, so nothing to score,
+              so the home card kept asking a question they had already answered.
+
+              They still have to press it. Saving on arrival would put a number
+              on the home screen that nobody chose, which is the thing this
+              whole change removes. */}
           <Button
-            title={isDirty ? 'Save' : 'Saved'}
+            title={hasSaved && !isDirty ? 'Saved' : 'Save'}
             variant="primary"
             onPress={commit}
-            disabled={!isDirty}
+            disabled={hasSaved && !isDirty}
             accessibilityLabel={
-              isDirty
-                ? 'Save your weighting to this device'
-                : 'Your weighting is saved'
+              hasSaved && !isDirty
+                ? 'Your weighting is saved'
+                : 'Save your weighting to this device'
             }
           />
 
           {/* The button's own label already says "Saved" when there is nothing
-              pending, so this line exists for the case that label cannot cover:
-              a weighting saved on some earlier visit, when the reader arrives
-              with no changes to make and no way to tell the screen remembered
-              them. */}
+              pending, so this line exists for the cases that label cannot
+              cover: a weighting saved on some earlier visit, and a first visit
+              where the defaults are on screen but are not yet anyone's answer. */}
           <ThemedText
             type="small"
             themeColor="textMuted"
@@ -169,7 +183,7 @@ export default function WeightingScreen() {
               ? 'Unsaved changes — your score updates live, but only Save keeps it.'
               : hasSaved
                 ? 'Your weighting is saved on this device.'
-                : 'Using the research defaults.'}
+                : 'Move the sliders, or save these as they are. Either way, Save is what puts a score on your home screen.'}
           </ThemedText>
 
           <Button

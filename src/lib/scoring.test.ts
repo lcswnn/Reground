@@ -263,6 +263,79 @@ describe('computeComposite', () => {
 });
 
 /**
+ * The breakdown has to add up to the number above it.
+ *
+ * The home screen itemises these under the reader's own weighting. If they were
+ * taken from the artifact instead they would be shares of the research score,
+ * and the one reader who opened the breakdown to check the arithmetic is
+ * exactly the one who would notice.
+ */
+describe('computeComposite — per-metric shares', () => {
+  it('sums to the unclamped score', () => {
+    const metrics = [
+      metric({ id: 'a', category: 'health', weight: 0.15, normalized: 0.8 }),
+      metric({ id: 'b', category: 'health', weight: 0.05, normalized: -0.3 }),
+      metric({ id: 'c', category: 'environment', weight: 0.15, normalized: 0.2 }),
+    ];
+    const weights = { health: 20, environment: 15 };
+
+    const total = computeComposite(metrics, weights).contributions.reduce(
+      (sum, entry) => sum + entry.contribution,
+      0,
+    );
+
+    expect(total).toBeCloseTo(unclampedComposite(metrics, weights), 12);
+  });
+
+  it('tracks the readers weighting, not the artifacts', () => {
+    const metrics = [
+      metric({ id: 'a', category: 'health', weight: 0.1, normalized: 1 }),
+      metric({ id: 'b', category: 'environment', weight: 0.1, normalized: 1 }),
+    ];
+
+    const healthHeavy = computeComposite(metrics, { health: 90, environment: 10 });
+    const byId = new Map(healthHeavy.contributions.map((entry) => [entry.metricId, entry]));
+
+    expect(byId.get('a')!.weight).toBeCloseTo(0.9, 6);
+    expect(byId.get('b')!.weight).toBeCloseTo(0.1, 6);
+    expect(byId.get('a')!.contribution).toBeCloseTo(0.9, 6);
+  });
+
+  it('keeps unscored metrics in the list at zero rather than dropping them', () => {
+    const result = computeComposite(
+      [
+        metric({ id: 'a', category: 'health', normalized: 0.8 }),
+        metric({ id: 'pending', category: 'environment', normalized: 0, hasData: false }),
+      ],
+      { health: 20, environment: 15 },
+    );
+
+    // Present, so the UI can render "no data yet" instead of silently showing
+    // eighteen rows where the reader configured nineteen.
+    expect(result.contributions).toHaveLength(2);
+
+    const pending = result.contributions.find((entry) => entry.metricId === 'pending')!;
+    expect(pending.hasData).toBe(false);
+    expect(pending.contribution).toBe(0);
+    expect(pending.weight).toBe(0);
+  });
+
+  it('gives a zero-weighted category no share', () => {
+    const result = computeComposite(
+      [
+        metric({ id: 'a', category: 'health', normalized: 0.8 }),
+        metric({ id: 'b', category: 'environment', normalized: 0.9 }),
+      ],
+      { health: 100, environment: 0 },
+    );
+
+    const byId = new Map(result.contributions.map((entry) => [entry.metricId, entry]));
+    expect(byId.get('b')!.weight).toBe(0);
+    expect(byId.get('b')!.contribution).toBe(0);
+  });
+});
+
+/**
  * Absent data is not zero progress.
  *
  * A metric with no measurement behind it leaves both the numerator and the

@@ -71,6 +71,27 @@ export interface CategoryBreakdown {
   unscoredMetricCount: number;
 }
 
+/** One metric's signed share of the score, under the weighting that produced it. */
+export interface MetricShare {
+  metricId: string;
+  /**
+   * `scaled weight × normalized`. Shares sum to the unclamped score.
+   *
+   * Recomputed rather than taken from the artifact's own `contribution`, which
+   * is the share under the *research* weighting. A breakdown itemising one
+   * weighting beneath a headline computed from another does not add up, and the
+   * reader who opened it is exactly the one who would check.
+   */
+  contribution: number;
+  /**
+   * The metric's rescaled weight — its actual share of the reader's budget,
+   * summing to 1 across scored metrics. Not the artifact's default weight.
+   */
+  weight: number;
+  /** False when the metric had no data and was left out of the score entirely. */
+  hasData: boolean;
+}
+
 export interface CompositeResult {
   /** 0–1, matching the artifact's `compositeScore`. */
   score: number;
@@ -82,6 +103,14 @@ export interface CompositeResult {
    */
   coverage: number;
   categories: CategoryBreakdown[];
+  /**
+   * Every metric, scored or not, ordered as supplied.
+   *
+   * Unscored metrics appear carrying 0 so a breakdown can render "no data yet"
+   * rather than dropping them silently — the same contract the data layer's
+   * `perMetricContributions` keeps.
+   */
+  contributions: MetricShare[];
 }
 
 /**
@@ -197,6 +226,15 @@ export function computeComposite(
     // Every metric, not just the scored ones — a category needs to be able to
     // say how many of its indicators are waiting on data.
     categories: summariseCategories(metrics, weights),
+    contributions: metrics.map((metric) => {
+      const weight = metric.hasData ? (weights.get(metric.id) ?? 0) : 0;
+      return {
+        metricId: metric.id,
+        contribution: weight * metric.normalized,
+        weight,
+        hasData: metric.hasData,
+      };
+    }),
   };
 }
 
