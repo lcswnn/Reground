@@ -53,8 +53,11 @@ interface HumanityProgressProps {
  * The default stays one line below, and tapping through goes back to the sliders.
  *
  * The breakdown exists because a number like this is a claim that ought to show
- * its work rather than be taken on faith, and because it is the only place the
- * detractors are visible as detractors. Note it always itemises the *default*
+ * its work rather than be taken on faith, and because it is the only place an
+ * indicator that is going backwards is visible as such. A negative contribution
+ * here means *regressed past its own baseline*, not "detractor" — since the
+ * composite became polarity-blind, a detractor sitting on its target earns its
+ * full weight like anything else. Note it always itemises the *default*
  * contributions — reweighting changes how much each indicator counts, not what
  * any of them says.
  */

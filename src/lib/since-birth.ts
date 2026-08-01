@@ -68,6 +68,11 @@ function normalize(metric: HumanityMetric, value: number): number {
   const target = metric.targetValue;
   if (baseline === undefined || target === undefined) return 0;
 
+  // The data layer returns `null` here rather than 0, because absence and zero
+  // progress are different claims. This one can return 0 because neither branch
+  // is reachable by the time a value gets here: `compositeSinceBirth` bails on
+  // missing anchors before calling, and `validateMetricConfigs` rejects a
+  // degenerate span at config load, so nothing with one reaches an artifact.
   const span = target - baseline;
   if (span === 0 || !Number.isFinite(span) || !Number.isFinite(value)) return 0;
 

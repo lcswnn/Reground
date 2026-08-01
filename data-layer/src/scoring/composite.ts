@@ -29,6 +29,16 @@ import { normalizeMetric } from './normalize.js';
  *
  * This is the thing a future reader is most likely to "fix" back. Don't.
  *
+ * **Unmeasured metrics leave both sums.** A metric with no series, no history
+ * reaching back to `asOf`, or a `normalizeMetric` that returned null is dropped
+ * from the numerator *and* from the weight denominator, and `coverage` reports
+ * how much of the weight budget that left. Scoring it as 0 instead would say
+ * "no progress made on this", which is a claim about the world rather than a
+ * statement about our data — and an invisible one, since it would read exactly
+ * like a metric genuinely stuck at its baseline. Such metrics still appear in
+ * `perMetricContributions` carrying 0 so the UI can render "no data yet"; that
+ * is presentation, and they are already out of the scoring.
+ *
  * **The clamp is a safety rail, not model logic.** Scaled weights sum to 1 and
  * `normalizeMetric` bounds every value to `[NORMALIZED_FLOOR, NORMALIZED_CEILING]`
  * = `[-0.5, 1]`. A weighted mean of values in that range is in that range, so
