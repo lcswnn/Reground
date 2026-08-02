@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     maxWidth: '45%',
   },
   deltaText: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.semibold,
     fontSize: 16,
   },
   value: {

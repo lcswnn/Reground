@@ -1,15 +1,19 @@
 /**
- * Humanitas design tokens.
+ * Mellova design tokens.
  *
- * The palette is deliberately warm and sunrise-leaning: this app exists to make
- * "things are getting better" feel true at a glance, so the primary accent is a
- * terracotta rather than a corporate blue. Around it sit three companions —
- * moss olive, dusty pink, soft sky — one per tab, so the bar reads as a set of
- * cozy siblings instead of one highlight color repeated. Surfaces stay a quiet
- * near-white so the stories and charts carry the color.
+ * The app is a place to land after the news, not another surface competing for
+ * attention, so both schemes are built from one supplied five-colour ramp each
+ * and nothing brighter than the page itself.
  *
- * Dark mode keeps the same hues but drops the luminance, so the app reads as the
- * same product at night instead of a different one.
+ * Light is warm sand: a tan paper rather than a near-white lightbox, because a
+ * white screen at 6am is a flashlight. Dark is not the same palette dimmed —
+ * it is a deep teal night, cool where the day is warm. That asymmetry is
+ * deliberate: the two schemes are the same app at two times of day.
+ *
+ * Only five colours were specified per scheme, and the token set below needs
+ * more than five — every derived value is a tint or shade of a supplied colour,
+ * kept on its hue, and each one carries its contrast ratio against that
+ * scheme's `background` so the next edit knows what headroom it has.
  */
 
 import "@/global.css";
@@ -18,145 +22,149 @@ import { Platform } from "react-native";
 
 export const Colors = {
   light: {
+    /** Supplied "Black" — warm near-black, softer than #000 on sand. 53:1. */
+    text: "#242120",
+    /** Supplied "Grey". 7.1:1 — headings' quieter sibling, comfortably AA. */
+    textSecondary: "#4F4C4F",
     /**
-     * Warm near-black rather than true black: softer, less clinical at 6am.
-     *
-     * The two greys below it are pulled down from where they started (#6B6459
-     * and #9A9287) because the lighter pair washed out on this near-white
-     * paper — muted sat at 2.94:1, under the 4.5:1 needed for body text.
-     * Ratios here are against `background`; on `surface` they run ~4% higher.
+     * Shade of the supplied "Light Brown". The supplied value itself is 2.6:1
+     * on this page — fine as a line, unreadable as text — so muted copy uses it
+     * darkened to 5.1:1 and the original is spent on `border` instead.
      */
-    text: "#221F1A",
-    /** 8.5:1 — headings' quieter sibling, still comfortably readable. */
-    textSecondary: "#4F493F",
-    /** 4.9:1 — clears AA, where the old value did not. */
-    textMuted: "#756D61",
-    textOnBrand: "#3A2410",
-
-    /** Near-white with a hair of warmth, so screens read as paper, not a lightbox. */
-    background: "#FBFAF7",
-    backgroundElement: "#F3F1EB",
-    backgroundSelected: "#E9E5DC",
-    surface: "#FFFFFF",
-
+    textMuted: "#6E5F5F",
+    /** On `brand`, which is a light tan: 7.8:1. */
+    textOnBrand: "#242120",
     /**
-     * 2.1:1 against the page. The old #E8E4DA was 1.22:1 — technically a line,
-     * but at 1px it read as a smudge and card edges disappeared.
+     * On `positive`, and it has to be its own token rather than reusing
+     * `textOnBrand`: the two fills sit on opposite sides of the page. `brand` is
+     * a tan lighter than the sand and takes dark text; `positive` is a sage
+     * darker than it and takes light. In dark mode they flip, which is exactly
+     * why one shared "text on a fill" value cannot be right in both schemes.
+     * 4.8:1.
      */
-    border: "#B8AF9C",
+    textOnPositive: "#FFFFFF",
+
+    /** Supplied "Light Tan". The page. */
+    background: "#FDDDB9",
+    /** The page, one step deeper — pills, inset rows, anything pressed into it. */
+    backgroundElement: "#F6D0A8",
+    backgroundSelected: "#EEC49A",
+    /** The page lifted toward white. Cards sit above the sand, not in it. */
+    surface: "#FFF1DE",
+
+    /** Supplied "Light Brown". 2.6:1 — visible at 1px without becoming a rule. */
+    border: "#9F8D8D",
 
     /**
      * The tab bar's top edge, and only that.
      *
      * Deliberately not `border`: this is the one line in the app that separates
-     * the chrome from the content rather than one card from another, and at
-     * `border`'s 2.1:1 it read as part of the page. Each scheme borrows the
-     * *other* scheme's background — near-black on paper, off-white on night —
-     * which is the strongest either palette can go without introducing a hue
-     * that belongs to neither.
+     * chrome from content rather than one card from another. Each scheme
+     * borrows the *other* scheme's background — night blue on sand, sand on
+     * night blue — which is the strongest either palette can go without
+     * introducing a hue that belongs to neither.
      */
-    barDivider: "#1A1510",
+    barDivider: "#041520",
 
-    /** Warm terracotta. The single orange in the app. */
-    brand: "#e08659",
+    /** Supplied "Tan". The single warm accent — fills, chips, the active tab. */
+    brand: "#D8AD8E",
     /**
-     * Same value as `brand` — used for link text and selected states, where it
-     * lands at 4.3:1 on `background`, just under the 4.5:1 bar for body text.
+     * The same tan taken to 4.8:1, for link text and selected states. `brand`
+     * itself is 1.7:1 here: a fill, never a letterform.
      */
-    brandStrong: "#e08659",
-    brandSoft: "#FBEBE2",
-
-    /** Progress / "up and to the right". Moss olive. Carries the bar charts. */
-    positive: "#9bb05c",
-    positiveSoft: "#EDEBD8",
+    brandStrong: "#8E5A34",
+    brandSoft: "#F6E0CC",
 
     /**
-     * Data moving the wrong way, wherever it appears. Brick rather than siren:
-     * 5.2:1 here, so it can carry a delta line as well as a bar.
+     * Progress / "up and to the right". Sage, dulled to sit on sand — 4.0:1 on
+     * the page and 3.8:1 on `positiveSoft`, which is where it usually is.
      */
-    decline: "#B4453F",
-    declineSoft: "#F6E7E6",
+    positive: "#5F7A46",
+    positiveSoft: "#E4E7D6",
 
     /**
-     * The blue: progress bars, the Progress tab, and the refresh wheel — one
-     * hue for "how far along" throughout. Taken a touch deeper than the wheel's
-     * old #3E7CA8 (4.3:1) so it clears 4.5:1 as text; this is 5.1:1.
+     * Data moving the wrong way. Brick rather than siren — 5.0:1, so it can
+     * carry a delta line as well as a bar, and nothing here is an emergency.
      */
-    info: "#37718F",
-    infoSoft: "#E6F1F8",
+    decline: "#9E4A3C",
+    declineSoft: "#F7DED6",
 
-    /** Secondary accent for humanity/people-flavored surfaces. */
-    accent: "#DDBEDC",
     /**
-     * The readable pink. `accent` is a wash — 1.4:1 on this paper, fine as a
-     * large fill behind something else but invisible as text or as a bar on a
-     * near-white page. This is the same hue taken down to 5.1:1 so it can carry
-     * a number.
+     * The cool one: progress bars, the Progress tab, the refresh wheel. Borrowed
+     * from the night palette's turquoise and deepened to 5.0:1, so the two
+     * schemes share a hue rather than each inventing a blue.
      */
-    accentStrong: "#8E5A8B",
-    accentSoft: "#F5EBF4",
+    info: "#456A6B",
+    infoSoft: "#DCE9E6",
 
-    /** Form errors. Brick, not siren red — nothing here is an emergency. */
-    danger: "#B4453F",
+    /** Secondary accent for humanity/people-flavored surfaces. A wash: 2.2:1. */
+    accent: "#C9B0AE",
+    /** The same mauve at 5.0:1, for when it has to carry a number. */
+    accentStrong: "#7A5C5C",
+    accentSoft: "#F0E2DE",
+
+    /** Form errors. Same brick as `decline`. */
+    danger: "#9E4A3C",
   },
   dark: {
-    text: "#F2EDE6",
-    textSecondary: "#B4ABA0",
-    textMuted: "#857C71",
-    textOnBrand: "#2A1A0C",
-
+    /** Supplied "Light Grey". 12.6:1. */
+    text: "#CFD6D6",
+    /** Supplied "Light Blue". 8.5:1. */
+    textSecondary: "#86B9B1",
     /**
-     * Near-black with the brown pushed further than it was: the old ramp only
-     * had ~5 points between its red and blue channels, which at these levels
-     * reads as plain charcoal. Doubling that gap is enough to see the warmth
-     * without lifting the screens off black.
-     *
-     * Luminance is deliberately unmoved (0.0079 vs the old 0.0076), so every
-     * contrast ratio noted below still holds.
+     * The supplied "Turquoise" lifted. At its given value it is 3.5:1 — under
+     * AA for body copy — so the original stays on `border`, where a 3.5:1 line
+     * is a feature, and muted text uses this 5.8:1 tint.
      */
-    background: "#1A1510",
-    backgroundElement: "#251E17",
-    backgroundSelected: "#2F281F",
-    surface: "#211A13",
+    textMuted: "#6F9997",
+    /** On `brand`, which is the light blue. */
+    textOnBrand: "#041520",
+    /** On `positive`. Same value as `textOnBrand` here — at night both fills
+     *  are lighter than the page, so the split the light scheme needs collapses.
+     *  Kept as its own token so the two can diverge again without a hunt. 8.9:1. */
+    textOnPositive: "#041520",
 
-    border: "#362E24",
+    /** Supplied "Darkest Blue". The page. */
+    background: "#041520",
+    /** Tints of the supplied "Dark Blue", climbing away from the page. */
+    backgroundElement: "#0A3140",
+    backgroundSelected: "#114050",
+    /** Supplied "Dark Blue". Cards, one step off the page. */
+    surface: "#042631",
+
+    /** Between the two supplied blues — 1.9:1, an edge rather than a frame. */
+    border: "#14384A",
 
     /** See the light scheme: the light background, mirrored. */
-    barDivider: "#FBFAF7",
+    barDivider: "#FDDDB9",
 
-    // The warm pair carries across schemes unchanged — both clear 4.9:1 on this
-    // background, so neither needs a night-specific cut.
-    brand: "#E67F4D",
-    brandStrong: "#E67F4D",
-    brandSoft: "#3A241A",
+    /** Supplied "Light Blue". 8.5:1 — reads as text as well as it fills. */
+    brand: "#86B9B1",
+    /** One value at night: the brand already carries text, so the light
+     *  scheme's fill/text split would be a distinction without a use. */
+    brandStrong: "#86B9B1",
+    brandSoft: "#0B3339",
 
-    positive: "#918737",
-    positiveSoft: "#262316",
+    /** Sage, pulled toward the palette's cool cast. 8.9:1. */
+    positive: "#8FBF9C",
+    positiveSoft: "#0D2E28",
 
-    // Was #80B5D9 — a blue under the name `decline`, which is why the wrong
-    // direction read as calm at night and alarming by day. Now red in both.
-    decline: "#E08A85",
-    declineSoft: "#2E1B19",
+    // The one warm colour at night, and it is deliberate: "wrong direction"
+    // must not read as calm, and everything else on screen is teal.
+    decline: "#DE9484",
+    declineSoft: "#351C1A",
 
-    /**
-     * Pulled down from #80B5D9 (8.2:1), which glared against the near-black.
-     * 6.9:1 keeps it comfortably readable while letting the page stay the
-     * brightest thing in the room rather than the bar on it.
-     */
-    info: "#74A6C9",
-    infoSoft: "#14252F",
+    /** Cooler and bluer than `brand`, so "how far along" stays its own hue. */
+    info: "#7FB0C9",
+    infoSoft: "#0A2C3C",
 
-    /**
-     * Same treatment as the blue: #DDBEDC was 10.6:1 here, brighter than the
-     * body text. 7.8:1 still reads as the same lilac-pink, just no longer lit.
-     */
-    accent: "#C2A0C1",
-    // Still one value at night — the dimmed wash carries text on its own, so
-    // the split the light scheme needs would be a distinction without a use.
-    accentStrong: "#C2A0C1",
-    accentSoft: "#2A2130",
+    /** Periwinkle — the palette's blues walked off teal, so people-flavored
+     *  surfaces don't collide with the brand. 8.2:1. */
+    accent: "#A9B8D0",
+    accentStrong: "#A9B8D0",
+    accentSoft: "#16283A",
 
-    danger: "#E08A85",
+    danger: "#DE9484",
   },
 } as const;
 
@@ -166,11 +174,13 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * Family names registered by `useFonts` in the root layout. Referenced as
  * strings everywhere else, so a missing load shows up as system fallback text
  * rather than a crash.
+ *
+ * Nunito throughout: a rounded sans with no sharp terminals, which is most of
+ * why the app reads as calm before a single word is parsed.
  */
-export const LibertinusMath = "LibertinusMath";
-export const LibertinusSerif = "LibertinusSerif";
-export const LibertinusSerifSemibold = "LibertinusSerif-Semibold";
-export const LibertinusSerifBold = "LibertinusSerif-Bold";
+export const NunitoRegular = "Nunito_400Regular";
+export const NunitoSemiBold = "Nunito_600SemiBold";
+export const NunitoBold = "Nunito_700Bold";
 
 export const Fonts = Platform.select({
   ios: {
@@ -178,9 +188,11 @@ export const Fonts = Platform.select({
      * Headings. One family name per weight file — RN can't synthesize weights
      * for a custom family, so `fontWeight` must stay off anything using these.
      */
-    display: LibertinusSerifBold,
+    display: NunitoBold,
+    /** Emphasis inside body copy, and the smaller headings. */
+    semibold: NunitoSemiBold,
     /** Everything that isn't a heading. */
-    body: LibertinusSerif,
+    body: NunitoRegular,
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
     /** iOS `UIFontDescriptorSystemDesignSerif` */
@@ -191,16 +203,18 @@ export const Fonts = Platform.select({
     mono: "ui-monospace",
   },
   default: {
-    display: LibertinusSerifBold,
-    body: LibertinusSerif,
+    display: NunitoBold,
+    semibold: NunitoSemiBold,
+    body: NunitoRegular,
     sans: "normal",
     serif: "serif",
     rounded: "normal",
     mono: "monospace",
   },
   web: {
-    display: `${LibertinusSerifBold}, var(--font-serif)`,
-    body: `${LibertinusSerif}, var(--font-serif)`,
+    display: `${NunitoBold}, var(--font-display)`,
+    semibold: `${NunitoSemiBold}, var(--font-display)`,
+    body: `${NunitoRegular}, var(--font-display)`,
     sans: "var(--font-display)",
     serif: "var(--font-serif)",
     rounded: "var(--font-rounded)",

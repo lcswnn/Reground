@@ -167,12 +167,15 @@ struct Provider: TimelineProvider {
 /// the home screen's appearance rather than the app's own light/dark override —
 /// on a home screen, matching the wallpaper's scheme is what looks native.
 private enum Palette {
-  static let text = dynamic(light: "221F1A", dark: "F2EDE6")
-  static let textMuted = dynamic(light: "756D61", dark: "857C71")
-  static let brand = dynamic(light: "e08659", dark: "E67F4D")
-  static let accentStrong = dynamic(light: "8E5A8B", dark: "C2A0C1")
-  static let accentSoft = dynamic(light: "F5EBF4", dark: "2A2130")
-  static let background = dynamic(light: "FBFAF7", dark: "1A1510")
+  static let text = dynamic(light: "242120", dark: "CFD6D6")
+  static let textMuted = dynamic(light: "6E5F5F", dark: "6F9997")
+  /// The readable tan, not `brand` itself. In light mode `brand` is a fill —
+  /// 1.7:1 on the sand background — so a widget label wearing it would be
+  /// legible in dark mode and invisible in light. See the note in the theme.
+  static let brandStrong = dynamic(light: "8E5A34", dark: "86B9B1")
+  static let accentStrong = dynamic(light: "7A5C5C", dark: "A9B8D0")
+  static let accentSoft = dynamic(light: "F0E2DE", dark: "16283A")
+  static let background = dynamic(light: "FDDDB9", dark: "041520")
 
   private static func dynamic(light: String, dark: String) -> Color {
     Color(UIColor { traits in
@@ -229,7 +232,7 @@ private struct SmallView: View {
         // bundled into the extension — one more copy of a font file in every
         // build, to be seen at 34pt behind a wallpaper — so the system serif
         // stands in for it.
-        .font(.system(size: 34, weight: .bold, design: .serif))
+        .font(.system(size: 34, weight: .bold, design: .rounded))
         .foregroundStyle(Palette.accentStrong)
         .minimumScaleFactor(0.6)
         .lineLimit(1)
@@ -240,7 +243,7 @@ private struct SmallView: View {
 
       if let metric = entry.metric {
         Text(metric.label)
-          .font(.system(size: 11, design: .serif))
+          .font(.system(size: 11, design: .rounded))
           .foregroundStyle(Palette.text)
           .lineLimit(2)
       }
@@ -261,7 +264,7 @@ private struct MediumView: View {
           .lineLimit(1)
 
         Text(entry.isPlaceholder ? "—" : "\(Int((entry.score * 100).rounded()))%")
-          .font(.system(size: 38, weight: .bold, design: .serif))
+          .font(.system(size: 38, weight: .bold, design: .rounded))
           .foregroundStyle(Palette.accentStrong)
           .minimumScaleFactor(0.6)
           .lineLimit(1)
@@ -279,19 +282,19 @@ private struct MediumView: View {
             .foregroundStyle(Palette.textMuted)
 
           Text(metric.label)
-            .font(.system(size: 13, design: .serif))
+            .font(.system(size: 13, design: .rounded))
             .foregroundStyle(Palette.text)
             .lineLimit(2)
 
           Text(formatValue(metric.currentValue, unit: metric.unit))
-            .font(.system(size: 24, weight: .bold, design: .serif))
+            .font(.system(size: 24, weight: .bold, design: .rounded))
             .foregroundStyle(Palette.text)
             .minimumScaleFactor(0.6)
             .lineLimit(1)
 
           Text(metric.delta)
             .font(.system(size: 12))
-            .foregroundStyle(Palette.brand)
+            .foregroundStyle(Palette.brandStrong)
             .lineLimit(1)
 
           Spacer(minLength: 0)

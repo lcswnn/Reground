@@ -1,14 +1,14 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { forwardRef } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { LinearGradient } from "expo-linear-gradient";
+import { forwardRef } from "react";
+import { StyleSheet, View } from "react-native";
 
-import { formatMetricValue } from '@/api/humanity';
-import { Sparkline } from '@/components/sparkline';
-import { ThemedText } from '@/components/themed-text';
-import { Colors, Fonts, Radius, Spacing } from '@/constants/theme';
-import { categoryLabel } from '@/constants/world-metrics';
-import type { DailyCard } from '@/lib/daily-card';
-import { formatDay } from '@/lib/format';
+import { formatMetricValue } from "@/api/humanity";
+import { Sparkline } from "@/components/sparkline";
+import { ThemedText } from "@/components/themed-text";
+import { Colors, Fonts, Radius, Spacing } from "@/constants/theme";
+import { categoryLabel } from "@/constants/world-metrics";
+import type { DailyCard } from "@/lib/daily-card";
+import { formatDay } from "@/lib/format";
 
 /**
  * Fixed to the light palette, and deliberately not theme-aware.
@@ -71,7 +71,10 @@ interface ShareCardProps {
  * Ref-forwarding because `captureRef` needs the host view, and the parent owns
  * the capture — this component should not know it is being photographed.
  */
-export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard({ card, width }, ref) {
+export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
+  { card, width },
+  ref,
+) {
   // Null direction means the artifact predates the field, so neither green nor
   // red is honest — the same rule the rest of the app follows. Here it falls
   // back to the brand rather than to grey: this card is a piece of design, and
@@ -108,7 +111,8 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard({ c
           paddingBottom: Spacing.three * scale,
           gap: Spacing.three * scale,
         },
-      ]}>
+      ]}
+    >
       {/* Under everything, clipped by the card's own radius. Corner to corner
           rather than banded, so no edge of the image is a flat colour. */}
       <LinearGradient
@@ -126,25 +130,32 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard({ c
             borderRadius: Radius.lg * scale,
             padding: Spacing.three * scale,
           },
-        ]}>
+        ]}
+      >
         <View style={styles.top}>
           <ThemedText
             type="eyebrow"
             style={[styles.category, { color: accent, fontSize: 13 * scale }]}
-            numberOfLines={1}>
+            numberOfLines={1}
+          >
             {categoryLabel(card.metric.category)}
           </ThemedText>
 
           <ThemedText
             style={[
               styles.headline,
-              { fontSize: 27 * scale, lineHeight: 34 * scale, color: palette.text },
+              {
+                fontSize: 27 * scale,
+                lineHeight: 34 * scale,
+                color: palette.text,
+              },
             ]}
             // Six lines of a 27pt serif is the whole top half. Anything longer
             // is a headline that failed, and shrinking is better than clipping.
             numberOfLines={6}
             adjustsFontSizeToFit
-            minimumFontScale={0.7}>
+            minimumFontScale={0.7}
+          >
             {card.headline}
           </ThemedText>
         </View>
@@ -160,14 +171,18 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard({ c
                   scale={scale}
                 />
                 <ThemedText
-                  style={[styles.arrow, { fontSize: 22 * scale, color: palette.textMuted }]}>
+                  style={[
+                    styles.arrow,
+                    { fontSize: 22 * scale, color: palette.textMuted },
+                  ]}
+                >
                   →
                 </ThemedText>
               </>
             ) : null}
 
             <Figure
-              label={card.to.year ?? 'today'}
+              label={card.to.year ?? "today"}
               value={formatAt(card, card.to.value)}
               color={accent}
               scale={scale}
@@ -185,16 +200,25 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard({ c
           style={[
             styles.footer,
             { borderTopColor: palette.border, paddingTop: Spacing.two * scale },
-          ]}>
+          ]}
+        >
           <ThemedText
-            style={[styles.source, { fontSize: 12 * scale, color: palette.textMuted }]}
-            numberOfLines={1}>
+            style={[
+              styles.source,
+              { fontSize: 12 * scale, color: palette.textMuted },
+            ]}
+            numberOfLines={1}
+          >
             {card.metric.sourceName}
           </ThemedText>
 
           <ThemedText
-            style={[styles.date, { fontSize: 12 * scale, color: palette.textMuted }]}
-            numberOfLines={1}>
+            style={[
+              styles.date,
+              { fontSize: 12 * scale, color: palette.textMuted },
+            ]}
+            numberOfLines={1}
+          >
             {formatDay(card.date)}
           </ThemedText>
         </View>
@@ -207,9 +231,14 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard({ c
       <ThemedText
         style={[
           styles.wordmark,
-          { fontSize: 13 * scale, lineHeight: 20 * scale, color: palette.textOnBrand },
-        ]}>
-        HUMANITAS
+          {
+            fontSize: 13 * scale,
+            lineHeight: 20 * scale,
+            color: palette.textOnBrand,
+          },
+        ]}
+      >
+        Mellova
       </ThemedText>
     </View>
   );
@@ -229,13 +258,22 @@ function Figure({
   return (
     <View style={styles.figure}>
       <ThemedText
-        style={[styles.value, { fontSize: 30 * scale, lineHeight: 36 * scale, color }]}
+        style={[
+          styles.value,
+          { fontSize: 30 * scale, lineHeight: 36 * scale, color },
+        ]}
         numberOfLines={1}
         adjustsFontSizeToFit
-        minimumFontScale={0.6}>
+        minimumFontScale={0.6}
+      >
         {value}
       </ThemedText>
-      <ThemedText style={[styles.figureLabel, { fontSize: 13 * scale, color: palette.textMuted }]}>
+      <ThemedText
+        style={[
+          styles.figureLabel,
+          { fontSize: 13 * scale, color: palette.textMuted },
+        ]}
+      >
         {label}
       </ThemedText>
     </View>
@@ -248,13 +286,13 @@ function formatAt(card: DailyCard, value: number): string {
 
 const styles = StyleSheet.create({
   card: {
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   // Takes everything the frame's padding leaves, so the orange reads as an even
   // border rather than as a block the content happens to sit on.
   sheet: {
     flex: 1,
-    justifyContent: 'space-between',
+    justifyContent: "space-between",
   },
   top: {
     gap: Spacing.two,
@@ -266,11 +304,11 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.display,
   },
   middle: {
-    justifyContent: 'flex-end',
+    justifyContent: "flex-end",
   },
   pair: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
+    flexDirection: "row",
+    alignItems: "flex-end",
   },
   figure: {
     flexShrink: 1,
@@ -286,16 +324,16 @@ const styles = StyleSheet.create({
     paddingBottom: 6,
   },
   footer: {
-    flexDirection: 'row',
-    alignItems: 'flex-end',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "flex-end",
+    justifyContent: "space-between",
     borderTopWidth: 1,
     gap: Spacing.two,
   },
   wordmark: {
     fontFamily: Fonts.display,
     letterSpacing: 1.6,
-    textAlign: 'center',
+    textAlign: "center",
   },
   source: {
     fontFamily: Fonts.body,

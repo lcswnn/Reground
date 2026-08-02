@@ -27,10 +27,20 @@ export function isIngestFresh(ingestedAt: string, now = Date.now()): boolean {
   return Number.isFinite(age) && age >= 0 && age < INGEST_FRESH_HOURS * 60 * 60 * 1000;
 }
 
-/** Whether a story arrived in the most recent run, and that run was recent. */
-export function isNewlyIngested(story: Story, latestIngestAt: string | null): boolean {
+/**
+ * Whether a story arrived in the most recent run, and that run was recent.
+ *
+ * `now` is injectable for the same reason `isIngestFresh` takes it: without it
+ * every test here is written against the wall clock, so a suite that passed the
+ * day it was written starts failing 36 hours later.
+ */
+export function isNewlyIngested(
+  story: Story,
+  latestIngestAt: string | null,
+  now = Date.now(),
+): boolean {
   if (!latestIngestAt || story.created_at !== latestIngestAt) return false;
-  return isIngestFresh(latestIngestAt);
+  return isIngestFresh(latestIngestAt, now);
 }
 
 /**

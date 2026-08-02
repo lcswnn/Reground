@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "humanitas",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#FBFAF7",
+    "backgroundColor": "#FDDDB9",
     "ios": {
       "icon": "./assets/icon.png",
       "bundleIdentifier": "com.lucaswaunn.humanitas",
@@ -20,7 +20,7 @@
     "android": {
       "package": "com.lucaswaunn.humanitas",
       "adaptiveIcon": {
-        "backgroundColor": "#FBFAF7",
+        "backgroundColor": "#FDDDB9",
         "foregroundImage": "./assets/icon.png"
       },
       "predictiveBackGestureEnabled": false
@@ -35,7 +35,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#e08659",
+          "backgroundColor": "#D8AD8E",
           "image": "./assets/icon-no-bg.png",
           "imageWidth": 160,
           "resizeMode": "contain"
@@ -45,7 +45,7 @@
       [
         "expo-notifications",
         {
-          "color": "#e08659"
+          "color": "#D8AD8E"
         }
       ],
       "expo-sharing",

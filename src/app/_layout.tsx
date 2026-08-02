@@ -1,3 +1,8 @@
+import {
+  Nunito_400Regular,
+  Nunito_600SemiBold,
+  Nunito_700Bold,
+} from '@expo-google-fonts/nunito';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
@@ -10,7 +15,7 @@ import { useEffect, useState } from 'react';
 import { AppReadyContext } from '@/lib/app-ready';
 import { prefetchAppData } from '@/lib/bootstrap';
 import { resyncReminder } from '@/lib/daily-reminder';
-import { Colors, Fonts, LibertinusSerif, LibertinusSerifBold } from '@/constants/theme';
+import { Colors, Fonts } from '@/constants/theme';
 import { queryClient } from '@/lib/query';
 import { SessionProvider, useSession } from '@/lib/session';
 import { useWeightingSync } from '@/state/weighting-sync';
@@ -105,10 +110,13 @@ function RootNavigator() {
   // Loaded at runtime rather than through the expo-font config plugin, which
   // would need a native rebuild to pick up.
   // One family name per file: RN can't synthesize weights for a custom family,
-  // so the bold face is registered under its own name and used directly.
+  // so each weight is registered under its own name and used directly. The
+  // names come from the package rather than being retyped — they are also what
+  // `constants/theme` references, and a typo in either place is silent.
   const [fontsLoaded, fontError] = useFonts({
-    [LibertinusSerif]: require('../../assets/fonts/LibertinusSerif-Regular.otf'),
-    [LibertinusSerifBold]: require('../../assets/fonts/LibertinusSerif-Bold.otf'),
+    Nunito_400Regular,
+    Nunito_600SemiBold,
+    Nunito_700Bold,
   });
 
   // A font that fails to decode shouldn't hold the app hostage — fall through
@@ -205,11 +213,9 @@ function RootNavigator() {
             Set once on the navigator instead of per screen, so a stack screen
             added later inherits it rather than reintroducing the mismatch.
 
-            22pt sits between `sectionTitle` and `subtitle` in the type scale
-            rather than on either. Libertinus runs small for its point size —
-            the same reason `small` is 17 rather than 14 — so matching
-            `sectionTitle`'s 20 read a step under the headings on the pages
-            below it, which is backwards for a title.
+            20pt matches `sectionTitle`: Nunito sits true to its point size, so
+            unlike the serif this replaced it needs no compensating bump to
+            outrank the headings on the page below it.
 
             `fontWeight: 'normal'` is load-bearing, not decoration. React
             Navigation's default header title is semibold, and RN cannot
@@ -222,7 +228,7 @@ function RootNavigator() {
             headerShadowVisible: false,
             headerTitleStyle: {
               fontFamily: Fonts.display,
-              fontSize: 22,
+              fontSize: 20,
               fontWeight: 'normal',
             },
           }}>

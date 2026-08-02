@@ -38,37 +38,41 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   );
 }
 
-// Libertinus is loaded as two single-weight families, so `fontWeight` is absent
+// Nunito is loaded as three single-weight families, so `fontWeight` is absent
 // throughout: naming a weight the family doesn't carry drops the text back to
-// the system font. Emphasis comes from the display face, color, and caps.
+// the system font. Emphasis comes from the semibold and display faces, color,
+// and caps — never from a numeric weight.
+//
+// Line heights run generous (~1.5 on body) on purpose. Loose leading is most of
+// what makes a screen feel unhurried, which is the whole point of the app.
 const styles = StyleSheet.create({
-  // Body moves with the small tier rather than staying put: `small` at 18 would
-  // have matched it, which makes the two types indistinguishable and quietly
-  // flattens every screen that pairs them.
+  // Body moves with the small tier rather than staying put: `small` matching it
+  // would make the two types indistinguishable and quietly flatten every screen
+  // that pairs them.
   default: {
     fontFamily: Fonts.body,
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 26,
   },
   defaultSemiBold: {
-    fontFamily: Fonts.body,
-    fontSize: 18,
+    fontFamily: Fonts.semibold,
+    fontSize: 17,
     lineHeight: 26,
   },
   hero: {
     fontFamily: Fonts.display,
-    fontSize: 40,
-    lineHeight: 48,
+    fontSize: 38,
+    lineHeight: 46,
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 32,
-    lineHeight: 40,
+    fontSize: 30,
+    lineHeight: 38,
   },
   subtitle: {
     fontFamily: Fonts.display,
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 23,
+    lineHeight: 31,
   },
   sectionTitle: {
     fontFamily: Fonts.display,
@@ -76,34 +80,34 @@ const styles = StyleSheet.create({
     lineHeight: 28,
   },
   eyebrow: {
-    fontFamily: Fonts.body,
-    fontSize: 14,
-    lineHeight: 19,
+    fontFamily: Fonts.semibold,
+    fontSize: 13,
+    lineHeight: 18,
     textTransform: 'uppercase',
     letterSpacing: 1.1,
   },
-  // Libertinus runs small for its point size — a 14pt line here read closer to
-  // 12 on device, which is why the secondary text throughout the app was
-  // squinty. 17 keeps it one clear step under body without being fine print.
+  // A real step under body rather than the 17 the serif needed: Nunito sits
+  // true to its point size, so secondary text no longer has to be bumped up to
+  // stop reading as fine print.
   small: {
     fontFamily: Fonts.body,
-    fontSize: 17,
-    lineHeight: 24,
+    fontSize: 15,
+    lineHeight: 22,
   },
   smallBold: {
-    fontFamily: Fonts.body,
-    fontSize: 17,
-    lineHeight: 24,
+    fontFamily: Fonts.semibold,
+    fontSize: 15,
+    lineHeight: 22,
   },
   link: {
     fontFamily: Fonts.body,
-    lineHeight: 30,
-    fontSize: 17,
+    lineHeight: 28,
+    fontSize: 16,
   },
   linkPrimary: {
-    fontFamily: Fonts.body,
-    lineHeight: 30,
-    fontSize: 17,
+    fontFamily: Fonts.semibold,
+    lineHeight: 28,
+    fontSize: 16,
   },
   code: {
     fontFamily: Fonts.mono,

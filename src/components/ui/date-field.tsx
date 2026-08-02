@@ -75,7 +75,7 @@ export function DateField({
           styles.input,
           {
             backgroundColor: theme.surface,
-            borderColor: errorText ? theme.danger : open ? theme.brand : theme.border,
+            borderColor: errorText ? theme.danger : open ? theme.brandStrong : theme.border,
           },
         ]}>
         <Text style={[styles.value, { color: value ? theme.text : theme.textMuted }]}>

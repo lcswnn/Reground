@@ -77,23 +77,27 @@ describe('ingestDayStart', () => {
 
 describe('isNewlyIngested', () => {
   const latest = '2026-07-31T09:00:00.000Z';
+  // Pinned rather than left to the wall clock: freshness is measured against
+  // `now`, so a real clock makes "tags a story from the latest run" pass on the
+  // day it was written and fail every day after.
+  const now = Date.parse('2026-07-31T12:00:00.000Z');
 
   it('tags a story from the latest run', () => {
-    expect(isNewlyIngested(story({ created_at: latest }), latest)).toBe(true);
+    expect(isNewlyIngested(story({ created_at: latest }), latest, now)).toBe(true);
   });
 
   it('does not tag one from an earlier run', () => {
-    expect(isNewlyIngested(story({ created_at: '2026-07-30T09:00:00.000Z' }), latest)).toBe(
+    expect(isNewlyIngested(story({ created_at: '2026-07-30T09:00:00.000Z' }), latest, now)).toBe(
       false,
     );
   });
 
   it('does not tag anything when nothing has ever run', () => {
-    expect(isNewlyIngested(story({}), null)).toBe(false);
+    expect(isNewlyIngested(story({}), null, now)).toBe(false);
   });
 
   it('stops tagging once the run itself has gone stale', () => {
     const old = '2020-01-01T00:00:00.000Z';
-    expect(isNewlyIngested(story({ created_at: old }), old)).toBe(false);
+    expect(isNewlyIngested(story({ created_at: old }), old, now)).toBe(false);
   });
 });

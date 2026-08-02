@@ -16,19 +16,19 @@
  * @type {import('@bacons/apple-targets/app.plugin').Config}
  */
 module.exports = {
-  type: 'widget',
+  type: "widget",
   // Must differ from the app target's name. Xcode derives each target's
-  // intermediates directory from it, so two targets called "Humanitas" compile
+  // intermediates directory from it, so two targets called "Mellova" compile
   // their asset catalogs to the same path and the build fails with "multiple
   // commands produce conflicting outputs". What the user actually reads in the
   // widget gallery is `configurationDisplayName` in index.swift, not this.
-  name: 'HumanitasWidget',
+  name: "MellovaWidget",
   // Matches the app's brand terracotta, and is what SwiftUI's `AccentColor`
   // resolves to inside the extension.
   colors: {
-    $accent: '#e08659',
+    $accent: "#e08659",
   },
   // WidgetKit's `containerBackground` modifier — which iOS 17 requires for a
   // widget to render at all rather than being blanked — does not exist below 17.
-  deploymentTarget: '17.0',
+  deploymentTarget: "17.0",
 };

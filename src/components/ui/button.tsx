@@ -36,11 +36,13 @@ export function Button({
           ? theme.backgroundElement
           : 'transparent';
   const foreground =
-    variant === 'primary' || variant === 'positive'
+    variant === 'primary'
       ? theme.textOnBrand
-      : variant === 'ghost'
-        ? theme.textSecondary
-        : theme.text;
+      : variant === 'positive'
+        ? theme.textOnPositive
+        : variant === 'ghost'
+          ? theme.textSecondary
+          : theme.text;
 
   return (
     <Pressable
@@ -76,8 +78,11 @@ const styles = StyleSheet.create({
     height: 44,
   },
   label: {
-    fontFamily: Fonts.body,
-    fontSize: 18,
+    // Semibold, now that a semibold face is actually loaded: a button label is
+    // the one place in the app that should read as heavier than the copy around
+    // it, and the serif this replaced had no weight between regular and bold.
+    fontFamily: Fonts.semibold,
+    fontSize: 17,
   },
   pressed: {
     opacity: 0.75,

@@ -1,4 +1,4 @@
-import type { Cadence, Observation } from '../types.js';
+import type { Cadence, Observation } from "../types.js";
 
 /**
  * A source adapter turns one upstream feed into `Observation`s.
@@ -39,7 +39,7 @@ export interface SourceAdapter {
 }
 
 export const USER_AGENT =
-  'Humanitas/1.0 (+https://github.com/lucaswaunn/Humanitas) data-layer';
+  "Mellova/1.0 (+https://github.com/lucaswaunn/Mellova) data-layer";
 
 /** Shared fetch with a User-Agent, a timeout, and a bounded retry. */
 export async function fetchText(
@@ -55,7 +55,7 @@ export async function fetchText(
 
     try {
       const response = await fetch(url, {
-        headers: { 'User-Agent': USER_AGENT },
+        headers: { "User-Agent": USER_AGENT },
         signal: controller.signal,
       });
 
@@ -73,7 +73,11 @@ export async function fetchText(
     } catch (error) {
       lastError = error;
       // An explicit non-retryable failure from above should not be retried.
-      if (error instanceof Error && /-> 4\d\d:/.test(error.message) && !/429/.test(error.message)) {
+      if (
+        error instanceof Error &&
+        /-> 4\d\d:/.test(error.message) &&
+        !/429/.test(error.message)
+      ) {
         throw error;
       }
     } finally {

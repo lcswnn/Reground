@@ -31,7 +31,7 @@ export function TextField({ label, errorText, style, ...rest }: TextFieldProps) 
           {
             backgroundColor: theme.surface,
             color: theme.text,
-            borderColor: errorText ? theme.danger : focused ? theme.brand : theme.border,
+            borderColor: errorText ? theme.danger : focused ? theme.brandStrong : theme.border,
           },
           style,
         ]}

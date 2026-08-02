@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "dependencies": {
     "@bacons/apple-targets": "^5.0.0",
+    "@expo-google-fonts/nunito": "^0.4.2",
     "@expo/ui": "~57.0.8",
     "@supabase/supabase-js": "^2.110.9",
     "@tanstack/react-query": "^5.101.4",

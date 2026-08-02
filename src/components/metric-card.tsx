@@ -83,7 +83,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   trendText: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.semibold,
     fontSize: 16,
   },
   value: {

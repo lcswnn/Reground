@@ -70,7 +70,7 @@ const styles = StyleSheet.create({
     flexShrink: 1,
   },
   compactLabel: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.semibold,
     fontSize: 15,
     letterSpacing: 0.2,
   },

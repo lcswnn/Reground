@@ -198,7 +198,7 @@ export default function ArchiveScreen() {
               }
               ListFooterComponent={
                 isFetchingNextPage ? (
-                  <ActivityIndicator style={styles.footerSpinner} color={theme.brand} />
+                  <ActivityIndicator style={styles.footerSpinner} color={theme.brandStrong} />
                 ) : !hasNextPage && stories.length > 0 ? (
                   // The archive does run out eventually, and saying so costs
                   // nothing. Plain and unceremonious — the sign-off on the Feed

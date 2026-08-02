@@ -267,7 +267,7 @@ function DailyReminderSection() {
               onPress={() => (pickerOpen ? closePicker() : setPickerOpen(true))}
               style={[
                 styles.timeRow,
-                { borderColor: pickerOpen ? theme.brand : theme.border },
+                { borderColor: pickerOpen ? theme.brandStrong : theme.border },
               ]}>
               <ThemedText type="small" themeColor="textSecondary">
                 Time

@@ -9,7 +9,9 @@ export function LoadingState({ label = 'Loading…' }: { label?: string }) {
   const theme = useTheme();
   return (
     <View style={styles.center}>
-      <ActivityIndicator color={theme.brand} />
+      {/* `brandStrong`, not `brand`: a spinner is a foreground mark, and in
+          light mode `brand` is a tan fill only a shade off the sand page. */}
+      <ActivityIndicator color={theme.brandStrong} />
       <ThemedText type="small" themeColor="textMuted">
         {label}
       </ThemedText>

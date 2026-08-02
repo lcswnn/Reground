@@ -1,8 +1,8 @@
-import Anthropic from '@anthropic-ai/sdk';
+import Anthropic from "@anthropic-ai/sdk";
 
-import { METRICS } from '../../data-layer/src/config/metrics.js';
-import { CATEGORY_VALUES } from './categories.js';
-import type { CuratedStory, FeedItem } from './types.js';
+import { METRICS } from "../../data-layer/src/config/metrics.js";
+import { CATEGORY_VALUES } from "./categories.js";
+import type { CuratedStory, FeedItem } from "./types.js";
 
 /**
  * The editorial step, in two stages against two models.
@@ -28,8 +28,8 @@ import type { CuratedStory, FeedItem } from './types.js';
  * with eight legal values, with no normalisation layer in between.
  */
 
-const TRIAGE_MODEL = 'claude-haiku-4-5';
-const WRITER_MODEL = 'claude-opus-5';
+const TRIAGE_MODEL = "claude-haiku-4-5";
+const WRITER_MODEL = "claude-opus-5";
 
 const KNOWN_METRIC_IDS = new Set(METRICS.map((metric) => metric.id));
 
@@ -80,7 +80,7 @@ const WRITE_LIMIT = 18;
  */
 export const SCORE_THRESHOLD = 60;
 
-const TRIAGE_PROMPT = `You are the editor of Humanitas, an app that shows people evidence that the world is getting better — and only evidence that holds up.
+const TRIAGE_PROMPT = `You are the editor of Mellova, an app that shows people evidence that the world is getting better — and only evidence that holds up.
 
 You are given a morning's worth of headlines from a curated list of outlets. Most of them are not for us. Your job is to decide which are worth publishing, and score them.
 
@@ -106,7 +106,7 @@ Score 0-100 on how much the story would genuinely change a well-informed reader'
 
 Return a verdict for every candidate. Do not write summaries — a later step does that.`;
 
-const WRITER_PROMPT = `You are the editor of Humanitas, an app that shows people evidence that the world is getting better. The stories below passed a first, deliberately generous screen. Your job is to make the final call on each, write the survivors up, and catch duplicate coverage.
+const WRITER_PROMPT = `You are the editor of Mellova, an app that shows people evidence that the world is getting better. The stories below passed a first, deliberately generous screen. Your job is to make the final call on each, write the survivors up, and catch duplicate coverage.
 
 Set publish to false when a story does not hold up on a second read:
 - the outcome is real but local or small — one hospital, one town, one volunteer group, one season
@@ -135,9 +135,12 @@ Write a summary for every story you publish, including ones you mark as duplicat
  */
 function metricGuidance(): string {
   const listing = METRICS.map((metric) => {
-    const direction = metric.direction === 'lower_is_better' ? 'lower is better' : 'higher is better';
+    const direction =
+      metric.direction === "lower_is_better"
+        ? "lower is better"
+        : "higher is better";
     return `- ${metric.id}: ${metric.label} (${direction}, measured in ${metric.unit})`;
-  }).join('\n');
+  }).join("\n");
 
   return `The app also tracks a set of long-run indicators of human progress. Set metric_id to the indicator a story belongs with, so a reader following that indicator can see the news behind the line on its chart.
 
@@ -151,60 +154,76 @@ Never invent an id. Use one from the list exactly as written, or "".`;
 }
 
 const TRIAGE_SCHEMA = {
-  type: 'object',
+  type: "object",
   properties: {
     verdicts: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
+        type: "object",
         properties: {
-          id: { type: 'integer', description: 'The bracketed index of the candidate.' },
-          keep: { type: 'boolean' },
-          score: { type: 'integer', description: '0-100.' },
+          id: {
+            type: "integer",
+            description: "The bracketed index of the candidate.",
+          },
+          keep: { type: "boolean" },
+          score: { type: "integer", description: "0-100." },
         },
-        required: ['id', 'keep', 'score'],
+        required: ["id", "keep", "score"],
         additionalProperties: false,
       },
     },
   },
-  required: ['verdicts'],
+  required: ["verdicts"],
   additionalProperties: false,
 } as const;
 
 const WRITER_SCHEMA = {
-  type: 'object',
+  type: "object",
   properties: {
     stories: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
+        type: "object",
         properties: {
-          id: { type: 'integer', description: 'The bracketed index of the story.' },
-          publish: { type: 'boolean' },
-          summary: {
-            type: 'string',
-            description: 'One or two sentences in your own words. Empty when publish is false.',
+          id: {
+            type: "integer",
+            description: "The bracketed index of the story.",
           },
-          category: { type: 'string', enum: CATEGORY_VALUES },
+          publish: { type: "boolean" },
+          summary: {
+            type: "string",
+            description:
+              "One or two sentences in your own words. Empty when publish is false.",
+          },
+          category: { type: "string", enum: CATEGORY_VALUES },
           metric_id: {
-            type: 'string',
+            type: "string",
             // Generated from the same array the prompt is rendered from, so the
             // model cannot name an indicator that no longer exists — and a new
             // one becomes selectable the moment it is added to the config.
-            enum: [...METRICS.map((metric) => metric.id), ''],
-            description: 'Tracked indicator this story counts toward, or "" for none.',
+            enum: [...METRICS.map((metric) => metric.id), ""],
+            description:
+              'Tracked indicator this story counts toward, or "" for none.',
           },
           duplicate_of: {
-            type: 'integer',
-            description: 'Id of the earlier entry covering the same event, or -1 if none.',
+            type: "integer",
+            description:
+              "Id of the earlier entry covering the same event, or -1 if none.",
           },
         },
-        required: ['id', 'publish', 'summary', 'category', 'metric_id', 'duplicate_of'],
+        required: [
+          "id",
+          "publish",
+          "summary",
+          "category",
+          "metric_id",
+          "duplicate_of",
+        ],
         additionalProperties: false,
       },
     },
   },
-  required: ['stories'],
+  required: ["stories"],
   additionalProperties: false,
 } as const;
 
@@ -224,7 +243,10 @@ const PRICES: Record<string, { input: number; output: number }> = {
   [WRITER_MODEL]: { input: 5, output: 25 },
 };
 
-const usage = new Map<string, { input: number; output: number; calls: number }>();
+const usage = new Map<
+  string,
+  { input: number; output: number; calls: number }
+>();
 
 function record(model: string, response: Anthropic.Message): void {
   const entry = usage.get(model) ?? { input: 0, output: 0, calls: 0 };
@@ -239,16 +261,17 @@ export function reportUsage(): void {
 
   for (const [model, entry] of usage) {
     const price = PRICES[model];
-    const dollars = (entry.input / 1e6) * price.input + (entry.output / 1e6) * price.output;
+    const dollars =
+      (entry.input / 1e6) * price.input + (entry.output / 1e6) * price.output;
     total += dollars;
     console.log(
-      `${model.padEnd(16)} ${entry.calls} call${entry.calls === 1 ? ' ' : 's'}  ` +
+      `${model.padEnd(16)} ${entry.calls} call${entry.calls === 1 ? " " : "s"}  ` +
         `${entry.input.toLocaleString().padStart(7)} in  ` +
         `${entry.output.toLocaleString().padStart(6)} out  ~$${dollars.toFixed(3)}`,
     );
   }
 
-  console.log(`${'total'.padEnd(16)} ~$${total.toFixed(3)}`);
+  console.log(`${"total".padEnd(16)} ~$${total.toFixed(3)}`);
 }
 
 let cached: Anthropic | null = null;
@@ -256,28 +279,37 @@ let cached: Anthropic | null = null;
 function client(): Anthropic {
   if (cached) return cached;
   if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY is not set — the curator cannot run without it');
+    throw new Error(
+      "ANTHROPIC_API_KEY is not set — the curator cannot run without it",
+    );
   }
   cached = new Anthropic();
   return cached;
 }
 
 /** Shared response handling: both stages fail the same three ways. */
-function textOf(model: string, response: Anthropic.Message, context: string): string {
+function textOf(
+  model: string,
+  response: Anthropic.Message,
+  context: string,
+): string {
   record(model, response);
 
-  if (response.stop_reason === 'refusal') {
-    throw new Error(`${context} refused (${response.stop_details?.category ?? 'unknown'})`);
+  if (response.stop_reason === "refusal") {
+    throw new Error(
+      `${context} refused (${response.stop_details?.category ?? "unknown"})`,
+    );
   }
-  if (response.stop_reason === 'max_tokens') {
+  if (response.stop_reason === "max_tokens") {
     // Truncated JSON parses as a short list and silently drops the tail, which
     // is indistinguishable from the editor rejecting those stories. Fail loudly
     // and bring the batch size down instead.
     throw new Error(`${context} hit max_tokens`);
   }
 
-  const block = response.content.find((content) => content.type === 'text');
-  if (!block || block.type !== 'text') throw new Error(`${context} returned no text block`);
+  const block = response.content.find((content) => content.type === "text");
+  if (!block || block.type !== "text")
+    throw new Error(`${context} returned no text block`);
 
   return block.text;
 }
@@ -290,27 +322,29 @@ function describe(item: FeedItem, index: number): string {
     item.excerpt ? `    excerpt: ${item.excerpt}` : null,
   ]
     .filter(Boolean)
-    .join('\n');
+    .join("\n");
 }
 
 /** Stage 1, one chunk. Returns scores against the chunk's own indices. */
 async function triageChunk(items: FeedItem[]): Promise<Map<number, number>> {
-  const listing = items.map(describe).join('\n\n');
+  const listing = items.map(describe).join("\n\n");
 
   const response = await client().messages.create({
     model: TRIAGE_MODEL,
     max_tokens: MAX_TOKENS,
     system: TRIAGE_PROMPT,
-    output_config: { format: { type: 'json_schema', schema: TRIAGE_SCHEMA } },
+    output_config: { format: { type: "json_schema", schema: TRIAGE_SCHEMA } },
     messages: [
       {
-        role: 'user',
+        role: "user",
         content: `Today's candidates:\n\n${listing}\n\nReturn a verdict for every candidate, keyed by the bracketed index.`,
       },
     ],
   });
 
-  const parsed = JSON.parse(textOf(TRIAGE_MODEL, response, 'triage')) as { verdicts: Verdict[] };
+  const parsed = JSON.parse(textOf(TRIAGE_MODEL, response, "triage")) as {
+    verdicts: Verdict[];
+  };
 
   const scores = new Map<number, number>();
   for (const verdict of parsed.verdicts) {
@@ -327,21 +361,27 @@ async function triageChunk(items: FeedItem[]): Promise<Map<number, number>> {
 }
 
 /** Stage 2. Writes the survivors up and collapses duplicate coverage. */
-async function write(survivors: { item: FeedItem; score: number }[]): Promise<CuratedStory[]> {
-  const listing = survivors.map(({ item }, index) => describe(item, index)).join('\n\n');
+async function write(
+  survivors: { item: FeedItem; score: number }[],
+): Promise<CuratedStory[]> {
+  const listing = survivors
+    .map(({ item }, index) => describe(item, index))
+    .join("\n\n");
 
   const response = await client().messages.create({
     model: WRITER_MODEL,
     max_tokens: MAX_TOKENS,
     system: `${WRITER_PROMPT}\n\n${metricGuidance()}`,
     output_config: {
-      effort: 'medium',
-      format: { type: 'json_schema', schema: WRITER_SCHEMA },
+      effort: "medium",
+      format: { type: "json_schema", schema: WRITER_SCHEMA },
     },
-    messages: [{ role: 'user', content: `Stories to write up:\n\n${listing}` }],
+    messages: [{ role: "user", content: `Stories to write up:\n\n${listing}` }],
   });
 
-  const parsed = JSON.parse(textOf(WRITER_MODEL, response, 'writer')) as { stories: Written[] };
+  const parsed = JSON.parse(textOf(WRITER_MODEL, response, "writer")) as {
+    stories: Written[];
+  };
 
   /**
    * Follows `duplicate_of` to the entry that represents the event.
@@ -382,7 +422,7 @@ async function write(survivors: { item: FeedItem; score: number }[]): Promise<Cu
       url: survivor.item.url,
       title: survivor.item.title,
       summary: story.summary.trim(),
-      category: story.category as CuratedStory['category'],
+      category: story.category as CuratedStory["category"],
       score: survivor.score,
       // The enum should make an unknown id impossible, but this is the value
       // that reaches a column the app renders a label from — checking it
@@ -401,32 +441,37 @@ async function write(survivors: { item: FeedItem; score: number }[]): Promise<Cu
     if (curated.score > existing.score) best.set(key, curated);
   }
 
-  if (collapsed > 0) console.log(`${collapsed} collapsed as duplicate coverage`);
+  if (collapsed > 0)
+    console.log(`${collapsed} collapsed as duplicate coverage`);
 
   return [...best.values()];
 }
 
 const TAG_SCHEMA = {
-  type: 'object',
+  type: "object",
   properties: {
     assignments: {
-      type: 'array',
+      type: "array",
       items: {
-        type: 'object',
+        type: "object",
         properties: {
-          id: { type: 'integer', description: 'The bracketed index of the story.' },
+          id: {
+            type: "integer",
+            description: "The bracketed index of the story.",
+          },
           metric_id: {
-            type: 'string',
-            enum: [...METRICS.map((metric) => metric.id), ''],
-            description: 'Tracked indicator this story counts toward, or "" for none.',
+            type: "string",
+            enum: [...METRICS.map((metric) => metric.id), ""],
+            description:
+              'Tracked indicator this story counts toward, or "" for none.',
           },
         },
-        required: ['id', 'metric_id'],
+        required: ["id", "metric_id"],
         additionalProperties: false,
       },
     },
   },
-  required: ['assignments'],
+  required: ["assignments"],
   additionalProperties: false,
 } as const;
 
@@ -448,25 +493,25 @@ export async function tagStories(
 ): Promise<(string | null)[]> {
   const listing = stories
     .map((story, index) => `[${index}] ${story.title}\n    ${story.summary}`)
-    .join('\n\n');
+    .join("\n\n");
 
   const response = await client().messages.create({
     model: WRITER_MODEL,
     max_tokens: MAX_TOKENS,
     system: metricGuidance(),
     output_config: {
-      effort: 'medium',
-      format: { type: 'json_schema', schema: TAG_SCHEMA },
+      effort: "medium",
+      format: { type: "json_schema", schema: TAG_SCHEMA },
     },
     messages: [
       {
-        role: 'user',
+        role: "user",
         content: `Assign an indicator to each story, or "" where none fits.\n\n${listing}`,
       },
     ],
   });
 
-  const parsed = JSON.parse(textOf(WRITER_MODEL, response, 'retag')) as {
+  const parsed = JSON.parse(textOf(WRITER_MODEL, response, "retag")) as {
     assignments: { id: number; metric_id: string }[];
   };
 
@@ -496,10 +541,13 @@ export async function curate(items: FeedItem[]): Promise<CuratedStory[]> {
   for (let index = 0; index < items.length; index += CHUNK) {
     const chunk = items.slice(index, index + CHUNK);
     const scores = await triageChunk(chunk);
-    for (const [id, score] of scores) survivors.push({ item: chunk[id], score });
+    for (const [id, score] of scores)
+      survivors.push({ item: chunk[id], score });
   }
 
-  console.log(`${survivors.length} survived triage (score >= ${SCORE_THRESHOLD})`);
+  console.log(
+    `${survivors.length} survived triage (score >= ${SCORE_THRESHOLD})`,
+  );
   if (survivors.length === 0) return [];
 
   // Sorted before the cut so the ceiling drops the weakest survivors rather

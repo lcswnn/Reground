@@ -1,9 +1,9 @@
-import { SymbolView } from 'expo-symbols';
-import { StyleSheet, View } from 'react-native';
+import { SymbolView } from "expo-symbols";
+import { StyleSheet, View } from "react-native";
 
-import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { ThemedText } from "@/components/themed-text";
+import { Radius, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 /**
  * Sized to sit with the count rather than to match the tab bar's 24pt glyphs —
@@ -47,8 +47,11 @@ export function DaysPill({ total }: { total: number }) {
       style={[styles.pill, { backgroundColor: theme.brandSoft }]}
       accessible
       accessibilityLabel={
-        total === 1 ? 'Your first day with Humanitas' : `${total} days with Humanitas`
-      }>
+        total === 1
+          ? "Your first day with Mellova"
+          : `${total} days with Mellova`
+      }
+    >
       {/* A sunrise rather than a flame. The flame was the right glyph for a
           streak — something burning that can go out — and that is the whole
           idea being removed. A sunrise is one per morning, it accumulates, and
@@ -61,19 +64,37 @@ export function DaysPill({ total }: { total: number }) {
         // Android and web have no SF Symbols. The count beside it already says
         // what the pill means, so the fallback only has to hold the space
         // without looking like a broken image.
-        fallback={<View style={[styles.glyphFallback, { backgroundColor: theme.brandStrong }]} />}
+        fallback={
+          <View
+            style={[
+              styles.glyphFallback,
+              { backgroundColor: theme.brandStrong },
+            ]}
+          />
+        }
       />
 
       {total === 1 ? (
-        <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          style={styles.label}
+        >
           First day
         </ThemedText>
       ) : (
         <>
-          <ThemedText type="small" style={[styles.count, { color: theme.brandStrong }]}>
+          <ThemedText
+            type="small"
+            style={[styles.count, { color: theme.brandStrong }]}
+          >
             {total}
           </ThemedText>
-          <ThemedText type="small" themeColor="textSecondary" style={styles.label}>
+          <ThemedText
+            type="small"
+            themeColor="textSecondary"
+            style={styles.label}
+          >
             days
           </ThemedText>
         </>
@@ -87,8 +108,8 @@ const styles = StyleSheet.create({
   // was the design telling somebody they had lost something. There is no lapsed
   // state to draw any more.
   pill: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.one,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.half,

@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   label: {
-    fontFamily: Fonts.body,
+    fontFamily: Fonts.semibold,
     // Sits next to the metric tag on a story card, so the two move together —
     // an uppercase 13 beside a sentence-case 15 reads as a mistake.
     fontSize: 15,
