@@ -42,13 +42,9 @@ const PRESS_SCALE = 0.86;
 const PRESS_FADE = 0.3;
 
 const ICONS: Record<string, { default: SFSymbol; selected: SFSymbol }> = {
-  index: { default: "sun.max", selected: "sun.max.fill" },
-  feed: { default: "newspaper", selected: "newspaper.fill" },
-  progress: {
-    default: "chart.line.uptrend.xyaxis",
-    selected: "chart.line.uptrend.xyaxis",
-  },
-  profile: { default: "person", selected: "person.fill" },
+  index: { default: "lungs", selected: "lungs.fill" },
+  feed: { default: "book", selected: "book.fill" },
+  play: { default: "gamecontroller", selected: "gamecontroller.fill" },
 };
 
 /**
@@ -57,27 +53,28 @@ const ICONS: Record<string, { default: SFSymbol; selected: SFSymbol }> = {
  * is legible from the color alone rather than from a difference in opacity.
  */
 const TAB_COLORS: Record<string, ThemeColor> = {
-  index: "brand",
-  feed: "positive",
-  // The same blue as the progress bars it leads to.
-  progress: "info",
-  // The same pink as the Humanity progress bar on the home screen.
-  profile: "accentStrong",
+  // The coolest hue in either scheme, on the tab you land on.
+  index: "info",
+  feed: "brand",
+  play: "accentStrong",
 };
 
 /**
- * Which routes get a button. Everything else in the navigator is reachable but
- * unlisted — `archive` is the only one today.
+ * Which routes get a button, and in which order — the array order is what the
+ * bar draws, not the navigator's.
+ *
+ * Everything else in the navigator is reachable but unlisted: `archive`, plus
+ * `today`, `progress` and `profile` since the pivot took them off the bar.
  *
  * An explicit list rather than a check on the descriptor, because expo-router
  * implements `href: null` by rewriting it into a `tabBarButton` that returns
  * null plus a `display: 'none'` item style. Both are read by the *default* tab
  * bar and by nothing else, so a hand-rolled bar like this one receives an
- * ordinary-looking route and would happily draw a fifth button for it. Naming
- * the four here means a route added to the layout cannot appear in the bar by
+ * ordinary-looking route and would happily draw a button for it. Naming the
+ * three here means a route added to the layout cannot appear in the bar by
  * accident, in either direction.
  */
-const BAR_ROUTES = ["index", "feed", "progress", "profile"];
+const BAR_ROUTES = ["index", "feed", "play"];
 
 export function TabBar({
   state,
@@ -113,6 +110,10 @@ export function TabBar({
     >
       {state.routes
         .filter((route) => BAR_ROUTES.includes(route.name))
+        // Ordered by `BAR_ROUTES`, not by the navigator. They agree today, but
+        // the bar's left-to-right order is a design decision and shouldn't
+        // silently change because someone reordered a `Tabs.Screen`.
+        .sort((a, b) => BAR_ROUTES.indexOf(a.name) - BAR_ROUTES.indexOf(b.name))
         .map((route) => {
           const { options } = descriptors[route.key];
           const focused = route.key === activeKey;

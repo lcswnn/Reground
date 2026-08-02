@@ -113,8 +113,11 @@ export default function WeightingScreen() {
   const returnToToday = useCallback(() => {
     // `replace` covers the deep-link case, where this screen is the root and
     // there is nothing under it to dismiss to.
-    if (router.canDismiss()) router.dismissTo('/');
-    else router.replace('/');
+    // `/today`, not `/`: Today moved off the index route when the bar became
+    // Breathe/Read/Play, and `/` is now the (empty) Breathe screen — which has
+    // no card on it, so saving would land you somewhere the change isn't shown.
+    if (router.canDismiss()) router.dismissTo('/today');
+    else router.replace('/today');
   }, []);
 
   const saveAndReturn = useCallback(() => {

@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect, useState } from 'react';
 
+import { EntryFlow } from '@/components/entry-flow';
 import { AppReadyContext } from '@/lib/app-ready';
 import { prefetchAppData } from '@/lib/bootstrap';
 import { resyncReminder } from '@/lib/daily-reminder';
@@ -156,6 +157,9 @@ function RootNavigator() {
 
   const [isRevealed, setIsRevealed] = useState(false);
 
+  /** Whether the breath-and-check-in has been done for this launch. */
+  const [hasEntered, setHasEntered] = useState(false);
+
   useEffect(() => {
     if (!isReady) return;
 
@@ -254,6 +258,14 @@ function RootNavigator() {
                 contentStyle: { backgroundColor: 'transparent' },
               }}
             />
+            {/* The game gets a stack screen so the tab bar is gone — a paddle
+                that runs along the top of three tab glyphs turns a missed ball
+                into a navigation.
+
+                No header either: a title bar over a game is chrome around a toy,
+                and the screen draws its own Back so the way out sits in the same
+                plane as the board. The swipe-back gesture still works. */}
+            <Stack.Screen name="game" options={{ headerShown: false }} />
             <Stack.Screen
               name="settings"
               options={{
@@ -295,6 +307,22 @@ function RootNavigator() {
             <Stack.Screen name="(auth)" options={{ headerShown: false }} />
           </Stack.Protected>
         </Stack>
+
+        {/* The arrival ritual — a check-in, then a breath for whoever needs one
+            — over the top of the mounted navigator. See `@/components/entry-flow`
+            for why it is an overlay rather than a route.
+
+            After the `Stack` rather than before it, because that is what puts
+            it on top: these are siblings, and paint order decides.
+
+            Gated on `session` so it never covers the sign-in screens, and on
+            `isRevealed` so the question appears as the splash lifts rather than
+            being answered underneath it. The `useState` is what makes this once
+            per cold launch — it resets on a cold start and survives a
+            backgrounding, which is the line we want. */}
+        {!!session && isRevealed && !hasEntered ? (
+          <EntryFlow onDone={() => setHasEntered(true)} />
+        ) : null}
       </AppReadyContext>
     </ThemeProvider>
   );
