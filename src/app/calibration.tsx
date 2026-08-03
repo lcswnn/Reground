@@ -1,5 +1,5 @@
 /**
- * Screen 5 — calibration. GROUP A only.
+ * Screen 6 — calibration. GROUP A only.
  *
  * The honesty rule lives with the copy, in `@/content/calibration`, and is
  * worth restating here because this screen is where it would be easiest to

@@ -1,6 +1,9 @@
 /**
  * Screen 3 — the breath. About a minute of cyclic sighing.
  *
+ * Arrived at from `breathe-intro.tsx`, so the animation only ever starts on a
+ * tap the user has just made. Nothing here waits for a second confirmation.
+ *
  * The skip is deliberately the quietest thing on the screen: it has to exist,
  * because being held on a screen you want to leave is its own kind of stress,
  * but it is not what anyone should be looking at.
@@ -21,7 +24,7 @@ export default function BreatheScreen() {
   const router = useRouter();
   const active = useSessionGuard();
 
-  const advance = useCallback(() => router.replace('/puzzle'), [router]);
+  const advance = useCallback(() => router.replace('/games'), [router]);
 
   if (!active) return null;
 

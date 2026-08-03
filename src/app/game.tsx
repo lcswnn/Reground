@@ -1,5 +1,11 @@
 /**
- * Screen 4 — the visuospatial task.
+ * Screen 5 — the visuospatial task itself, whichever game was picked.
+ *
+ * The screen is the frame, not the game: it owns the framing copy, the dose
+ * timer and the way out, and renders whatever `/games` chose inside that. Every
+ * game on the list is interchangeable from here, which is the point — the
+ * mechanism is "occupy visual working memory", and nothing about the timing or
+ * the copy depends on which one does it.
  *
  * This screen is framed differently for the two groups. For GROUP B — someone
  * who saw something — it is the point of the whole session, it runs longer,
@@ -20,16 +26,17 @@ import { Button } from '@/components/ui/button';
 import { PUZZLE } from '@/config/session';
 import { PUZZLE_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
-import { PuzzleBoard } from '@/session/puzzle/puzzle-board';
+import { findGame } from '@/session/games/catalog';
+import { GAME_VIEWS } from '@/session/games/views';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { puzzleDurationMs, showsCalibration } from '@/session/routing';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
-export default function PuzzleScreen() {
+export default function GameScreen() {
   const router = useRouter();
   const active = useSessionGuard();
-  const { categoryGroup } = useSessionFlow();
+  const { categoryGroup, game } = useSessionFlow();
 
   const [timeUp, setTimeUp] = useState(false);
   /** Bumped by "keep going", which is what restarts the timer below. */
@@ -38,12 +45,24 @@ export default function PuzzleScreen() {
   const group = categoryGroup ?? 'world';
   const durationMs = extensions === 0 ? puzzleDurationMs(group) : PUZZLE.keepGoingMs;
 
+  const chosen = game ? findGame(game) : undefined;
+  const GameView = game ? GAME_VIEWS[game] : undefined;
+
   useEffect(() => {
     const timeout = setTimeout(() => setTimeUp(true), durationMs);
     return () => clearTimeout(timeout);
   }, [durationMs, extensions]);
 
-  if (!active) return null;
+  /**
+   * Landing here with nothing picked means a reload or a deep link — the only
+   * way in is a tap on the picker. Back to the picker rather than to the start
+   * of the session: the answers already given are still good.
+   */
+  useEffect(() => {
+    if (active && !GameView) router.replace('/games');
+  }, [active, GameView, router]);
+
+  if (!active || !GameView) return null;
 
   const finish = () => {
     router.replace(showsCalibration(group) ? '/calibration' : '/mood-after');
@@ -53,7 +72,7 @@ export default function PuzzleScreen() {
     <SessionScreen>
       <View style={styles.root}>
         <View style={styles.heading}>
-          <ThemedText type="subtitle">{PUZZLE_COPY.title}</ThemedText>
+          <ThemedText type="subtitle">{chosen?.title ?? PUZZLE_COPY.title}</ThemedText>
           <ThemedText themeColor="textSecondary">
             {group === 'witnessed'
               ? PUZZLE_COPY.witnessedFraming
@@ -61,7 +80,7 @@ export default function PuzzleScreen() {
           </ThemedText>
         </View>
 
-        <PuzzleBoard />
+        <GameView />
 
         <View style={styles.footer}>
           {timeUp ? (

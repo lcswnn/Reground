@@ -1,5 +1,5 @@
 /**
- * Screen 7 — the end.
+ * Screen 8 — the end.
  *
  * What is deliberately absent is most of the design: no "come back later", no
  * timer, no streak, no rating of the app, no share sheet, no next step. The

@@ -1,5 +1,5 @@
 /**
- * Screen 6 — the second rating, and the last branch in the session.
+ * Screen 7 — the second rating, and the last branch in the session.
  *
  * Three things are decided here:
  *  - Dropped by `MEANINGFUL_MOOD_DROP` or more: say so once, plainly, and end.

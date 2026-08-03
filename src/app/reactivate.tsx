@@ -38,7 +38,7 @@ export default function ReactivationScreen() {
       // Recorded as skipped either way: what matters downstream is whether the
       // image was reactivated, not whose decision it was.
       setReactivationSkipped(true);
-      router.replace('/breathe');
+      router.replace('/breathe-intro');
     }
   }, [autoSkip, moodBefore, router, setReactivationSkipped]);
 
@@ -46,7 +46,7 @@ export default function ReactivationScreen() {
 
   const advance = (skipped: boolean) => {
     setReactivationSkipped(skipped);
-    router.replace('/breathe');
+    router.replace('/breathe-intro');
   };
 
   return (

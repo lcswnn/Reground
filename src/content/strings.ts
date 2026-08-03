@@ -35,6 +35,18 @@ export const REACTIVATION = {
   ready: 'Ready',
 } as const;
 
+export const BREATHE_INTRO = {
+  /**
+   * Names the exercise. "Cyclic breathing" is a real technique with real
+   * evidence behind it, and saying so is worth more than a softer line would
+   * be — it tells the user this is a method, not a mood.
+   */
+  body: "Okay, let's begin with some cyclic breathing.",
+  /** Under the button, quiet. The screen waits: nothing starts on arrival. */
+  hint: 'Tap start to begin.',
+  start: 'Start',
+} as const;
+
 export const BREATHING_COPY = {
   inhale: 'In',
   secondInhale: 'In again',
@@ -43,7 +55,22 @@ export const BREATHING_COPY = {
   skip: 'skip',
 } as const;
 
+export const GAME_PICKER = {
+  /**
+   * Names the mechanism rather than hiding it. "Visuospatial" is a real word
+   * doing real work here — it is *why* this step is a game and not a coping
+   * tip, and someone who wants to look it up should be able to.
+   */
+  title: "Now, let's pick a visuospatial game to take your mind off things:",
+  /** Above the paid list. Not a pitch — a label. */
+  lockedHeading: 'Reground Plus',
+  lockedNote: 'Not available yet.',
+  /** Read out with a locked card; never shown as a badge with its own line. */
+  lockedLabel: 'Locked',
+} as const;
+
 export const PUZZLE_COPY = {
+  /** Fallback only — the play screen titles itself from the chosen game. */
   title: 'Fit the shapes.',
   /** GROUP A — a normal step in the sequence. */
   worldFraming: 'A few minutes of this. No score, no way to lose.',

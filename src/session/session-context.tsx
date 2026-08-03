@@ -14,6 +14,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import type { ReactNode } from 'react';
 
 import type { Category, CategoryGroup } from '@/content/categories';
+import type { GameId } from '@/session/games/catalog';
 
 export interface SessionState {
   category: Category | null;
@@ -23,6 +24,12 @@ export interface SessionState {
   moodAfter: number | null;
   /** True if the user skipped the reactivation cue, or it was skipped for them. */
   reactivationSkipped: boolean;
+  /**
+   * Which game they picked for the visuospatial step. Null until the picker,
+   * and cleared with everything else at the start of the next session — the
+   * choice is not a preference to be remembered, it is one tap in one session.
+   */
+  game: GameId | null;
 }
 
 const EMPTY_SESSION: SessionState = {
@@ -31,6 +38,7 @@ const EMPTY_SESSION: SessionState = {
   moodBefore: null,
   moodAfter: null,
   reactivationSkipped: false,
+  game: null,
 };
 
 interface SessionApi extends SessionState {
@@ -41,6 +49,7 @@ interface SessionApi extends SessionState {
   begin: (category: Category) => void;
   setMoodBefore: (mood: number) => void;
   setReactivationSkipped: (skipped: boolean) => void;
+  chooseGame: (game: GameId) => void;
   setMoodAfter: (mood: number) => void;
   reset: () => void;
 }
@@ -66,6 +75,10 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
     setState((current) => ({ ...current, reactivationSkipped: skipped }));
   }, []);
 
+  const chooseGame = useCallback((game: GameId) => {
+    setState((current) => ({ ...current, game }));
+  }, []);
+
   const setMoodAfter = useCallback((mood: number) => {
     setState((current) => ({ ...current, moodAfter: mood }));
   }, []);
@@ -78,10 +91,11 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
       begin,
       setMoodBefore,
       setReactivationSkipped,
+      chooseGame,
       setMoodAfter,
       reset,
     }),
-    [state, begin, setMoodBefore, setReactivationSkipped, setMoodAfter, reset],
+    [state, begin, setMoodBefore, setReactivationSkipped, chooseGame, setMoodAfter, reset],
   );
 
   return <SessionContext value={value}>{children}</SessionContext>;
