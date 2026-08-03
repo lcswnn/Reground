@@ -30,8 +30,9 @@ const styles = StyleSheet.create({
   label: {
     fontFamily: Fonts.semibold,
     // Sits next to the metric tag on a story card, so the two move together —
-    // an uppercase 13 beside a sentence-case 15 reads as a mistake.
-    fontSize: 15,
+    // an uppercase step beside a sentence-case one reads as a mistake. Caps take
+    // a smaller bump than the rest of the scale — see `themed-text`.
+    fontSize: 16,
     textTransform: 'uppercase',
     letterSpacing: 0.7,
   },

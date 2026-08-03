@@ -71,7 +71,7 @@ const styles = StyleSheet.create({
   },
   compactLabel: {
     fontFamily: Fonts.semibold,
-    fontSize: 15,
+    fontSize: 18,
     letterSpacing: 0.2,
   },
 });

@@ -555,7 +555,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   category: {
-    fontSize: 13,
+    fontSize: 15,
     letterSpacing: 0.9,
     flexShrink: 1,
   },
@@ -571,7 +571,7 @@ const styles = StyleSheet.create({
     gap: Spacing.half,
   },
   figureLabel: {
-    fontSize: 15,
+    fontSize: 18,
   },
   arrow: {
     // Sits on the numbers' baseline rather than the labels'.
@@ -602,7 +602,7 @@ const styles = StyleSheet.create({
   // Shared by the label and the percentage that replaces it, so the pill keeps
   // exactly the height it had before anybody voted.
   reactionLabel: {
-    fontSize: 16,
+    fontSize: 19,
   },
   company: {
     textAlign: 'center',

@@ -116,7 +116,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   count: {
-    fontSize: 19,
+    fontSize: 23,
   },
   glyphFallback: {
     width: GLYPH_SIZE - 3,
@@ -125,6 +125,6 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   label: {
-    fontSize: 15,
+    fontSize: 18,
   },
 });

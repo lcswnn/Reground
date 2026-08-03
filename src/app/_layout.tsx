@@ -1,8 +1,9 @@
 import {
-  Nunito_400Regular,
-  Nunito_600SemiBold,
-  Nunito_700Bold,
-} from '@expo-google-fonts/nunito';
+  Caveat_400Regular,
+  Caveat_500Medium,
+  Caveat_600SemiBold,
+  Caveat_700Bold,
+} from '@expo-google-fonts/caveat';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { useFonts } from 'expo-font';
 import * as Notifications from 'expo-notifications';
@@ -115,9 +116,10 @@ function RootNavigator() {
   // names come from the package rather than being retyped — they are also what
   // `constants/theme` references, and a typo in either place is silent.
   const [fontsLoaded, fontError] = useFonts({
-    Nunito_400Regular,
-    Nunito_600SemiBold,
-    Nunito_700Bold,
+    Caveat_400Regular,
+    Caveat_500Medium,
+    Caveat_600SemiBold,
+    Caveat_700Bold,
   });
 
   // A font that fails to decode shouldn't hold the app hostage — fall through
@@ -217,9 +219,9 @@ function RootNavigator() {
             Set once on the navigator instead of per screen, so a stack screen
             added later inherits it rather than reintroducing the mismatch.
 
-            20pt matches `sectionTitle`: Nunito sits true to its point size, so
-            unlike the serif this replaced it needs no compensating bump to
-            outrank the headings on the page below it.
+            24pt matches `sectionTitle`, which is where the scale had to move
+            for Caveat: the face sits small for its point size, so a 20 that
+            outranked the page below it in Nunito no longer does.
 
             `fontWeight: 'normal'` is load-bearing, not decoration. React
             Navigation's default header title is semibold, and RN cannot
@@ -232,7 +234,7 @@ function RootNavigator() {
             headerShadowVisible: false,
             headerTitleStyle: {
               fontFamily: Fonts.display,
-              fontSize: 20,
+              fontSize: 24,
               fontWeight: 'normal',
             },
           }}>

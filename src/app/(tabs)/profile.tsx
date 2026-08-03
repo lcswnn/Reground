@@ -163,7 +163,7 @@ const styles = StyleSheet.create({
   },
   avatarText: {
     fontFamily: Fonts.display,
-    fontSize: 28,
+    fontSize: 34,
   },
   headerText: {
     flex: 1,

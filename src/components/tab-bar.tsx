@@ -252,7 +252,7 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   label: {
-    fontSize: 13,
+    fontSize: 15,
     lineHeight: 16,
   },
 });

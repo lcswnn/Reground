@@ -154,10 +154,10 @@ const styles = StyleSheet.create({
   },
   deltaText: {
     fontFamily: Fonts.semibold,
-    fontSize: 16,
+    fontSize: 19,
   },
   value: {
-    fontSize: 28,
+    fontSize: 34,
     lineHeight: 32,
   },
   link: {

@@ -84,10 +84,10 @@ const styles = StyleSheet.create({
   },
   trendText: {
     fontFamily: Fonts.semibold,
-    fontSize: 16,
+    fontSize: 19,
   },
   value: {
-    fontSize: 28,
+    fontSize: 34,
     lineHeight: 32,
   },
 });

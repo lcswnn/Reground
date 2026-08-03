@@ -22,16 +22,18 @@ import { formatDay } from "@/lib/format";
 const palette = Colors.light;
 
 /**
- * The card's ground: terracotta into dusty pink, corner to corner.
+ * The card's ground: full ink into a lighter grey of the same ink, corner to
+ * corner.
  *
- * The two are the palette's documented companions, and the ramp between them is
- * the sunrise the whole scheme is named for — which is the right ground for a
- * card whose entire job is to make "things are getting better" feel true at a
- * glance. It also does what a flat orange could not: the gradient makes the
- * image identifiable as this app from across a feed *and* stays interesting at
- * the size a story renders.
+ * The palette is two colours, so a share card cannot be identifiable by hue —
+ * it has to be identifiable by *shape*: a paper sheet floating on a dark ramp,
+ * with the wordmark below it. The gradient is what keeps that ground from
+ * reading as a flat black rectangle at feed size.
+ *
+ * `accentStrong` rather than `accent` for the far end: the wordmark sits down
+ * there in paper, and the lighter grey would drop it under 4.5:1.
  */
-const GROUND = [palette.brand, palette.accent] as const;
+const GROUND = [palette.brand, palette.accentStrong] as const;
 
 /**
  * The day's card, composed to be screenshotted.
@@ -135,7 +137,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
         <View style={styles.top}>
           <ThemedText
             type="eyebrow"
-            style={[styles.category, { color: accent, fontSize: 13 * scale }]}
+            style={[styles.category, { color: accent, fontSize: 14 * scale }]}
             numberOfLines={1}
           >
             {categoryLabel(card.metric.category)}
@@ -145,12 +147,12 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
             style={[
               styles.headline,
               {
-                fontSize: 27 * scale,
-                lineHeight: 34 * scale,
+                fontSize: 32 * scale,
+                lineHeight: 40 * scale,
                 color: palette.text,
               },
             ]}
-            // Six lines of a 27pt serif is the whole top half. Anything longer
+            // Six lines of a 32pt Caveat headline is the whole top half. Anything longer
             // is a headline that failed, and shrinking is better than clipping.
             numberOfLines={6}
             adjustsFontSizeToFit
@@ -173,7 +175,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
                 <ThemedText
                   style={[
                     styles.arrow,
-                    { fontSize: 22 * scale, color: palette.textMuted },
+                    { fontSize: 26 * scale, color: palette.textMuted },
                   ]}
                 >
                   →
@@ -205,7 +207,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
           <ThemedText
             style={[
               styles.source,
-              { fontSize: 12 * scale, color: palette.textMuted },
+              { fontSize: 14 * scale, color: palette.textMuted },
             ]}
             numberOfLines={1}
           >
@@ -215,7 +217,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
           <ThemedText
             style={[
               styles.date,
-              { fontSize: 12 * scale, color: palette.textMuted },
+              { fontSize: 14 * scale, color: palette.textMuted },
             ]}
             numberOfLines={1}
           >
@@ -232,8 +234,8 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
         style={[
           styles.wordmark,
           {
-            fontSize: 13 * scale,
-            lineHeight: 20 * scale,
+            fontSize: 15 * scale,
+            lineHeight: 22 * scale,
             color: palette.textOnBrand,
           },
         ]}
@@ -260,7 +262,7 @@ function Figure({
       <ThemedText
         style={[
           styles.value,
-          { fontSize: 30 * scale, lineHeight: 36 * scale, color },
+          { fontSize: 36 * scale, lineHeight: 42 * scale, color },
         ]}
         numberOfLines={1}
         adjustsFontSizeToFit
@@ -271,7 +273,7 @@ function Figure({
       <ThemedText
         style={[
           styles.figureLabel,
-          { fontSize: 13 * scale, color: palette.textMuted },
+          { fontSize: 15 * scale, color: palette.textMuted },
         ]}
       >
         {label}

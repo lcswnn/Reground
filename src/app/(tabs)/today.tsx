@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
    * fits instead of wrapping or truncating.
    */
   greeting: {
-    fontSize: 36,
+    fontSize: 44,
     lineHeight: 44,
   },
   // Keeps the page gutter, so it lines up with the header and the card above.

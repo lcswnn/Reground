@@ -48,9 +48,12 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.body,
-    fontSize: 15,
+    // Barely moved where the rest of the app went up a step: this is set in
+    // caps, and Caveat's capitals are already its tallest letters. Tracking is
+    // looser than the sans wanted, because a joined face resists being spaced.
+    fontSize: 16,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.9,
   },
   input: {
     fontFamily: Fonts.body,
@@ -58,10 +61,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.md,
     borderWidth: 1.5,
     paddingHorizontal: Spacing.three,
-    fontSize: 17,
+    fontSize: 20,
   },
   error: {
     fontFamily: Fonts.body,
-    fontSize: 15,
+    fontSize: 18,
   },
 });

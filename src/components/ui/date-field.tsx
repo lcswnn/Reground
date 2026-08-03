@@ -116,9 +116,10 @@ const styles = StyleSheet.create({
   },
   label: {
     fontFamily: Fonts.body,
-    fontSize: 15,
+    // See TextField's label: caps don't need the step the rest of the scale took.
+    fontSize: 16,
     textTransform: 'uppercase',
-    letterSpacing: 0.6,
+    letterSpacing: 0.9,
   },
   // Matches TextField's box exactly, minus the text cursor.
   input: {
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
   },
   value: {
     fontFamily: Fonts.body,
-    fontSize: 17,
+    fontSize: 20,
   },
   picker: {
     justifyContent: 'center',
@@ -141,6 +142,6 @@ const styles = StyleSheet.create({
   },
   error: {
     fontFamily: Fonts.body,
-    fontSize: 15,
+    fontSize: 18,
   },
 });

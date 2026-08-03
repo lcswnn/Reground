@@ -23,10 +23,10 @@ module.exports = {
   // commands produce conflicting outputs". What the user actually reads in the
   // widget gallery is `configurationDisplayName` in index.swift, not this.
   name: "RegroundWidget",
-  // Matches the app's brand terracotta, and is what SwiftUI's `AccentColor`
-  // resolves to inside the extension.
+  // The app's ink — `brand` in `src/constants/theme.ts` — and what SwiftUI's
+  // `AccentColor` resolves to inside the extension.
   colors: {
-    $accent: "#e08659",
+    $accent: "#4E4C50",
   },
   // WidgetKit's `containerBackground` modifier — which iOS 17 requires for a
   // widget to render at all rather than being blanked — does not exist below 17.

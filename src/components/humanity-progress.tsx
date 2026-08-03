@@ -461,7 +461,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   footnote: {
-    fontSize: 15,
+    fontSize: 18,
     lineHeight: 21,
   },
 });

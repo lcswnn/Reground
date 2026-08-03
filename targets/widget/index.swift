@@ -167,15 +167,15 @@ struct Provider: TimelineProvider {
 /// the home screen's appearance rather than the app's own light/dark override —
 /// on a home screen, matching the wallpaper's scheme is what looks native.
 private enum Palette {
-  static let text = dynamic(light: "242120", dark: "CFD6D6")
-  static let textMuted = dynamic(light: "6E5F5F", dark: "6F9997")
-  /// The readable tan, not `brand` itself. In light mode `brand` is a fill —
-  /// 1.7:1 on the sand background — so a widget label wearing it would be
-  /// legible in dark mode and invisible in light. See the note in the theme.
-  static let brandStrong = dynamic(light: "8E5A34", dark: "86B9B1")
-  static let accentStrong = dynamic(light: "7A5C5C", dark: "A9B8D0")
-  static let accentSoft = dynamic(light: "F0E2DE", dark: "16283A")
-  static let background = dynamic(light: "FDDDB9", dark: "041520")
+  static let text = dynamic(light: "4E4C50", dark: "F3F0E7")
+  static let textMuted = dynamic(light: "676567", dark: "D6D3CE")
+  /// Ink, same as `text`. The app's palette is two colours right now, so
+  /// `brandStrong` has nothing of its own to say — kept as a distinct constant
+  /// because it goes back to having something the moment an accent hue lands.
+  static let brandStrong = dynamic(light: "4E4C50", dark: "F3F0E7")
+  static let accentStrong = dynamic(light: "676567", dark: "D6D3CE")
+  static let accentSoft = dynamic(light: "EBE8DF", dark: "565459")
+  static let background = dynamic(light: "F3F0E7", dark: "4E4C50")
 
   private static func dynamic(light: String, dark: String) -> Color {
     Color(UIColor { traits in

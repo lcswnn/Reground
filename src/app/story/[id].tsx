@@ -206,7 +206,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   summary: {
-    fontSize: 20,
+    fontSize: 24,
     lineHeight: 29,
   },
   sourceCard: {

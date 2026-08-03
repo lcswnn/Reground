@@ -2,18 +2,21 @@
  * Reground design tokens.
  *
  * The app is a place to land after the news, not another surface competing for
- * attention, so both schemes are built from one supplied five-colour ramp each
- * and nothing brighter than the page itself.
+ * attention. Right now that is taken about as far as it goes: the whole app is
+ * drawn from two supplied colours — #F3F0E7 paper and #4E4C50 ink — and every
+ * token below is one of them, or a blend of the two along the line between
+ * them. No third hue, so nothing on screen can shout.
  *
- * Light is warm sand: a tan paper rather than a near-white lightbox, because a
- * white screen at 6am is a flashlight. Dark is not the same palette dimmed —
- * it is a deep teal night, cool where the day is warm. That asymmetry is
- * deliberate: the two schemes are the same app at two times of day.
+ * The blends are written as `ink at N% over paper`, which is the only way any
+ * fill or line here is derived. Contrast ratios are against `background`.
  *
- * Only five colours were specified per scheme, and the token set below needs
- * more than five — every derived value is a tint or shade of a supplied colour,
- * kept on its hue, and each one carries its contrast ratio against that
- * scheme's `background` so the next edit knows what headroom it has.
+ * Semantic tokens (`positive`, `decline`, `info`, `accent`) still exist and are
+ * still used at their call sites, but they all resolve to ink for now — the
+ * *meaning* is carried by the label and the arrow, not by colour. When a real
+ * accent hue is chosen, this is the only file that changes.
+ *
+ * Dark mode is the same two colours swapped: ink page, paper text. It is not a
+ * second palette, and deliberately so — one ramp, read from either end.
  */
 
 import "@/global.css";
@@ -22,149 +25,131 @@ import { Platform } from "react-native";
 
 export const Colors = {
   light: {
-    /** Supplied "Black" — warm near-black, softer than #000 on sand. 53:1. */
-    text: "#242120",
-    /** Supplied "Grey". 7.1:1 — headings' quieter sibling, comfortably AA. */
-    textSecondary: "#4F4C4F",
+    /** Supplied ink. 7.5:1 on paper — comfortably AAA for body copy. */
+    text: "#4E4C50",
     /**
-     * Shade of the supplied "Light Brown". The supplied value itself is 2.6:1
-     * on this page — fine as a line, unreadable as text — so muted copy uses it
-     * darkened to 5.1:1 and the original is spent on `border` instead.
+     * Also ink, and that is the spec: headings and their quieter sibling are the
+     * same colour for now. Hierarchy is carried by size and leading instead —
+     * kept as its own token so the two can part company later without a hunt.
      */
-    textMuted: "#6E5F5F",
-    /** On `brand`, which is a light tan: 7.8:1. */
-    textOnBrand: "#242120",
+    textSecondary: "#4E4C50",
     /**
-     * On `positive`, and it has to be its own token rather than reusing
-     * `textOnBrand`: the two fills sit on opposite sides of the page. `brand` is
-     * a tan lighter than the sand and takes dark text; `positive` is a sage
-     * darker than it and takes light. In dark mode they flip, which is exactly
-     * why one shared "text on a fill" value cannot be right in both schemes.
-     * 4.8:1.
+     * Ink at 85% over paper. The one place a blend is load-bearing rather than
+     * decorative: full ink would leave captions indistinguishable from body, and
+     * anything lighter than this drops under 4.5:1. Exactly 5.0:1.
      */
-    textOnPositive: "#FFFFFF",
-
-    /** Supplied "Light Tan". The page. */
-    background: "#FDDDB9",
-    /** The page, one step deeper — pills, inset rows, anything pressed into it. */
-    backgroundElement: "#F6D0A8",
-    backgroundSelected: "#EEC49A",
-    /** The page lifted toward white. Cards sit above the sand, not in it. */
-    surface: "#FFF1DE",
-
-    /** Supplied "Light Brown". 2.6:1 — visible at 1px without becoming a rule. */
-    border: "#9F8D8D",
-
+    textMuted: "#676567",
+    /** On `brand`, which is solid ink. Paper, so 7.5:1 the other way round. */
+    textOnBrand: "#F3F0E7",
     /**
-     * The tab bar's top edge, and only that.
-     *
-     * Deliberately not `border`: this is the one line in the app that separates
-     * chrome from content rather than one card from another. Each scheme
-     * borrows the *other* scheme's background — night blue on sand, sand on
-     * night blue — which is the strongest either palette can go without
-     * introducing a hue that belongs to neither.
+     * On `positive`. Same value as `textOnBrand` while every fill is ink — the
+     * light/dark split this token existed to solve is currently moot. Kept
+     * separate because it stops being moot the moment a real accent lands.
      */
-    barDivider: "#041520",
+    textOnPositive: "#F3F0E7",
 
-    /** Supplied "Tan". The single warm accent — fills, chips, the active tab. */
-    brand: "#D8AD8E",
-    /**
-     * The same tan taken to 4.8:1, for link text and selected states. `brand`
-     * itself is 1.7:1 here: a fill, never a letterform.
-     */
-    brandStrong: "#8E5A34",
-    brandSoft: "#F6E0CC",
+    /** Supplied paper. The page. */
+    background: "#F3F0E7",
+    /** Ink at 5% — pills, inset rows, anything pressed into the page. */
+    backgroundElement: "#EBE8DF",
+    /** Ink at 9%, one step further in, for the pressed state of the above. */
+    backgroundSelected: "#E5E2DA",
+    /** Paper lifted toward white. Cards sit above the page, not in it. */
+    surface: "#F8F6EF",
+
+    /** Ink at 20%. Visible at 1px without becoming a rule. */
+    border: "#D2CFC9",
 
     /**
-     * Progress / "up and to the right". Sage, dulled to sit on sand — 4.0:1 on
-     * the page and 3.8:1 on `positiveSoft`, which is where it usually is.
+     * The tab bar's top edge, and only that — the one line that separates chrome
+     * from content rather than one card from another, so it runs heavier than
+     * `border`. Ink at 35%.
      */
-    positive: "#5F7A46",
-    positiveSoft: "#E4E7D6",
+    barDivider: "#B9B7B2",
+
+    /** Ink. Fills, chips, the active tab. */
+    brand: "#4E4C50",
+    /**
+     * Ink again: it is already a letterform-grade colour, so the fill/text split
+     * the old tan needed has nothing to do here.
+     */
+    brandStrong: "#4E4C50",
+    /** Ink at 12% — the wash those fills sit on. */
+    brandSoft: "#DFDCD5",
+
+    /** Progress. Ink: direction is carried by the arrow and the label. */
+    positive: "#4E4C50",
+    /** Ink at 8%. */
+    positiveSoft: "#EDEAE2",
 
     /**
-     * Data moving the wrong way. Brick rather than siren — 5.0:1, so it can
-     * carry a delta line as well as a bar, and nothing here is an emergency.
+     * Data moving the wrong way. Also ink — but its wash is deliberately a step
+     * denser than `positiveSoft`, which is the only signal left once hue is
+     * gone. Ink at 14%: a wrong-way pill reads heavier on the page than a
+     * right-way one of the same size.
      */
-    decline: "#9E4A3C",
-    declineSoft: "#F7DED6",
+    decline: "#4E4C50",
+    declineSoft: "#DCD9D2",
 
-    /**
-     * The cool one: progress bars, the Progress tab, the refresh wheel. Borrowed
-     * from the night palette's turquoise and deepened to 5.0:1, so the two
-     * schemes share a hue rather than each inventing a blue.
-     */
-    info: "#456A6B",
-    infoSoft: "#DCE9E6",
+    /** Progress bars, the Progress tab, the refresh wheel. */
+    info: "#4E4C50",
+    infoSoft: "#E5E2DA",
 
-    /** Secondary accent for humanity/people-flavored surfaces. A wash: 2.2:1. */
-    accent: "#C9B0AE",
-    /** The same mauve at 5.0:1, for when it has to carry a number. */
-    accentStrong: "#7A5C5C",
-    accentSoft: "#F0E2DE",
+    /** Humanity/people-flavoured surfaces. A wash: ink at 35%. */
+    accent: "#B9B7B2",
+    /** The same axis at 5.0:1, for when it has to carry a number. */
+    accentStrong: "#676567",
+    accentSoft: "#EBE8DF",
 
-    /** Form errors. Same brick as `decline`. */
-    danger: "#9E4A3C",
+    /** Form errors. Ink — the message says what is wrong. */
+    danger: "#4E4C50",
   },
+  /**
+   * The same two colours read from the other end: ink page, paper text. Every
+   * blend is paper over ink at the percentage its light-mode counterpart used
+   * ink over paper, so the two schemes have identical structure and identical
+   * body contrast — 7.5:1 either way.
+   */
   dark: {
-    /** Supplied "Light Grey". 12.6:1. */
-    text: "#CFD6D6",
-    /** Supplied "Light Blue". 8.5:1. */
-    textSecondary: "#86B9B1",
-    /**
-     * The supplied "Turquoise" lifted. At its given value it is 3.5:1 — under
-     * AA for body copy — so the original stays on `border`, where a 3.5:1 line
-     * is a feature, and muted text uses this 5.8:1 tint.
-     */
-    textMuted: "#6F9997",
-    /** On `brand`, which is the light blue. */
-    textOnBrand: "#041520",
-    /** On `positive`. Same value as `textOnBrand` here — at night both fills
-     *  are lighter than the page, so the split the light scheme needs collapses.
-     *  Kept as its own token so the two can diverge again without a hunt. 8.9:1. */
-    textOnPositive: "#041520",
+    text: "#F3F0E7",
+    textSecondary: "#F3F0E7",
+    /** Paper at 85% over ink. 5.1:1. */
+    textMuted: "#D6D3CE",
+    textOnBrand: "#4E4C50",
+    textOnPositive: "#4E4C50",
 
-    /** Supplied "Darkest Blue". The page. */
-    background: "#041520",
-    /** Tints of the supplied "Dark Blue", climbing away from the page. */
-    backgroundElement: "#0A3140",
-    backgroundSelected: "#114050",
-    /** Supplied "Dark Blue". Cards, one step off the page. */
-    surface: "#042631",
+    /** Supplied ink. The page. */
+    background: "#4E4C50",
+    /** Paper at 5% / 9%, climbing away from the page. */
+    backgroundElement: "#565459",
+    backgroundSelected: "#5D5B5F",
+    /** Paper at 12% — cards, one step off the page. */
+    surface: "#5F5D61",
 
-    /** Between the two supplied blues — 1.9:1, an edge rather than a frame. */
-    border: "#14384A",
+    /** Paper at 20%. */
+    border: "#767476",
 
-    /** See the light scheme: the light background, mirrored. */
-    barDivider: "#FDDDB9",
+    /** See the light scheme. Paper at 35%. */
+    barDivider: "#8B898B",
 
-    /** Supplied "Light Blue". 8.5:1 — reads as text as well as it fills. */
-    brand: "#86B9B1",
-    /** One value at night: the brand already carries text, so the light
-     *  scheme's fill/text split would be a distinction without a use. */
-    brandStrong: "#86B9B1",
-    brandSoft: "#0B3339",
+    brand: "#F3F0E7",
+    brandStrong: "#F3F0E7",
+    brandSoft: "#67656A",
 
-    /** Sage, pulled toward the palette's cool cast. 8.9:1. */
-    positive: "#8FBF9C",
-    positiveSoft: "#0D2E28",
+    positive: "#F3F0E7",
+    positiveSoft: "#5B595E",
 
-    // The one warm colour at night, and it is deliberate: "wrong direction"
-    // must not read as calm, and everything else on screen is teal.
-    decline: "#DE9484",
-    declineSoft: "#351C1A",
+    decline: "#F3F0E7",
+    declineSoft: "#636166",
 
-    /** Cooler and bluer than `brand`, so "how far along" stays its own hue. */
-    info: "#7FB0C9",
-    infoSoft: "#0A2C3C",
+    info: "#F3F0E7",
+    infoSoft: "#5D5B5F",
 
-    /** Periwinkle — the palette's blues walked off teal, so people-flavored
-     *  surfaces don't collide with the brand. 8.2:1. */
-    accent: "#A9B8D0",
-    accentStrong: "#A9B8D0",
-    accentSoft: "#16283A",
+    accent: "#8B898B",
+    accentStrong: "#D6D3CE",
+    accentSoft: "#565459",
 
-    danger: "#DE9484",
+    danger: "#F3F0E7",
   },
 } as const;
 
@@ -175,12 +160,16 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * strings everywhere else, so a missing load shows up as system fallback text
  * rather than a crash.
  *
- * Nunito throughout: a rounded sans with no sharp terminals, which is most of
- * why the app reads as calm before a single word is parsed.
+ * Caveat throughout: a handwriting face, so the whole app reads as something
+ * jotted down rather than published at you — which is most of why it feels calm
+ * before a single word is parsed. It also runs small and wide for its point
+ * size, which is why the type scale in `themed-text` sits higher than a sans
+ * would need; see the note there before shrinking anything.
  */
-export const NunitoRegular = "Nunito_400Regular";
-export const NunitoSemiBold = "Nunito_600SemiBold";
-export const NunitoBold = "Nunito_700Bold";
+export const CaveatRegular = "Caveat_400Regular";
+export const CaveatMedium = "Caveat_500Medium";
+export const CaveatSemiBold = "Caveat_600SemiBold";
+export const CaveatBold = "Caveat_700Bold";
 
 export const Fonts = Platform.select({
   ios: {
@@ -188,33 +177,37 @@ export const Fonts = Platform.select({
      * Headings. One family name per weight file — RN can't synthesize weights
      * for a custom family, so `fontWeight` must stay off anything using these.
      */
-    display: NunitoBold,
+    display: CaveatBold,
     /** Emphasis inside body copy, and the smaller headings. */
-    semibold: NunitoSemiBold,
+    semibold: CaveatSemiBold,
     /** Everything that isn't a heading. */
-    body: NunitoRegular,
+    body: CaveatRegular,
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
     /** iOS `UIFontDescriptorSystemDesignSerif` */
     serif: "ui-serif",
     /** iOS `UIFontDescriptorSystemDesignRounded` */
     rounded: "ui-rounded",
-    /** iOS `UIFontDescriptorSystemDesignMonospaced` */
+    /**
+     * iOS `UIFontDescriptorSystemDesignMonospaced`. Stays a system face:
+     * Caveat has no monospaced cut, and the one thing `code` has to do is line
+     * digits up.
+     */
     mono: "ui-monospace",
   },
   default: {
-    display: NunitoBold,
-    semibold: NunitoSemiBold,
-    body: NunitoRegular,
+    display: CaveatBold,
+    semibold: CaveatSemiBold,
+    body: CaveatRegular,
     sans: "normal",
     serif: "serif",
     rounded: "normal",
     mono: "monospace",
   },
   web: {
-    display: `${NunitoBold}, var(--font-display)`,
-    semibold: `${NunitoSemiBold}, var(--font-display)`,
-    body: `${NunitoRegular}, var(--font-display)`,
+    display: `${CaveatBold}, var(--font-display)`,
+    semibold: `${CaveatSemiBold}, var(--font-display)`,
+    body: `${CaveatRegular}, var(--font-display)`,
     sans: "var(--font-display)",
     serif: "var(--font-serif)",
     rounded: "var(--font-rounded)",

@@ -129,11 +129,11 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
   },
   newTagText: {
-    fontSize: 12,
+    fontSize: 14,
     letterSpacing: 0.8,
   },
   title: {
-    fontSize: 20,
+    fontSize: 24,
     lineHeight: 27,
   },
   meta: {

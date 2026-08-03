@@ -222,7 +222,7 @@ const styles = StyleSheet.create({
     gap: Spacing.three,
   },
   compositeDelta: {
-    fontSize: 22,
+    fontSize: 26,
   },
   pressed: {
     opacity: 0.85,
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
     gap: Spacing.one,
   },
   change: {
-    fontSize: 17,
+    fontSize: 20,
     // Keeps the four arrows on one vertical line however wide the numbers are.
     minWidth: 62,
     textAlign: 'right',

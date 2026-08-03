@@ -180,14 +180,14 @@ const styles = StyleSheet.create({
   },
   deltaText: {
     fontFamily: Fonts.semibold,
-    fontSize: 16,
+    fontSize: 19,
   },
   value: {
-    fontSize: 28,
-    lineHeight: 32,
+    fontSize: 34,
+    lineHeight: 38,
   },
   basis: {
-    fontSize: 15,
+    fontSize: 18,
     lineHeight: 21,
   },
   sourceLink: {

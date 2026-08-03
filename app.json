@@ -7,7 +7,7 @@
     "icon": "./assets/icon.png",
     "scheme": "reground",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#FDDDB9",
+    "backgroundColor": "#F3F0E7",
     "ios": {
       "icon": "./assets/icon.png",
       "bundleIdentifier": "com.lucaswaunn.reground",
@@ -20,7 +20,7 @@
     "android": {
       "package": "com.lucaswaunn.reground",
       "adaptiveIcon": {
-        "backgroundColor": "#FDDDB9",
+        "backgroundColor": "#F3F0E7",
         "foregroundImage": "./assets/icon.png"
       },
       "predictiveBackGestureEnabled": false
@@ -35,7 +35,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#D8AD8E",
+          "backgroundColor": "#F3F0E7",
           "image": "./assets/icon-no-bg.png",
           "imageWidth": 160,
           "resizeMode": "contain"
@@ -45,7 +45,7 @@
       [
         "expo-notifications",
         {
-          "color": "#D8AD8E"
+          "color": "#4E4C50"
         }
       ],
       "expo-sharing",

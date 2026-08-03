@@ -58,7 +58,7 @@ const styles = StyleSheet.create({
     alignSelf: 'flex-start',
   },
   pillText: {
-    fontSize: 12,
+    fontSize: 14,
     letterSpacing: 0.8,
   },
 });
