@@ -30,7 +30,6 @@
       "favicon": "./assets/icon.png"
     },
     "plugins": [
-      "./plugins/with-local-notifications-only",
       "expo-router",
       [
         "expo-splash-screen",
@@ -42,13 +41,6 @@
         }
       ],
       "expo-sqlite",
-      [
-        "expo-notifications",
-        {
-          "color": "#4E4C50"
-        }
-      ],
-      "expo-sharing",
       "@bacons/apple-targets"
     ],
     "experiments": {

@@ -11,9 +11,27 @@
  * only thing that crosses the boundary is the `stories` table.
  */
 
-import type { StoryCategory } from '../../src/types/database.js';
-
-export type { StoryCategory };
+/**
+ * The `story_category` enum, as the database declares it.
+ *
+ * Previously imported from the app's generated Supabase types. Those went with
+ * the pivot — the app no longer reads the `stories` table, so this layer is the
+ * only remaining owner of the shape and the definition lives here now. It must
+ * still match the enum in the database: adding a value here without a migration
+ * gets the insert rejected at write time, not at build time.
+ *
+ * `categories.ts` holds the same set as a runtime array for the curator's JSON
+ * schema, with a compile-time guard that the two cannot drift apart.
+ */
+export type StoryCategory =
+  | 'health'
+  | 'poverty'
+  | 'climate'
+  | 'energy'
+  | 'education'
+  | 'science'
+  | 'rights'
+  | 'conservation';
 
 /** A feed we are willing to take stories from. */
 export interface FeedConfig {

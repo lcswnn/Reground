@@ -28,15 +28,21 @@ SplashScreen.setOptions({ fade: true, duration: 350 });
  * tells you to put the phone down. Anything else to navigate to would be an
  * invitation to stay.
  *
- * The previous app — tabs, stories, the humanity data — is intact under
- * `src/legacy/app/` and out of the router's way. `git mv` it back into
- * `src/app/` to restore it; nothing was deleted. It is excluded from
- * `tsconfig.json` while it sits there, because its screens link to routes that
- * no longer exist.
+ * The previous app — tabs, stories, the humanity data — was parked under
+ * `src/legacy/` through the pivot and has now been deleted rather than left to
+ * rot beside code it no longer resembles. It is in git: `git show ab1efc0` is
+ * the last commit that has it, and `git checkout ab1efc0 -- src/legacy` brings
+ * any of it back. Take that route rather than trusting the old screens to
+ * still compile — they link to routes that no longer exist.
  *
  * Gone with it: Supabase, react-query, notifications and the data prefetch.
  * The session makes no network calls and holds no account, so there is nothing
  * left for any of them to do.
+ *
+ * The data layer itself is untouched and still running daily — see
+ * `.github/workflows/data-refresh.yml`. Its consumer is now the WidgetKit
+ * extension in `targets/widget/`, which fetches the published artifact
+ * directly, not this app.
  */
 export default function RootLayout() {
   return (

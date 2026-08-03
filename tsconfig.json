@@ -11,10 +11,6 @@
       ]
     }
   },
-  "_comment": "src/legacy is the previous tabs app, parked out of the router's way. Its screens link to routes that no longer exist, so it is excluded rather than kept compiling. Remove this line when it is either restored or deleted.",
-  "exclude": [
-    "src/legacy"
-  ],
   "include": [
     "**/*.ts",
     "**/*.tsx",

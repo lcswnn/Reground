@@ -1,12 +1,24 @@
-import type { HumanityMetric } from '@/api/humanity';
-
 /**
- * Client-side recomputation of the composite under custom category weights.
+ * A second, independent implementation of the composite, kept as a check on the
+ * data layer's.
  *
- * The server already computes the composite and ships it in the artifact. This
- * exists for one thing the server cannot do: the reader's own weighting is
- * per-device and arrives after the artifact was built, so "Your Score" has to be
- * computed here or not at all.
+ * ## Why this exists with no screen behind it
+ *
+ * It was the client's copy: the reader's weighting was per-device and arrived
+ * after the artifact was built, so "Your Score" had to be computed on the phone
+ * or not at all. The pivot removed that screen along with the rest of the tabs
+ * app, and nothing in `src/app/` imports this module any more.
+ *
+ * It is kept anyway, and deliberately, because the *test* beside it is a live
+ * guard on the daily refresh workflow. `scoring.test.ts` recomputes the
+ * published `compositeScore` from the published metrics and fails if the two
+ * disagree — see the "Re-check the model against the built artifact" step in
+ * `.github/workflows/data-refresh.yml`, which runs after `data:artifact` and
+ * before `data:publish`. A hand-written second implementation is the whole
+ * point of that check; move this into `data-layer/` and it becomes the server
+ * agreeing with itself, which catches nothing.
+ *
+ * Restore the weighting screen and this becomes app code again unchanged.
  *
  * ## This deliberately mirrors `data-layer/src/scoring/composite.ts`
  *
@@ -308,8 +320,25 @@ function summariseCategories(
   return out;
 }
 
+/**
+ * The fields of an artifact metric this module reads.
+ *
+ * Declared structurally rather than imported from the full artifact type, which
+ * left with `src/api/` in the pivot. It is also the honest signature: `hasData`
+ * is optional here because artifacts published before that field existed do not
+ * carry it, and `toScorable` has to keep reading those.
+ */
+export interface ArtifactMetric {
+  id: string;
+  category: string;
+  weight: number;
+  normalized: number;
+  hasData?: boolean;
+  polarity: 'contributor' | 'detractor';
+}
+
 /** Narrows artifact metrics to what `computeComposite` needs. */
-export function toScorable(metrics: HumanityMetric[]): ScorableMetric[] {
+export function toScorable(metrics: ArtifactMetric[]): ScorableMetric[] {
   return metrics.map((metric) => ({
     id: metric.id,
     category: metric.category,
