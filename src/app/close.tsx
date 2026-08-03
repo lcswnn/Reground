@@ -6,9 +6,11 @@
  * session told the user to put the phone down and then asking them for
  * anything would make that a lie.
  *
- * The one button resets the session state and returns the app to Screen 1's
- * resting state, so whatever was entered is gone before the app is opened
- * again.
+ * The one button clears the session state — so whatever was entered is gone
+ * before the app is opened again — and then goes forward, to `closed.tsx`. It
+ * used to go back to Screen 1, which quietly made the whole thing a loop: the
+ * screen that says "nothing here needs you again today" handed the user the
+ * opening question and waited.
  */
 
 import { StyleSheet, View } from 'react-native';
@@ -27,7 +29,7 @@ export default function CloseScreen() {
 
   const done = () => {
     reset();
-    router.replace('/');
+    router.replace('/closed');
   };
 
   return (

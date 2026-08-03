@@ -143,3 +143,11 @@ export const CLOSE = {
   /** The only action on the screen. No rating, no share, no "come back". */
   done: 'Close',
 } as const;
+
+/**
+ * The last thing in the app. One line, and nothing to tap — see `closed.tsx`
+ * for why it is a dead end on purpose.
+ */
+export const CLOSED = {
+  line: 'You may now close the app.',
+} as const;
