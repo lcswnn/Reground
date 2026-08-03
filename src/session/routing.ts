@@ -15,6 +15,19 @@ import {
 } from '@/config/session';
 
 /**
+ * GROUP A is asked one more question before the session starts: which thing.
+ *
+ * Only they are. For GROUP B the trouble is a specific image the user already
+ * has in mind, so there is nothing to narrow — and the screen that would use
+ * the answer (`showsCalibration`) never renders for them anyway. The two
+ * functions are driven by the same group for the same reason, and if one ever
+ * stops matching the other, the picker is asking for something nothing reads.
+ */
+export function needsTopic(group: CategoryGroup): boolean {
+  return group === 'world';
+}
+
+/**
  * Someone at the top of the scale should not be asked to bring the image back.
  * The reactivation cue is there to make the puzzle land on the right memory;
  * it is not worth doing to a person who is already at 8.

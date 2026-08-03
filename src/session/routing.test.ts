@@ -4,6 +4,7 @@ import { HIGH_DISTRESS_MOOD, MEANINGFUL_MOOD_DROP, PUZZLE } from '@/config/sessi
 import {
   aftercareKind,
   moodOutcome,
+  needsTopic,
   puzzleDurationMs,
   showsCalibration,
   skipsReactivation,
@@ -36,6 +37,19 @@ describe('group routing', () => {
   it('offers grounding for images and postponement for worries', () => {
     expect(aftercareKind('witnessed')).toBe('grounding');
     expect(aftercareKind('world')).toBe('park-worry');
+  });
+
+  it('asks the topic follow-up only for world-state fears', () => {
+    expect(needsTopic('world')).toBe(true);
+    expect(needsTopic('witnessed')).toBe(false);
+  });
+
+  // The picker exists to feed the calibration screen. If one group were asked
+  // which thing and then never shown anything about it, the question would be
+  // taking a tap from someone in distress and giving nothing back for it.
+  it('asks for a topic exactly when it will use one', () => {
+    expect(needsTopic('world')).toBe(showsCalibration('world'));
+    expect(needsTopic('witnessed')).toBe(showsCalibration('witnessed'));
   });
 });
 

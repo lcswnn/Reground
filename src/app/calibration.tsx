@@ -34,7 +34,7 @@ const ARROWS: Record<TrendDirection, string> = {
 export default function CalibrationScreen() {
   const router = useRouter();
   const active = useSessionGuard();
-  const { category, categoryGroup } = useSessionFlow();
+  const { category, categoryGroup, topic } = useSessionFlow();
 
   if (!active || !category || !categoryGroup) return null;
 
@@ -42,7 +42,10 @@ export default function CalibrationScreen() {
   // routes GROUP B straight past this.
   if (!showsCalibration(categoryGroup)) return <Redirect href="/mood-after" />;
 
-  const entry = calibrationFor(category);
+  // The topic is what selects the content. A GROUP A session with no topic
+  // means the picker was never reached, which is a broken route rather than a
+  // state to render a general answer for.
+  const entry = calibrationFor(topic);
   if (!entry) return <Redirect href="/mood-after" />;
 
   return (

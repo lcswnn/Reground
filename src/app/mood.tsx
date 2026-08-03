@@ -8,9 +8,14 @@
  *
  * The "change that" link is the only backwards move in the session. It is safe
  * here and nowhere else: nothing has started yet, so going back costs the user
- * nothing and un-picks a mis-tap on a screen that advances on touch. It goes to
- * `/category` rather than `/` — the mis-tap it undoes is the answer, and the
- * door in front of that has nothing to change.
+ * nothing and un-picks a mis-tap on a screen that advances on touch. It never
+ * goes to `/` — the mis-tap it undoes is an answer, and the door in front of
+ * those has nothing to change.
+ *
+ * Which answer it undoes is the last one given. GROUP A answered twice, and the
+ * topic is both the more likely mis-tap (six options, not two) and the cheaper
+ * one to correct — sending them back to the first question instead would clear
+ * the topic and make them give both answers again to fix one.
  */
 
 import { useState } from 'react';
@@ -29,7 +34,7 @@ import { useSessionGuard } from '@/session/use-session-guard';
 export default function MoodBeforeScreen() {
   const router = useRouter();
   const active = useSessionGuard({ requireMood: false });
-  const { category, setMoodBefore } = useSessionFlow();
+  const { category, topic, setMoodBefore } = useSessionFlow();
 
   const [mood, setMood] = useState<number | null>(null);
 
@@ -49,10 +54,13 @@ export default function MoodBeforeScreen() {
         <View style={styles.heading}>
           <ThemedText type="title">{MOOD_BEFORE.question}</ThemedText>
           <View style={styles.answer}>
-            <ThemedText themeColor="textMuted">{category.label}</ThemedText>
+            {/* The narrower answer when there is one: echoing "Something that's
+                happening" back at someone who then said "The climate" shows
+                them the coarser of their two answers for no reason. */}
+            <ThemedText themeColor="textMuted">{topic?.label ?? category.label}</ThemedText>
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.replace('/category')}
+              onPress={() => router.replace(topic ? '/topic' : '/category')}
               hitSlop={Spacing.three}>
               <ThemedText type="small" themeColor="textMuted" style={styles.back}>
                 {MOOD_BEFORE.back}

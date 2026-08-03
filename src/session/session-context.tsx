@@ -14,12 +14,23 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import type { ReactNode } from 'react';
 
 import type { Category, CategoryGroup } from '@/content/categories';
+import type { WorldTopic } from '@/content/topics';
 import type { GameId } from '@/session/games/catalog';
 
 export interface SessionState {
   category: Category | null;
   /** Duplicated from `category` because it is the actual routing signal. */
   categoryGroup: CategoryGroup | null;
+  /**
+   * Which thing, for GROUP A. Null for GROUP B, which is never asked — and
+   * null for GROUP A too until the picker, so a screen reading this before
+   * then gets nothing rather than a stale answer from the last session.
+   *
+   * This is what decides which data the calibration screen pulls. It is
+   * deliberately not a routing signal: every branch in the session still keys
+   * off the *group*, so adding a topic cannot change the shape of the flow.
+   */
+  topic: WorldTopic | null;
   moodBefore: number | null;
   moodAfter: number | null;
   /** True if the user skipped the reactivation cue, or it was skipped for them. */
@@ -35,6 +46,7 @@ export interface SessionState {
 const EMPTY_SESSION: SessionState = {
   category: null,
   categoryGroup: null,
+  topic: null,
   moodBefore: null,
   moodAfter: null,
   reactivationSkipped: false,
@@ -47,6 +59,8 @@ interface SessionApi extends SessionState {
    * screen later, via `setMoodBefore`.
    */
   begin: (category: Category) => void;
+  /** GROUP A's follow-up answer. Never called for GROUP B. */
+  chooseTopic: (topic: WorldTopic) => void;
   setMoodBefore: (mood: number) => void;
   setReactivationSkipped: (skipped: boolean) => void;
   chooseGame: (game: GameId) => void;
@@ -65,6 +79,10 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
       category,
       categoryGroup: category.group,
     });
+  }, []);
+
+  const chooseTopic = useCallback((topic: WorldTopic) => {
+    setState((current) => ({ ...current, topic }));
   }, []);
 
   const setMoodBefore = useCallback((mood: number) => {
@@ -89,13 +107,23 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
     () => ({
       ...state,
       begin,
+      chooseTopic,
       setMoodBefore,
       setReactivationSkipped,
       chooseGame,
       setMoodAfter,
       reset,
     }),
-    [state, begin, setMoodBefore, setReactivationSkipped, chooseGame, setMoodAfter, reset],
+    [
+      state,
+      begin,
+      chooseTopic,
+      setMoodBefore,
+      setReactivationSkipped,
+      chooseGame,
+      setMoodAfter,
+      reset,
+    ],
   );
 
   return <SessionContext value={value}>{children}</SessionContext>;

@@ -13,7 +13,7 @@
  * them, and cite them, before this goes near a user.
  */
 
-import type { Category } from '@/content/categories';
+import type { TopicDataKey, WorldTopic } from '@/content/topics';
 
 /** Which way the line is going. What it *means* is carried by `label`. */
 export type TrendDirection = 'up' | 'down' | 'flat';
@@ -32,19 +32,20 @@ export interface CalibrationEntry {
 }
 
 /**
- * Keyed by category id. GROUP B is absent by design — the screen never renders
- * for it.
+ * Keyed by `TopicDataKey`, so the compiler requires an entry for every dataset
+ * a topic can point at. GROUP B is absent by design — the screen never renders
+ * for it, and it has no topic to key on.
  */
-export const CALIBRATION: Record<string, CalibrationEntry> = {
+export const CALIBRATION: Record<TopicDataKey, CalibrationEntry> = {
   /**
-   * The entry the flow actually renders right now.
+   * The general entry, reached only by the `unsure` topic now that the picker
+   * asks which thing.
    *
-   * The first screen is currently two options rather than a topic picker, so
-   * everything in GROUP A arrives here. That makes this the weakest content in
-   * the app by some distance — "the trend" is not a question you can answer
-   * without knowing which thing — and it is the first thing that should
-   * improve when a topic picker comes back. The five topical entries below are
-   * kept for exactly that.
+   * It is still the weakest content here, and unavoidably so: it is the answer
+   * for someone who could not name one thing, and "the trend" genuinely is not
+   * a question you can answer without knowing which. What it must not become is
+   * a shrug — see the honesty rule above. The five topical entries below are
+   * what everyone else gets.
    */
   world: {
     trend: {
@@ -115,6 +116,12 @@ export const CALIBRATION: Record<string, CalibrationEntry> = {
   },
 };
 
-export function calibrationFor(category: Category): CalibrationEntry | null {
-  return CALIBRATION[category.id] ?? null;
+/**
+ * The topic is the whole input: it is what the follow-up question was asked to
+ * establish, and `dataKey` is what it resolves to. A null topic means the
+ * session never went through the picker — GROUP B, or a stale route — and the
+ * caller is expected to send those somewhere else rather than render a guess.
+ */
+export function calibrationFor(topic: WorldTopic | null): CalibrationEntry | null {
+  return topic ? CALIBRATION[topic.dataKey] : null;
 }

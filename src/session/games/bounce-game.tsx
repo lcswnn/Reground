@@ -1,16 +1,22 @@
-import { useEffect, useState } from 'react';
-import { GestureResponderEvent, LayoutChangeEvent, Pressable, StyleSheet, View } from 'react-native';
+import { useEffect, useState } from "react";
+import {
+  GestureResponderEvent,
+  LayoutChangeEvent,
+  Pressable,
+  StyleSheet,
+  View,
+} from "react-native";
 import Animated, {
   FadeIn,
   runOnJS,
   useAnimatedStyle,
   useFrameCallback,
   useSharedValue,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
-import { ThemedText } from '@/components/themed-text';
-import { Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { ThemedText } from "@/components/themed-text";
+import { Radius, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
 /**
  * Keep the ball in the air. That is the whole game.
@@ -29,11 +35,20 @@ import { useTheme } from '@/hooks/use-theme';
  */
 
 /** Radius of the ball, in points. */
-const BALL_RADIUS = 9;
+const BALL_RADIUS = 10;
 
 /** The single number that decides how hard this is. Forgiving on purpose. */
-const PADDLE_WIDTH = 92;
-const PADDLE_HEIGHT = 16;
+const PADDLE_WIDTH = 90;
+/**
+ * Tall enough to still be a paddle once the dome is cut out of it.
+ *
+ * The face is drawn by clipping a circle to this box, so the crown sits at the
+ * top and the tips are left with `PADDLE_HEIGHT - PADDLE_CURVE` of body. Deeper
+ * curve, thinner tips — at the previous 16 this would leave about 5pt at the
+ * edges, which the rounded bottom corners then eat into, and the paddle tapers
+ * away to points. Raise this alongside `PADDLE_CURVE`.
+ */
+const PADDLE_HEIGHT = 23;
 
 /**
  * How far the middle of the paddle bulges above its edges, in points.
@@ -47,8 +62,14 @@ const PADDLE_HEIGHT = 16;
  * Kept as a proportion of the face rather than a fixed depth, so the dome keeps
  * its shape at any paddle width. A fixed depth on a narrow paddle would be very
  * nearly a half-circle, and every hit a wild deflection.
+ *
+ * This ratio is the difficulty dial as much as `PADDLE_WIDTH` is: it sets how
+ * far a tip hit can throw the ball off vertical, which at 0.24 is about 25°
+ * (it was 18° at 0.17). Push it much past this and the rally stops wandering
+ * and starts ricocheting — the ball spends its time on the walls rather than
+ * over the paddle, and the game asks for reactions instead of attention.
  */
-const PADDLE_CURVE = (PADDLE_WIDTH / 2) * 0.17;
+const PADDLE_CURVE = (PADDLE_WIDTH / 2) * 0.28;
 
 /**
  * The radius of the circle that dome is a slice of, solved from the paddle's
@@ -107,11 +128,11 @@ const MAX_FALL_SPEED = 1400;
  */
 const MAX_FRAME_MS = 48;
 
-type Status = 'ready' | 'playing';
+type Status = "ready" | "playing";
 
 export function BounceGame() {
   const theme = useTheme();
-  const [status, setStatus] = useState<Status>('ready');
+  const [status, setStatus] = useState<Status>("ready");
 
   // Board size lives in shared values as well as state: state is what lays the
   // board out, but the physics runs on the UI thread and cannot read it.
@@ -168,10 +189,10 @@ export function BounceGame() {
     paddleX.value = width / 2;
 
     isLive.value = true;
-    setStatus('playing');
+    setStatus("playing");
   };
 
-  const end = () => setStatus('ready');
+  const end = () => setStatus("ready");
 
   const movePaddle = (event: GestureResponderEvent) => {
     const width = boardW.value;
@@ -180,13 +201,18 @@ export function BounceGame() {
     // Clamped so the paddle stays whole on screen. A paddle allowed to hang off
     // the edge turns the corners into dead zones the ball can hide in.
     const half = PADDLE_WIDTH / 2;
-    paddleX.value = Math.max(half, Math.min(width - half, event.nativeEvent.locationX));
+    paddleX.value = Math.max(
+      half,
+      Math.min(width - half, event.nativeEvent.locationX),
+    );
   };
 
   const frame = useFrameCallback((info) => {
     if (!isLive.value) return;
 
-    const dt = Math.min(info.timeSincePreviousFrame ?? MAX_FRAME_MS, MAX_FRAME_MS) / 1000;
+    const dt =
+      Math.min(info.timeSincePreviousFrame ?? MAX_FRAME_MS, MAX_FRAME_MS) /
+      1000;
     const width = boardW.value;
     const height = boardH.value;
 
@@ -270,7 +296,7 @@ export function BounceGame() {
   }, false);
 
   useEffect(() => {
-    frame.setActive(status === 'playing');
+    frame.setActive(status === "playing");
   }, [frame, status]);
 
   const ballStyle = useAnimatedStyle(() => ({
@@ -286,14 +312,17 @@ export function BounceGame() {
 
   return (
     <View
-      style={[styles.board, { backgroundColor: theme.backgroundElement, borderColor: theme.border }]}
+      style={[
+        styles.board,
+        { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+      ]}
       onLayout={onLayout}
       // The board itself is the control: the paddle goes where the finger is,
       // rather than having to be picked up first. Deliberately not the capture
       // variants — the start button is a child, and capturing here would eat
       // its taps.
-      onStartShouldSetResponder={() => status === 'playing'}
-      onMoveShouldSetResponder={() => status === 'playing'}
+      onStartShouldSetResponder={() => status === "playing"}
+      onMoveShouldSetResponder={() => status === "playing"}
       onResponderTerminationRequest={() => false}
       onResponderGrant={movePaddle}
       onResponderMove={movePaddle}
@@ -308,7 +337,10 @@ export function BounceGame() {
         style={[
           styles.ball,
           ballStyle,
-          { backgroundColor: theme.info, opacity: status === 'playing' ? 1 : 0 },
+          {
+            backgroundColor: theme.info,
+            opacity: status === "playing" ? 1 : 0,
+          },
         ]}
       />
 
@@ -323,7 +355,7 @@ export function BounceGame() {
         <View style={[styles.paddleFace, { backgroundColor: theme.info }]} />
       </Animated.View>
 
-      {status === 'ready' ? (
+      {status === "ready" ? (
         <Animated.View entering={FadeIn.duration(300)} style={styles.overlay}>
           <ThemedText type="small" themeColor="textMuted" style={styles.hint}>
             Keep it in the air.
@@ -355,13 +387,13 @@ export function BounceGame() {
 const styles = StyleSheet.create({
   board: {
     flex: 1,
-    width: '100%',
+    width: "100%",
     borderRadius: Radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   ball: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     width: BALL_RADIUS * 2,
@@ -369,21 +401,21 @@ const styles = StyleSheet.create({
     borderRadius: BALL_RADIUS,
   },
   paddle: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     bottom: PADDLE_INSET,
     width: PADDLE_WIDTH,
     height: PADDLE_HEIGHT,
     // Clips the circle below into an arc. The bottom corners are rounded off
     // the box itself, which the crown never reaches.
-    overflow: 'hidden',
+    overflow: "hidden",
     borderBottomLeftRadius: Radius.sm,
     borderBottomRightRadius: Radius.sm,
   },
   // A circle wide enough that only the shallow top of it shows through the
   // paddle's box: `PADDLE_CURVE` at the crown, tapering to nothing at the tips.
   paddleFace: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: PADDLE_WIDTH / 2 - PADDLE_ARC_RADIUS,
     width: PADDLE_ARC_RADIUS * 2,
@@ -391,13 +423,13 @@ const styles = StyleSheet.create({
     borderRadius: PADDLE_ARC_RADIUS,
   },
   overlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.three,
   },
   start: {
@@ -406,5 +438,5 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
   },
   startPressed: { opacity: 0.75 },
-  hint: { textAlign: 'center' },
+  hint: { textAlign: "center" },
 });

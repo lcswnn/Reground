@@ -31,6 +31,18 @@ export const ENTRY = {
   title: "What's stuck with you?",
 } as const;
 
+/**
+ * The follow-up, for GROUP A only.
+ *
+ * Four words, and no explanation of why it is being asked. "So we can show you
+ * the right numbers" would be a promise made before anything has been shown,
+ * and it turns a question into a transaction — the answer is the same either
+ * way, and the screen that uses it will make the case for itself.
+ */
+export const TOPIC = {
+  title: "What's it about?",
+} as const;
+
 export const MOOD_BEFORE = {
   question: "How are you feeling right now?",
   moodLowLabel: "okay",

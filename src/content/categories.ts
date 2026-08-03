@@ -10,9 +10,11 @@
  * about where the thing actually stands, the second one skips that entirely,
  * because there is no article that helps with an image you can't stop seeing.
  *
- * When a finer topic picker comes back, it goes *inside* the `world` branch —
- * `src/content/calibration.ts` is still keyed by category id and still has the
- * per-topic copy waiting.
+ * The finer topic picker is back, and it sits *inside* the `world` branch on a
+ * screen of its own — see `src/content/topics.ts`. That is the level the
+ * calibration content is keyed at. This file stays coarse on purpose: the
+ * group is the only thing the flow branches on, so a topic list that grows
+ * cannot change the shape of the session.
  */
 
 export type CategoryGroup = 'world' | 'witnessed';
