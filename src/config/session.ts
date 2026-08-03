@@ -76,6 +76,24 @@ export const BREATH_CYCLE_MS =
   BREATHING.restMs;
 
 /**
+ * The 5-4-3-2-1's crossfade: out, a beat of nothing, in.
+ *
+ * The beat is the part that matters. A straight cut, or a fade with no gap
+ * between the two halves, makes the prompts feel like pages being turned by
+ * someone waiting for you to finish. The empty moment is what makes it read as
+ * one thing settling before the next arrives — which is the pace the exercise
+ * is supposed to be done at.
+ *
+ * In is slower than out for the same reason: leaving is quick, arriving takes
+ * its time.
+ */
+export const GROUNDING_FADE = {
+  outMs: 260,
+  holdMs: 140,
+  inMs: 460,
+} as const;
+
+/**
  * The puzzle.
  *
  * NOTE ON DOSE: the trials this mechanic comes from (visuospatial task after

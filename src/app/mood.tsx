@@ -8,7 +8,9 @@
  *
  * The "change that" link is the only backwards move in the session. It is safe
  * here and nowhere else: nothing has started yet, so going back costs the user
- * nothing and un-picks a mis-tap on a screen that advances on touch.
+ * nothing and un-picks a mis-tap on a screen that advances on touch. It goes to
+ * `/category` rather than `/` — the mis-tap it undoes is the answer, and the
+ * door in front of that has nothing to change.
  */
 
 import { useState } from 'react';
@@ -50,7 +52,7 @@ export default function MoodBeforeScreen() {
             <ThemedText themeColor="textMuted">{category.label}</ThemedText>
             <Pressable
               accessibilityRole="button"
-              onPress={() => router.replace('/')}
+              onPress={() => router.replace('/category')}
               hitSlop={Spacing.three}>
               <ThemedText type="small" themeColor="textMuted" style={styles.back}>
                 {MOOD_BEFORE.back}
