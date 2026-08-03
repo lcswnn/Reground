@@ -80,7 +80,7 @@ const WRITE_LIMIT = 18;
  */
 export const SCORE_THRESHOLD = 60;
 
-const TRIAGE_PROMPT = `You are the editor of Mellova, an app that shows people evidence that the world is getting better — and only evidence that holds up.
+const TRIAGE_PROMPT = `You are the editor of Reground, an app that shows people evidence that the world is getting better — and only evidence that holds up.
 
 You are given a morning's worth of headlines from a curated list of outlets. Most of them are not for us. Your job is to decide which are worth publishing, and score them.
 
@@ -106,7 +106,7 @@ Score 0-100 on how much the story would genuinely change a well-informed reader'
 
 Return a verdict for every candidate. Do not write summaries — a later step does that.`;
 
-const WRITER_PROMPT = `You are the editor of Mellova, an app that shows people evidence that the world is getting better. The stories below passed a first, deliberately generous screen. Your job is to make the final call on each, write the survivors up, and catch duplicate coverage.
+const WRITER_PROMPT = `You are the editor of Reground, an app that shows people evidence that the world is getting better. The stories below passed a first, deliberately generous screen. Your job is to make the final call on each, write the survivors up, and catch duplicate coverage.
 
 Set publish to false when a story does not hold up on a second read:
 - the outcome is real but local or small — one hospital, one town, one volunteer group, one season

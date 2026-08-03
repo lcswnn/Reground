@@ -48,8 +48,8 @@ export function DaysPill({ total }: { total: number }) {
       accessible
       accessibilityLabel={
         total === 1
-          ? "Your first day with Mellova"
-          : `${total} days with Mellova`
+          ? "Your first day with Reground"
+          : `${total} days with Reground`
       }
     >
       {/* A sunrise rather than a flame. The flame was the right glyph for a

@@ -1,5 +1,5 @@
 /**
- * Mellova design tokens.
+ * Reground design tokens.
  *
  * The app is a place to land after the news, not another surface competing for
  * attention, so both schemes are built from one supplied five-colour ramp each

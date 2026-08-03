@@ -39,7 +39,7 @@ export interface SourceAdapter {
 }
 
 export const USER_AGENT =
-  "Mellova/1.0 (+https://github.com/lucaswaunn/Mellova) data-layer";
+  "Reground/1.0 (+https://github.com/lucaswaunn/Reground) data-layer";
 
 /** Shared fetch with a User-Agent, a timeout, and a bounded retry. */
 export async function fetchText(

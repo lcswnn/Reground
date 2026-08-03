@@ -205,7 +205,7 @@ export async function fetchFeed(feed: FeedConfig): Promise<FeedItem[]> {
     headers: {
       // Several of these outlets serve a 403 to a bare fetch. Identifying the
       // project honestly gets a 200 and is the polite thing to do besides.
-      "user-agent": "MellovaBot/1.0 (+https://github.com/lucaswaunn/Mellova)",
+      "user-agent": "RegroundBot/1.0 (+https://github.com/lucaswaunn/Reground)",
       accept:
         "application/rss+xml, application/atom+xml, application/xml, text/xml;q=0.9, */*;q=0.8",
     },

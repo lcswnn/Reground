@@ -50,7 +50,7 @@ forever.
   silently generates no target at all — you get a `WidgetKit.framework` reference
   and an `Info.plist`, but no `PBXNativeTarget`, and nothing to run.
 - **The target name must differ from the app's.** Xcode derives each target's
-  intermediates path from its name, so two targets called `Mellova` compile
+  intermediates path from its name, so two targets called `Reground` compile
   their asset catalogs to the same directory and the build fails with "multiple
   commands produce conflicting outputs". The gallery name comes from
   `configurationDisplayName` in Swift, not the target name.
@@ -67,7 +67,7 @@ npx expo prebuild -p ios
 npx expo run:ios
 ```
 
-Then long-press the home screen → **+** → search "Mellova". Widgets never
+Then long-press the home screen → **+** → search "Reground". Widgets never
 appear under `npx expo start` alone; they need a real build.
 
 ## Scheduling reality check

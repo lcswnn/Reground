@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Humanitas",
-    "slug": "Humanitas",
+    "name": "Reground",
+    "slug": "Reground",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "scheme": "humanitas",
+    "scheme": "reground",
     "userInterfaceStyle": "automatic",
     "backgroundColor": "#FDDDB9",
     "ios": {
       "icon": "./assets/icon.png",
-      "bundleIdentifier": "com.lucaswaunn.humanitas",
+      "bundleIdentifier": "com.lucaswaunn.reground",
       "appleTeamId": "FH9MRL7638",
       "supportsTablet": true,
       "infoPlist": {
@@ -18,7 +18,7 @@
       }
     },
     "android": {
-      "package": "com.lucaswaunn.humanitas",
+      "package": "com.lucaswaunn.reground",
       "adaptiveIcon": {
         "backgroundColor": "#FDDDB9",
         "foregroundImage": "./assets/icon.png"

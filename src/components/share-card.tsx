@@ -238,7 +238,7 @@ export const ShareCard = forwardRef<View, ShareCardProps>(function ShareCard(
           },
         ]}
       >
-        Mellova
+        Reground
       </ThemedText>
     </View>
   );

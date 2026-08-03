@@ -305,7 +305,7 @@ private struct MediumView: View {
   }
 }
 
-struct HumanitasWidgetEntryView: View {
+struct RegroundWidgetEntryView: View {
   @Environment(\.widgetFamily) private var family
   let entry: Entry
 
@@ -323,10 +323,10 @@ struct HumanitasWidgetEntryView: View {
 }
 
 @main
-struct HumanitasWidget: Widget {
+struct RegroundWidget: Widget {
   var body: some WidgetConfiguration {
-    StaticConfiguration(kind: "HumanitasWidget", provider: Provider()) { entry in
-      HumanitasWidgetEntryView(entry: entry)
+    StaticConfiguration(kind: "RegroundWidget", provider: Provider()) { entry in
+      RegroundWidgetEntryView(entry: entry)
     }
     .configurationDisplayName("Humanity progress")
     .description("How far along the world is, and one indicator a day.")

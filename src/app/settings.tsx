@@ -250,7 +250,7 @@ function DailyReminderSection() {
         {blocked ? (
           <>
             <ThemedText type="small" themeColor="textSecondary">
-              Notifications are turned off for Humanitas in your device settings.
+              Notifications are turned off for Reground in your device settings.
             </ThemedText>
             <Button
               title="Open Settings"

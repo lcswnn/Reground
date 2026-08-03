@@ -162,6 +162,11 @@ export function BounceGame() {
     vx.value = 0;
     vy.value = 0;
 
+    // Back to centre for every serve, not just the first: wherever the last
+    // rally left the paddle, the new ball falls down the middle, and starting
+    // out of position is a miss the player had no hand in.
+    paddleX.value = width / 2;
+
     isLive.value = true;
     setStatus('playing');
   };

@@ -18,11 +18,11 @@
 module.exports = {
   type: "widget",
   // Must differ from the app target's name. Xcode derives each target's
-  // intermediates directory from it, so two targets called "Mellova" compile
+  // intermediates directory from it, so two targets called "Reground" compile
   // their asset catalogs to the same path and the build fails with "multiple
   // commands produce conflicting outputs". What the user actually reads in the
   // widget gallery is `configurationDisplayName` in index.swift, not this.
-  name: "MellovaWidget",
+  name: "RegroundWidget",
   // Matches the app's brand terracotta, and is what SwiftUI's `AccentColor`
   // resolves to inside the extension.
   colors: {
