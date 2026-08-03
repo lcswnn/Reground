@@ -37,7 +37,7 @@
         {
           "backgroundColor": "#F3F0E7",
           "image": "./assets/icon-no-bg.png",
-          "imageWidth": 160,
+          "imageWidth": 260,
           "resizeMode": "contain"
         }
       ],

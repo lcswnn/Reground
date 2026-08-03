@@ -5,19 +5,36 @@ import { queryClient } from '@/lib/query';
 import { supabase } from '@/lib/supabase';
 import { getScopeUser, setScopeUser } from '@/lib/user-scope';
 
+/**
+ * Who the reader is, without ever asking.
+ *
+ * There are no sign-in or sign-up screens. The app opens on Today, and the
+ * identity underneath it is a Supabase *anonymous* user created silently on
+ * first launch and persisted from then on.
+ *
+ * That is a deliberate trade, and worth stating plainly because it is invisible
+ * from the UI:
+ *
+ *   - **What it buys.** Everything per-reader still works — saved stories, card
+ *     reactions, the birthday behind "Since you were born", the weighting synced
+ *     off the device — because RLS still sees a real `auth.uid()`. Nothing in
+ *     `api/` had to learn about a signed-out mode, and no policy changed.
+ *   - **What it costs.** The account is the install. There is no password to
+ *     recover it with, so deleting the app, or wiping its storage, is the end of
+ *     that reader's history, and a second device is a second reader. For an app
+ *     whose state is a day count and a handful of bookmarks, that is the right
+ *     side of the trade — but it is why `signOut` does not exist here. Signing
+ *     out of an anonymous account is indistinguishable from deleting it, so the
+ *     app does not offer a button that quietly destroys everything.
+ *
+ * Requires Anonymous Sign-Ins to be enabled for the Supabase project. With it
+ * off, `signInAnonymously` fails with `anonymous_provider_disabled`; see
+ * `startAnonymousSession` for what the app does then.
+ */
 interface SessionContextValue {
   session: Session | null;
-  /** True until we know whether a persisted session exists. Gate the UI on this. */
+  /** True until we know whether a session exists, including the first sign-in. */
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  /** `birthDate` is `YYYY-MM-DD`; it seeds profiles.birth_date via the trigger. */
-  signUp: (
-    email: string,
-    password: string,
-    displayName: string,
-    birthDate: string,
-  ) => Promise<void>;
-  signOut: () => Promise<void>;
 }
 
 const SessionContext = createContext<SessionContextValue | null>(null);
@@ -41,13 +58,14 @@ export function useSession() {
  *
  *   - **The device stores.** `setScopeUser` re-namespaces `localStorage`, so the
  *     weighting, the day count and today's vote follow the account rather than
- *     the phone. Without it, signing in as somebody else inherited all three —
- *     and the weighting was then uploaded into *their* profile by the sync.
+ *     the phone.
  *   - **The query cache.** Saved stories and the profile are per-user and come
- *     from the server, but a cache is a cache: clearing only on `signOut` left
- *     the previous account's rows readable whenever a session ended some other
- *     way — an expired refresh token, a password change, the app being killed
- *     mid-sign-out.
+ *     from the server, and a cache is a cache.
+ *
+ * With anonymous sessions the account rarely changes after the first launch —
+ * but "rarely" is not "never": a lost refresh token means the next launch mints
+ * a fresh anonymous user, and that reader must not open onto the previous one's
+ * cached rows.
  *
  * Guarded on an actual change of account. `onAuthStateChange` also fires on
  * every token refresh, and clearing the cache hourly would turn a warm app cold
@@ -61,6 +79,49 @@ function adoptSession(next: Session | null): void {
   setScopeUser(nextUserId);
 }
 
+/**
+ * Creates the anonymous user, once.
+ *
+ * Module scope rather than inside the effect because in development the provider
+ * mounts twice, and two overlapping `signInAnonymously` calls create two
+ * accounts — the second winning, the first left orphaned in `auth.users` with
+ * whatever the reader had already done attached to it. Sharing the in-flight
+ * promise makes the second caller await the first.
+ *
+ * A failure here is not fatal and deliberately does not throw. Today, Progress
+ * and the daily card all read `humanity.json`, a public object in Storage that
+ * needs no session at all — so a reader who is offline at first launch, or whose
+ * project has anonymous sign-ins switched off, still gets the app. They lose the
+ * per-user half of it (saved stories, reactions, birthday) until a launch where
+ * this succeeds.
+ */
+let pending: Promise<Session | null> | null = null;
+
+function startAnonymousSession(): Promise<Session | null> {
+  pending ??= supabase.auth
+    .signInAnonymously()
+    .then(({ data, error }) => {
+      if (error) {
+        // Logged rather than swallowed: this is the one failure that quietly
+        // halves the app, and it is otherwise invisible from the UI.
+        console.warn('[session] anonymous sign-in failed:', error.message);
+        return null;
+      }
+      return data.session;
+    })
+    .catch((error: unknown) => {
+      console.warn('[session] anonymous sign-in failed:', error);
+      return null;
+    })
+    .finally(() => {
+      // Cleared so a later mount can retry — one attempt that failed offline
+      // should not poison the process for as long as it runs.
+      pending = null;
+    });
+
+  return pending;
+}
+
 export function SessionProvider({ children }: PropsWithChildren) {
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -68,15 +129,21 @@ export function SessionProvider({ children }: PropsWithChildren) {
   useEffect(() => {
     let active = true;
 
-    supabase.auth.getSession().then(({ data }) => {
-      if (!active) return;
-      adoptSession(data.session);
-      setSession(data.session);
-      setIsLoading(false);
-    });
+    void (async () => {
+      const { data } = await supabase.auth.getSession();
 
-    // Fires for sign-in, sign-out, and every token refresh, so this is the single
-    // source of truth once the initial read has resolved.
+      // Restored from storage on every launch after the first, and no network
+      // call is made on that path.
+      const current = data.session ?? (await startAnonymousSession());
+
+      if (!active) return;
+      adoptSession(current);
+      setSession(current);
+      setIsLoading(false);
+    })();
+
+    // Fires for the anonymous sign-in and every token refresh, so this is the
+    // single source of truth once the initial read has resolved.
     const { data: subscription } = supabase.auth.onAuthStateChange((_event, next) => {
       adoptSession(next);
       setSession(next);
@@ -88,38 +155,7 @@ export function SessionProvider({ children }: PropsWithChildren) {
     };
   }, []);
 
-  const value = useMemo<SessionContextValue>(
-    () => ({
-      session,
-      isLoading,
-      async signIn(email, password) {
-        const { error } = await supabase.auth.signInWithPassword({
-          email: email.trim(),
-          password,
-        });
-        if (error) throw error;
-      },
-      async signUp(email, password, displayName, birthDate) {
-        const { error } = await supabase.auth.signUp({
-          email: email.trim(),
-          password,
-          // Read by the handle_new_user() trigger to seed the profiles row.
-          options: { data: { display_name: displayName.trim(), birth_date: birthDate } },
-        });
-        if (error) throw error;
-      },
-      async signOut() {
-        const { error } = await supabase.auth.signOut();
-        if (error) throw error;
-        // `adoptSession` clears the cache and re-scopes the device stores when
-        // the auth handler fires. Kept here as well because that fires
-        // asynchronously, and this closes the window where a screen still
-        // mounted could re-read the outgoing account's rows.
-        queryClient.clear();
-      },
-    }),
-    [session, isLoading],
-  );
+  const value = useMemo<SessionContextValue>(() => ({ session, isLoading }), [session, isLoading]);
 
   return <SessionContext value={value}>{children}</SessionContext>;
 }

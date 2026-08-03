@@ -38,56 +38,58 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
   );
 }
 
-// Caveat is loaded as four single-weight families, so `fontWeight` is absent
-// throughout: naming a weight the family doesn't carry drops the text back to
-// the system font. Emphasis comes from the semibold and display faces, color,
-// and caps — never from a numeric weight.
+// `fontWeight` is absent throughout: naming a weight rather than the family
+// drops the text back to the system font on iOS. Playpen Sans ships a real
+// 600, so `defaultSemiBold` now resolves to it via `Fonts.semibold`, and
+// the remaining tiers are separated by size, colour and caps — see the note on
+// `Fonts` in `constants/theme.ts`.
 //
-// Every size below is ~20% above what the same tier ran at in Nunito. Caveat is
-// a handwriting face with a short x-height and a lot of its mass in the
-// ascenders, so it reads a full step smaller than its point size claims — 17pt
-// body was fine print. The line heights did *not* grow with it: the extra point
-// size already fills the leading, and holding them steady keeps the generous
-// ~1.5 rhythm that makes the screen feel unhurried, which is the whole point of
-// the app.
+// Every size sits ~10% above what the same tier ran at in Nunito. A handwriting
+// face needs the room — the letterforms are irregular by design, and irregular
+// shapes need to be bigger before the eye stops working at them — but Playpen
+// Sans is upright and rounded, so it needs far less of a bump than a
+// joined script would. The line heights did *not* grow with it: the extra point
+// size fills the leading, and holding them steady keeps the generous ~1.5 rhythm
+// that makes the screen feel unhurried, which is the whole point of the app.
 const styles = StyleSheet.create({
   // Body moves with the small tier rather than staying put: `small` matching it
   // would make the two types indistinguishable and quietly flatten every screen
   // that pairs them.
   default: {
     fontFamily: Fonts.body,
-    fontSize: 20,
+    fontSize: 19,
     lineHeight: 28,
   },
   defaultSemiBold: {
     fontFamily: Fonts.semibold,
-    fontSize: 20,
+    fontSize: 19,
     lineHeight: 28,
   },
   hero: {
     fontFamily: Fonts.display,
-    fontSize: 46,
-    lineHeight: 54,
+    fontSize: 42,
+    lineHeight: 50,
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 36,
-    lineHeight: 44,
+    fontSize: 33,
+    lineHeight: 41,
   },
   subtitle: {
     fontFamily: Fonts.display,
-    fontSize: 28,
-    lineHeight: 36,
+    fontSize: 25,
+    lineHeight: 33,
   },
   sectionTitle: {
     fontFamily: Fonts.display,
-    fontSize: 24,
-    lineHeight: 32,
+    fontSize: 22,
+    lineHeight: 30,
   },
-  // The one tier that stays close to where it was. It is set in caps with
-  // tracking, and Caveat's capitals are its tallest letterforms — the size
-  // problem the rest of the scale has doesn't apply here. Tracking is looser
-  // than the sans needed, because a joined face fights being letterspaced.
+  // The one tier that stays close to where it was, and the one place emphasis
+  // survives the loss of a bold: with a single weight in the family, caps plus
+  // tracking is what an eyebrow has left to be an eyebrow with. The tracking
+  // runs looser than the sans needed — a hand-drawn face has irregular
+  // sidebearings, and the extra space is what keeps caps from clotting.
   eyebrow: {
     fontFamily: Fonts.semibold,
     fontSize: 14,
@@ -97,23 +99,23 @@ const styles = StyleSheet.create({
   },
   small: {
     fontFamily: Fonts.body,
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 24,
   },
   smallBold: {
     fontFamily: Fonts.semibold,
-    fontSize: 18,
+    fontSize: 17,
     lineHeight: 24,
   },
   link: {
     fontFamily: Fonts.body,
     lineHeight: 28,
-    fontSize: 19,
+    fontSize: 18,
   },
   linkPrimary: {
     fontFamily: Fonts.semibold,
     lineHeight: 28,
-    fontSize: 19,
+    fontSize: 18,
   },
   code: {
     fontFamily: Fonts.mono,

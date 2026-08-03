@@ -160,28 +160,41 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * strings everywhere else, so a missing load shows up as system fallback text
  * rather than a crash.
  *
- * Caveat throughout: a handwriting face, so the whole app reads as something
- * jotted down rather than published at you — which is most of why it feels calm
- * before a single word is parsed. It also runs small and wide for its point
- * size, which is why the type scale in `themed-text` sits higher than a sans
- * would need; see the note there before shrinking anything.
+ * Playpen Sans throughout: a handwriting face, so the whole app reads as
+ * something jotted down rather than published at you — which is most of why it
+ * feels calm before a single word is parsed. It is the legible end of that
+ * genre: upright, unjoined, and rounded, where a more cursive script makes a
+ * page of statistics work to read. It is also a touch bouncier than the Patrick
+ * Hand it replaced — closer to a note left for someone than to handwriting on a
+ * form — which is worth looking at on a device before it is settled on.
+ *
+ * ## Two weights, unlike every face before it
+ *
+ * This is the first face here that ships more than one cut, so `semibold` is
+ * finally a real semibold rather than an alias. That matters most on button
+ * labels and the `defaultSemiBold` tier, which have carried emphasis by size
+ * and colour alone until now.
+ *
+ * `fontWeight` still does not appear anywhere: naming a weight rather than the
+ * file drops iOS back to the system font. The weight is selected by loading
+ * `PlaypenSans_600SemiBold` as its own family and asking for it by name, which
+ * is why both cuts are registered in the root layout.
+ *
+ * `display` uses the 600 as well — a heading in a handwriting face needs the
+ * extra weight more than it needs the extra points, and the type scale was
+ * inherited from a one-weight face that had no other option.
  */
-export const CaveatRegular = "Caveat_400Regular";
-export const CaveatMedium = "Caveat_500Medium";
-export const CaveatSemiBold = "Caveat_600SemiBold";
-export const CaveatBold = "Caveat_700Bold";
+export const PlaypenSansRegular = "PlaypenSans_400Regular";
+export const PlaypenSansSemiBold = "PlaypenSans_600SemiBold";
 
 export const Fonts = Platform.select({
   ios: {
-    /**
-     * Headings. One family name per weight file — RN can't synthesize weights
-     * for a custom family, so `fontWeight` must stay off anything using these.
-     */
-    display: CaveatBold,
+    /** Headings. The 600 cut — see above. */
+    display: PlaypenSansSemiBold,
     /** Emphasis inside body copy, and the smaller headings. */
-    semibold: CaveatSemiBold,
+    semibold: PlaypenSansSemiBold,
     /** Everything that isn't a heading. */
-    body: CaveatRegular,
+    body: PlaypenSansRegular,
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
     /** iOS `UIFontDescriptorSystemDesignSerif` */
@@ -190,24 +203,24 @@ export const Fonts = Platform.select({
     rounded: "ui-rounded",
     /**
      * iOS `UIFontDescriptorSystemDesignMonospaced`. Stays a system face:
-     * Caveat has no monospaced cut, and the one thing `code` has to do is line
-     * digits up.
+     * Playpen Sans has no monospaced cut, and the one thing `code` has to do is
+     * line digits up.
      */
     mono: "ui-monospace",
   },
   default: {
-    display: CaveatBold,
-    semibold: CaveatSemiBold,
-    body: CaveatRegular,
+    display: PlaypenSansSemiBold,
+    semibold: PlaypenSansSemiBold,
+    body: PlaypenSansRegular,
     sans: "normal",
     serif: "serif",
     rounded: "normal",
     mono: "monospace",
   },
   web: {
-    display: `${CaveatBold}, var(--font-display)`,
-    semibold: `${CaveatSemiBold}, var(--font-display)`,
-    body: `${CaveatRegular}, var(--font-display)`,
+    display: `${PlaypenSansRegular}, var(--font-display)`,
+    semibold: `${PlaypenSansRegular}, var(--font-display)`,
+    body: `${PlaypenSansRegular}, var(--font-display)`,
     sans: "var(--font-display)",
     serif: "var(--font-serif)",
     rounded: "var(--font-rounded)",

@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     // the one place in the app that should read as heavier than the copy around
     // it, and the serif this replaced had no weight between regular and bold.
     fontFamily: Fonts.semibold,
-    fontSize: 20,
+    fontSize: 19,
   },
   pressed: {
     opacity: 0.75,
