@@ -17,7 +17,7 @@
  * cannot change the shape of the session.
  */
 
-export type CategoryGroup = 'world' | 'witnessed';
+export type CategoryGroup = "world" | "witnessed";
 
 export interface Category {
   id: string;
@@ -29,15 +29,23 @@ export interface Category {
 
 export const CATEGORIES: readonly Category[] = [
   {
-    id: 'world',
-    label: "Something that's happening",
-    detail: 'The war, the climate, the economy. The way things are going.',
-    group: 'world',
+    id: "world",
+    label: "News about current events.",
+    detail: "Wars, Climate Change, Economy, Politics, etc.",
+    group: "world",
   },
   {
-    id: 'witnessed',
-    label: 'Something I saw',
-    detail: "An image or a video that hasn't left.",
-    group: 'witnessed',
+    id: "witnessed",
+    label: "Something I saw",
+    detail:
+      "An image or video on social media that you can't seem to get out of your mind.",
+    group: "witnessed",
+  },
+  {
+    id: "personal-other",
+    label: "Personal/Other",
+    detail:
+      "An experience or memory that keeps coming back, or an unknown cause.",
+    group: "witnessed",
   },
 ];

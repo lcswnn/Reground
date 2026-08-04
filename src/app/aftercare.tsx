@@ -18,6 +18,7 @@ import { GroundingSequence } from '@/session/aftercare/grounding-sequence';
 import { ParkWorry } from '@/session/aftercare/park-worry';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { aftercareKind } from '@/session/routing';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -25,6 +26,7 @@ export default function AftercareScreen() {
   const router = useRouter();
   const active = useSessionGuard();
   const { categoryGroup } = useSessionFlow();
+  const back = useSessionBack('/aftercare');
 
   /**
    * Which half of the grounding branch is on screen. Local and not a route, so
@@ -38,7 +40,7 @@ export default function AftercareScreen() {
   const close = () => router.replace('/close');
 
   return (
-    <SessionScreen>
+    <SessionScreen onBack={back}>
       {aftercareKind(categoryGroup) === 'grounding' ? (
         started ? (
           // The count-down ends on a question rather than on the door: see

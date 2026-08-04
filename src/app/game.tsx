@@ -30,6 +30,7 @@ import { findGame } from '@/session/games/catalog';
 import { GAME_VIEWS } from '@/session/games/views';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { puzzleDurationMs, showsCalibration } from '@/session/routing';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -37,6 +38,7 @@ export default function GameScreen() {
   const router = useRouter();
   const active = useSessionGuard();
   const { categoryGroup, game } = useSessionFlow();
+  const back = useSessionBack('/game');
 
   const [timeUp, setTimeUp] = useState(false);
   /** Bumped by "keep going", which is what restarts the timer below. */
@@ -69,7 +71,7 @@ export default function GameScreen() {
   };
 
   return (
-    <SessionScreen>
+    <SessionScreen onBack={back}>
       <View style={styles.root}>
         <View style={styles.heading}>
           <ThemedText type="subtitle">{chosen?.title ?? PUZZLE_COPY.title}</ThemedText>

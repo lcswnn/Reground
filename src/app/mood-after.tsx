@@ -25,6 +25,7 @@ import { useTheme } from '@/hooks/use-theme';
 import { MoodScale } from '@/session/ui/mood-scale';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { moodOutcome } from '@/session/routing';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -33,6 +34,7 @@ export default function MoodAfterScreen() {
   const active = useSessionGuard();
   const theme = useTheme();
   const { moodBefore, setMoodAfter } = useSessionFlow();
+  const back = useSessionBack('/mood-after');
 
   const [mood, setMood] = useState<number | null>(null);
 
@@ -47,7 +49,7 @@ export default function MoodAfterScreen() {
   };
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <ThemedText type="title">{MOOD_AFTER.question}</ThemedText>
 

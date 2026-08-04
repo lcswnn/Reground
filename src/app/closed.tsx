@@ -11,6 +11,10 @@
  *
  * The session state was already cleared on the way in, so nothing entered is
  * still in memory behind this.
+ *
+ * The one screen that keeps its wall now that every other screen has a back
+ * button. Going back would mean re-entering a session that no longer exists —
+ * and a dead end with a way out of it is not a dead end. See `previousRoute`.
  */
 
 import { useEffect } from 'react';

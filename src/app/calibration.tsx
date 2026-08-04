@@ -21,6 +21,7 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { showsCalibration } from '@/session/routing';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -35,6 +36,7 @@ export default function CalibrationScreen() {
   const router = useRouter();
   const active = useSessionGuard();
   const { category, categoryGroup, topic } = useSessionFlow();
+  const back = useSessionBack('/calibration');
 
   if (!active || !category || !categoryGroup) return null;
 
@@ -49,7 +51,7 @@ export default function CalibrationScreen() {
   if (!entry) return <Redirect href="/mood-after" />;
 
   return (
-    <SessionScreen>
+    <SessionScreen onBack={back}>
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}

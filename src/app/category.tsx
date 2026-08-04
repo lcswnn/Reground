@@ -7,8 +7,7 @@
  *
  * Tapping an answer advances immediately rather than arming a Start button.
  * With two options there is nothing to confirm, and the saved tap matters more
- * than the mis-tap does — the next screen carries a way back for that, and it
- * is the only screen in the session that does.
+ * than the mis-tap does — the back button on the next screen undoes it.
  */
 
 import { StyleSheet, View } from 'react-native';
@@ -21,11 +20,13 @@ import { Spacing } from '@/constants/theme';
 import { OptionCard } from '@/session/ui/option-card';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { needsTopic } from '@/session/routing';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 
 export default function EntryScreen() {
   const router = useRouter();
   const { begin } = useSessionFlow();
+  const back = useSessionBack('/category');
 
   const choose = (category: Category) => {
     begin(category);
@@ -35,7 +36,7 @@ export default function EntryScreen() {
   };
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <ThemedText type="title">{ENTRY.title}</ThemedText>
 

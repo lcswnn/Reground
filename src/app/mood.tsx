@@ -6,20 +6,19 @@
  * so it gets a screen to itself rather than sharing one with the question
  * above it.
  *
- * The "change that" link is the only backwards move in the session. It is safe
- * here and nowhere else: nothing has started yet, so going back costs the user
- * nothing and un-picks a mis-tap on a screen that advances on touch. It never
- * goes to `/` — the mis-tap it undoes is an answer, and the door in front of
- * those has nothing to change.
+ * The answer given a screen ago is echoed above the scale. It is a label now
+ * rather than a control: this used to be the one screen in the session that
+ * carried a way back — a "change that" link next to the answer — and back is
+ * now a button in the same corner of every screen, so the line's only job is
+ * saying which question the rating is about.
  *
- * Which answer it undoes is the last one given. GROUP A answered twice, and the
- * topic is both the more likely mis-tap (six options, not two) and the cheaper
- * one to correct — sending them back to the first question instead would clear
- * the topic and make them give both answers again to fix one.
+ * Which answer is shown is the last one given. GROUP A answered twice, and the
+ * narrower answer is the useful one — echoing "Something that's happening" at
+ * someone who then said "The climate" tells them nothing they didn't just say.
  */
 
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
@@ -28,6 +27,7 @@ import { MOOD_BEFORE } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { MoodScale } from '@/session/ui/mood-scale';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -35,6 +35,7 @@ export default function MoodBeforeScreen() {
   const router = useRouter();
   const active = useSessionGuard({ requireMood: false });
   const { category, topic, setMoodBefore } = useSessionFlow();
+  const back = useSessionBack('/mood');
 
   const [mood, setMood] = useState<number | null>(null);
 
@@ -43,30 +44,19 @@ export default function MoodBeforeScreen() {
   const advance = () => {
     if (mood === null) return;
     setMoodBefore(mood);
-    // Always to the cue screen — it decides for itself whether to show
-    // anything, so the high-distress skip lives in exactly one place.
-    router.replace('/reactivate');
+    // The breath first now. The cue that used to sit here has moved to the far
+    // side of it, next to the game it feeds — see `reactivate.tsx`.
+    router.replace('/breathe-intro');
   };
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <View style={styles.heading}>
           <ThemedText type="title">{MOOD_BEFORE.question}</ThemedText>
-          <View style={styles.answer}>
-            {/* The narrower answer when there is one: echoing "Something that's
-                happening" back at someone who then said "The climate" shows
-                them the coarser of their two answers for no reason. */}
-            <ThemedText themeColor="textMuted">{topic?.label ?? category.label}</ThemedText>
-            <Pressable
-              accessibilityRole="button"
-              onPress={() => router.replace(topic ? '/topic' : '/category')}
-              hitSlop={Spacing.three}>
-              <ThemedText type="small" themeColor="textMuted" style={styles.back}>
-                {MOOD_BEFORE.back}
-              </ThemedText>
-            </Pressable>
-          </View>
+          <ThemedText themeColor="textMuted">
+            {MOOD_BEFORE.answerPrefix} {topic?.label ?? category.label}
+          </ThemedText>
         </View>
 
         <MoodScale
@@ -92,13 +82,5 @@ const styles = StyleSheet.create({
   },
   heading: {
     gap: Spacing.two,
-  },
-  answer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  back: {
-    textDecorationLine: 'underline',
   },
 });

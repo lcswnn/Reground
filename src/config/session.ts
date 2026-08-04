@@ -38,7 +38,7 @@ export const MEANINGFUL_MOOD_DROP = 2;
  * mid-exhale to hit exactly 60 would be worse than missing it.
  */
 export const BREATHING = {
-  totalMs: 60_000,
+  totalMs: 50_000,
   /**
    * Stillness before the first inhale.
    *
@@ -50,20 +50,20 @@ export const BREATHING = {
    * breath starts where the user can see it start.
    */
   leadInMs: 1_400,
-  firstInhaleMs: 3_000,
+  firstInhaleMs: 2_500,
   /**
    * The top-up. Short and sharp is the point of it — it reinflates what the
    * first inhale left collapsed, which is what makes the long exhale actually
    * offload anything. A slow second inhale is just one long inhale with a
    * stumble in it.
    */
-  secondInhaleMs: 800,
+  secondInhaleMs: 700,
   /**
    * The beat at the top, on a full chest. Long enough to be a rest rather than
    * a hinge between two movements.
    */
   holdMs: 1_500,
-  exhaleMs: 8_200,
+  exhaleMs: 6_200,
   /** Room to land at the bottom before being asked to start again. */
   restMs: 1_000,
 } as const;
@@ -74,6 +74,20 @@ export const BREATH_CYCLE_MS =
   BREATHING.holdMs +
   BREATHING.exhaleMs +
   BREATHING.restMs;
+
+/**
+ * How many whole cycles the breath actually runs — `totalMs` rounded to the
+ * nearest one, since the screen never cuts off mid-breath.
+ *
+ * Derived rather than written down twice: the intro screen tells the user this
+ * number before they start, and a promise of four rounds followed by five is
+ * exactly the kind of small lie this app cannot afford. `strings.test.ts` holds
+ * the rest of that copy against the numbers above.
+ */
+export const BREATH_CYCLES = Math.max(
+  1,
+  Math.round(BREATHING.totalMs / BREATH_CYCLE_MS),
+);
 
 /**
  * The frog that breathes along with the circle.

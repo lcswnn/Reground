@@ -34,7 +34,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { BREATHING, BREATH_CYCLE_MS } from '@/config/session';
+import { BREATHING, BREATH_CYCLES, BREATH_CYCLE_MS } from '@/config/session';
 import { BREATHING_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -178,8 +178,9 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
   useEffect(() => {
     // Cycles rather than a bare 60s cut-off: the breath finishes where it
     // started, at the bottom, instead of being interrupted somewhere in an
-    // inhale.
-    const cycles = Math.max(1, Math.round(BREATHING.totalMs / BREATH_CYCLE_MS));
+    // inhale. Derived in the config now, because the intro screen quotes this
+    // number to the user before they start.
+    const cycles = BREATH_CYCLES;
     let index = 0;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     // The frog's beats inside the current phase. At most two are ever pending,

@@ -12,6 +12,10 @@
  *
  * No session state is touched here. Someone who opens the app and puts it down
  * has done nothing that needs clearing.
+ *
+ * One of the two screens with no back button, the other being `closed.tsx`.
+ * Nothing has happened yet, so there is nothing behind this to return to — see
+ * `previousRoute`, which is where that decision is written down.
  */
 
 import { useRouter } from "expo-router";

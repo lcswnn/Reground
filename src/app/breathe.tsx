@@ -18,18 +18,22 @@ import { BREATHING_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { BreathingGuide } from '@/session/breathing/breathing-guide';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionGuard } from '@/session/use-session-guard';
 
 export default function BreatheScreen() {
   const router = useRouter();
   const active = useSessionGuard();
+  const back = useSessionBack('/breathe');
 
-  const advance = useCallback(() => router.replace('/games'), [router]);
+  // To the cue rather than straight to the picker: it decides for itself
+  // whether to show anything, so the high-distress skip lives in one place.
+  const advance = useCallback(() => router.replace('/reactivate'), [router]);
 
   if (!active) return null;
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <BreathingGuide onDone={advance} />
 

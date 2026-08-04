@@ -17,18 +17,39 @@
  * file it.
  */
 export const WELCOME = {
-  title: 'Hey, how are you today?',
+  title: "Hey, how are you today?",
   /**
    * Says it for them. The whole point is that it should be recognisable enough
    * to be pressed without being thought about — the question that actually
    * branches the session is on the next screen.
    */
-  action: 'I got caught in doomscrolling',
+  action: "I\'m feeling a bit anxious right now.",
+} as const;
+
+/**
+ * The back button, top-left on every screen that has somewhere to go back to.
+ *
+ * A word as well as the arrow. The arrow alone is a fine icon on a screen that
+ * is already a page; on a screen that is one question and a scale it is just
+ * another mark to decode.
+ */
+export const BACK = {
+  arrow: "←",
+  label: "Back",
+} as const;
+
+/**
+ * The tap-for-more control, on the two screens that ask something of the user
+ * without the reason fitting on the screen.
+ */
+export const DISCLOSURE = {
+  /** Points along the line when closed, down into the text when open. */
+  chevron: "›",
 } as const;
 
 export const ENTRY = {
   /** No logo, no onboarding. Straight to why they opened this. */
-  title: "What's stuck with you?",
+  title: "What seemed to trigger that anxiety?",
 } as const;
 
 /**
@@ -48,8 +69,13 @@ export const MOOD_BEFORE = {
   moodLowLabel: "okay",
   moodHighLabel: "awful",
   continue: "Next",
-  /** The one step in the session you can walk back, and only before it starts. */
-  back: "change that",
+  /**
+   * Labels the answer that is echoed back above the scale. It used to sit
+   * beside a "change that" link; changing it is now the back button's job, so
+   * the line is left doing only the thing it was always better at — reminding
+   * the user which question this rating is about.
+   */
+  answerPrefix: "Your answer:",
 } as const;
 
 export const REACTIVATION = {
@@ -57,9 +83,36 @@ export const REACTIVATION = {
    * Deliberately not a request to describe or type anything — bringing the
    * image to mind is the whole ask, and putting words to it is a different and
    * much heavier task.
+   *
+   * "Before we begin" now points at the game rather than at the session, which
+   * is already underway by the time this is read — the breath runs first. Worth
+   * keeping in mind if this line is rewritten again: whatever it says it comes
+   * before had better be the screen that actually follows it.
    */
-  body: "Before we start — bring to mind the thing that stuck with you. You don't have to describe it.",
-  skip: "Skip",
+  body: "Now, start to think about that image or video that's stuck in your mind.",
+  /**
+   * The one screen in the session that deliberately makes someone feel worse,
+   * so it is the one that most owes an answer to "why should I". Behind a tap:
+   * someone who just wants it over with should not have to read a rationale
+   * first, and someone who wants to know why should not have to take it on
+   * trust.
+   */
+  explainLabel: "Why are you asking me to do this?",
+  /**
+   * Plain mechanism, no jargon. "Reconsolidation" is the word for it and is
+   * deliberately absent — unlike "visuospatial" on the game picker, it names
+   * something the user can do nothing with, and this screen is already asking
+   * enough of their attention.
+   */
+  why: "Holding it in mind for a moment makes the memory briefly unsteady. The game after this competes for the same part of your head, and that seems to be what does the work.",
+  /**
+   * The honest half, and the reason the screen exists rather than being cut for
+   * being unpleasant. Hedged on purpose — "seems to" and "in the trials" are
+   * load-bearing. See `CALIBRATION_COPY`'s rule: a claim only works here if the
+   * user could go and check it and find it holds.
+   */
+  whyEvidence:
+    "In the trials this comes from, the game on its own didn't help. It only worked after a reminder like this one. That's the whole reason we ask.",
   ready: "Ready",
 } as const;
 
@@ -69,7 +122,39 @@ export const BREATHE_INTRO = {
    * evidence behind it, and saying so is worth more than a softer line would
    * be — it tells the user this is a method, not a mood.
    */
-  body: "Okay, let's begin with some cyclic breathing.",
+  body: "Okay, let's begin with some physiological sigh breathing.",
+  /**
+   * Behind a tap, not on the screen. Someone who already knows the technique,
+   * or who just wants the minute to start, should see a title and a button —
+   * and a paragraph of instruction is the last thing to hand a person who
+   * opened this app because they were wound up.
+   */
+  explainLabel: "What is a physiological sigh?",
+  /**
+   * What the breath is, in the two lines it takes to say it.
+   *
+   * Naming the technique is not the same as explaining it, and this screen was
+   * doing only the first. Someone about to hand a minute to an app is owed the
+   * shape of what they are copying before the circle starts moving — the
+   * `leadInMs` hold exists because arriving mid-inhale means spending the first
+   * cycle working it out, and reading it beforehand removes the rest of that.
+   *
+   * The nose and the mouth are how the sigh is actually done, and the on-screen
+   * cues ("In", "In again", "Out") have never had room to say so.
+   */
+  method:
+    "Physiological sigh: one shorter inhale, followed by a second quick inhale through the nose, then one long exhale through your mouth.",
+  /**
+   * The other half of "what to expect": how long, and what to watch.
+   *
+   * The count comes from `BREATH_CYCLES` rather than being written out, so the
+   * promise can't drift from the timings in `@/config/session`. "About a
+   * minute" is held to `BREATHING.totalMs` by `strings.test.ts` for the same
+   * reason — being told a minute and given two is worse than being told
+   * nothing.
+   */
+  shape: (rounds: number) =>
+    `${rounds} rounds, about a minute. The circle grows as you breathe in and shrinks as you breathe out, and the frog breathes with it.`,
   /** Under the button, quiet. The screen waits: nothing starts on arrival. */
   hint: "Tap start to begin.",
   start: "Start",

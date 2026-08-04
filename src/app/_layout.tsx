@@ -106,11 +106,16 @@ function RootNavigator() {
     <ThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
       {/*
-        The session runs forward only: no header, no back button, and the
-        swipe-back gesture off. Every screen navigates with `router.replace`,
-        so there is never a stack to walk backwards into — going back into the
-        reactivation cue, or into the thing that upset you, is not something
-        this flow should allow by accident.
+        No native header, and the swipe-back gesture stays off. Every screen
+        navigates with `router.replace`, so there is never a stack to walk
+        backwards into by accident — which is the point: stepping back into the
+        reactivation cue, or into the thing that upset you, should take a
+        deliberate tap and nothing less.
+
+        That tap is the back button `SessionScreen` draws top-left. It is a
+        route change like any other rather than a stack pop, and `previousRoute`
+        in `session/routing.ts` is the single place that says where each screen
+        goes and which two have nowhere to go at all.
 
         `fade` rather than a push, because nothing here is a level deeper than
         the last screen. It is the next moment of one continuous thing.

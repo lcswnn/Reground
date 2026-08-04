@@ -8,9 +8,8 @@
  * on separate screens is what stops the flow's shape from depending on a topic
  * list that will keep changing.
  *
- * Like the screen before it, tapping an answer advances immediately. There is
- * no back link here for the same reason there isn't one there — the rating
- * screen carries the session's only way back, and it now returns here rather
+ * Like the screen before it, tapping an answer advances immediately — the back
+ * button undoes a mis-tap, and from the rating screen it returns here rather
  * than to the first question when there is a topic to change.
  */
 
@@ -24,6 +23,7 @@ import { Spacing } from '@/constants/theme';
 import { OptionCard } from '@/session/ui/option-card';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { needsTopic } from '@/session/routing';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -32,6 +32,7 @@ export default function TopicScreen() {
   // The rating is collected after this screen, so there is none to require yet.
   const active = useSessionGuard({ requireMood: false });
   const { categoryGroup, chooseTopic } = useSessionFlow();
+  const back = useSessionBack('/topic');
 
   if (!active || !categoryGroup) return null;
 
@@ -45,7 +46,7 @@ export default function TopicScreen() {
   };
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <ThemedText type="title">{TOPIC.title}</ThemedText>
 

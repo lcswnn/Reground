@@ -27,6 +27,7 @@ import { CHECK_IN, SUPPORT_RESOURCE } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionGuard } from '@/session/use-session-guard';
 
 type Answer = 'helped' | 'did-not';
@@ -35,6 +36,7 @@ export default function CheckInScreen() {
   const router = useRouter();
   const theme = useTheme();
   const active = useSessionGuard();
+  const back = useSessionBack('/check-in');
 
   /**
    * Local, not session state. Nothing downstream branches on it and nothing is
@@ -45,7 +47,7 @@ export default function CheckInScreen() {
   if (!active) return null;
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <ThemedText type="title">{CHECK_IN.question}</ThemedText>
 

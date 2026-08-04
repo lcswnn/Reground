@@ -25,6 +25,7 @@ import { usePremiumAccess } from '@/session/games/premium';
 import { isPlayable } from '@/session/games/views';
 import { GameCard } from '@/session/ui/game-card';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -33,6 +34,7 @@ export default function GamesScreen() {
   const theme = useTheme();
   const active = useSessionGuard();
   const { chooseGame } = useSessionFlow();
+  const back = useSessionBack('/games');
 
   const hasPremium = usePremiumAccess();
   const { unlocked, locked } = partitionGames(hasPremium);
@@ -45,7 +47,7 @@ export default function GamesScreen() {
   };
 
   return (
-    <SessionScreen>
+    <SessionScreen onBack={back}>
       <ScrollView
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}>

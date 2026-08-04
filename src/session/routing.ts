@@ -64,6 +64,120 @@ export function moodOutcome(before: number, after: number): MoodOutcome {
   };
 }
 
+/**
+ * Every route in the session, in flow order.
+ *
+ * Written out as a union rather than inferred from the file tree so that
+ * `previousRoute` below is exhaustive: adding a screen without giving it a way
+ * back is a type error, not a screen that quietly has no button.
+ */
+export type SessionRoute =
+  | '/'
+  | '/category'
+  | '/topic'
+  | '/mood'
+  | '/breathe-intro'
+  | '/breathe'
+  | '/reactivate'
+  | '/games'
+  | '/game'
+  | '/calibration'
+  | '/mood-after'
+  | '/aftercare'
+  | '/check-in'
+  | '/close'
+  | '/closed';
+
+/** The slice of session state the back button's target depends on. */
+export interface BackContext {
+  group: CategoryGroup | null;
+  /** GROUP A answered the follow-up, so there is a second screen behind them. */
+  hasTopic: boolean;
+  moodBefore: number | null;
+  moodAfter: number | null;
+}
+
+/**
+ * Where the back button goes from a given screen, or `null` for the screens
+ * that don't get one.
+ *
+ * Every screen navigates with `router.replace`, so there is no stack to pop —
+ * back is a route like any other, and this is the one place that says which.
+ * Two of the targets are deliberately not the screen the user literally came
+ * from:
+ *
+ *  - `/reactivate` goes back to `/breathe-intro`, not `/breathe`. The breath is
+ *    a minute on its own clock; sending someone back into the middle of it is a
+ *    forward action wearing a back button. The intro is the step's front door
+ *    and waits for a tap.
+ *  - `/games` goes back to `/breathe-intro` rather than `/reactivate` when the
+ *    cue was auto-skipped for high distress — `/reactivate` would bounce them
+ *    straight forward again, which is a back button that does nothing.
+ */
+export function previousRoute(
+  route: SessionRoute,
+  context: BackContext,
+): SessionRoute | null {
+  switch (route) {
+    // The door starts nothing, and the dead end has already cleared the
+    // session. Neither has anything behind it worth returning to.
+    case '/':
+    case '/closed':
+      return null;
+
+    case '/category':
+      return '/';
+    case '/topic':
+      return '/category';
+    case '/mood':
+      return context.hasTopic ? '/topic' : '/category';
+    case '/breathe-intro':
+      return '/mood';
+    case '/breathe':
+      return '/breathe-intro';
+    case '/reactivate':
+      return '/breathe-intro';
+    case '/games':
+      return context.moodBefore !== null && skipsReactivation(context.moodBefore)
+        ? '/breathe-intro'
+        : '/reactivate';
+    case '/game':
+      return '/games';
+    case '/calibration':
+      return '/game';
+    case '/mood-after':
+      // GROUP B never sees the calibration screen, so their last step was the
+      // game itself.
+      return context.group !== null && showsCalibration(context.group)
+        ? '/calibration'
+        : '/game';
+    case '/aftercare':
+      return '/mood-after';
+    case '/check-in':
+      return '/aftercare';
+    case '/close':
+      return routeIntoClose(context);
+  }
+}
+
+/**
+ * The closing screen has three ways in — straight from the second rating when
+ * it improved, from the check-in after grounding, and from the worry-parking
+ * screen — so its back target is the only one that has to be reconstructed
+ * from state rather than read off the flow.
+ */
+function routeIntoClose(context: BackContext): SessionRoute {
+  const { group, moodBefore, moodAfter } = context;
+
+  // Nothing to reconstruct from: the rating screen is the safe answer, since
+  // every path to here passes through it.
+  if (group === null || moodBefore === null || moodAfter === null) return '/mood-after';
+
+  if (moodOutcome(moodBefore, moodAfter).improved) return '/mood-after';
+
+  return aftercareKind(group) === 'grounding' ? '/check-in' : '/aftercare';
+}
+
 export type AftercareKind = 'grounding' | 'park-worry';
 
 /**

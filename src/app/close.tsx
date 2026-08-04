@@ -21,11 +21,14 @@ import { Button } from '@/components/ui/button';
 import { CLOSE } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 
 export default function CloseScreen() {
   const router = useRouter();
   const { reset } = useSessionFlow();
+  // Three routes lead here and the state says which — see `routeIntoClose`.
+  const back = useSessionBack('/close');
 
   const done = () => {
     reset();
@@ -33,7 +36,7 @@ export default function CloseScreen() {
   };
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <ThemedText type="title">{CLOSE.title}</ThemedText>
         <ThemedText type="subtitle" themeColor="textSecondary">
