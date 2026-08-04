@@ -12,10 +12,10 @@
  * gives no clean hook for that. The circle itself is still animated on the UI
  * thread; only the four transitions per cycle cross back.
  *
- * The frog on the top half is driven from the same machine. It is drawn rather
- * than animated — eight poses, and the breath is which one is showing — so it
- * cannot be interpolated the way the circle is, and it needs its own beats
- * inside each phase. Those come from `frog-cycle.ts` and are scheduled off the
+ * Tully, on the top half, is driven from the same machine. They are drawn rather
+ * than animated — six poses, and the breath is which one is showing — so they
+ * cannot be interpolated the way the circle is, and they need their own beats
+ * inside each phase. Those come from `tully-cycle.ts` and are scheduled off the
  * phase's own start below, so the two halves cannot drift apart no matter how
  * long the screen runs.
  */
@@ -39,8 +39,8 @@ import { BREATHING_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
-import { BreathingFrog } from '@/session/breathing/breathing-frog';
-import { FROG_CYCLE, LEAD_IN_POSE, STILL_POSE } from '@/session/breathing/frog-cycle';
+import { BreathingTully } from '@/session/breathing/breathing-tully';
+import { LEAD_IN_POSE, STILL_POSE, TULLY_CYCLE } from '@/session/breathing/tully-cycle';
 import { tickBreath } from '@/session/ui/haptics';
 
 type Phase = 'inhale-1' | 'inhale-2' | 'hold' | 'exhale' | 'rest';
@@ -56,25 +56,26 @@ const MID_SCALE = 0.82;
 /**
  * The circle used to own the screen. It now has the bottom half of it, so it
  * is bounded by height as well as width — on a short screen the width-derived
- * size would push the cue and the track into the frog.
+ * size would push the cue and the track into Tully.
  */
 const DIAMETER_RATIO = 0.58;
 const DIAMETER_HEIGHT_RATIO = 0.22;
 const MAX_DIAMETER = 260;
 
 /**
- * The frog, bounded on the same two axes as the circle so the pair keep their
+ * Tully, bounded on the same two axes as the circle so the pair keep their
  * relative sizes on any screen rather than one of them hitting a cap first.
  *
- * Sized as a square: the artwork is cropped to the union of all eight poses,
- * which comes out at an aspect of 1.02, so a square box and `contain` leave
- * almost nothing spare. Deliberately smaller than the circle — the circle is
- * the thing to breathe with, and a frog that outweighs it turns the screen
- * into a picture of a frog with a timer under it.
+ * Sized as a square, and the artwork's 1.2 aspect means `contain` fits them to
+ * the width and leaves the spare above and below. That spare is what they grow
+ * into: the union crop is sized for their fullest pose, so at the bottom of the
+ * breath they are a good deal shorter than the box. Deliberately smaller than
+ * the circle — the circle is the thing to breathe with, and a Tully that
+ * outweighs it turns the screen into a picture of Tully with a timer under it.
  */
-const FROG_RATIO = 0.44;
-const FROG_HEIGHT_RATIO = 0.19;
-const MAX_FROG = 190;
+const TULLY_RATIO = 0.44;
+const TULLY_HEIGHT_RATIO = 0.19;
+const MAX_TULLY = 190;
 
 interface Step {
   phase: Phase;
@@ -86,8 +87,8 @@ interface Step {
   cue: string | null;
 }
 
-/** The frog poses that fill each phase. Keyed so the two lists can't slip. */
-const posesFor = (phase: Phase) => FROG_CYCLE[phase];
+/** The Tully poses that fill each phase. Keyed so the two lists can't slip. */
+const posesFor = (phase: Phase) => TULLY_CYCLE[phase];
 
 const CYCLE: readonly Step[] = [
   {
@@ -155,15 +156,15 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     height * DIAMETER_HEIGHT_RATIO,
     MAX_DIAMETER,
   );
-  const frogSize = Math.min(width * FROG_RATIO, height * FROG_HEIGHT_RATIO, MAX_FROG);
+  const tullySize = Math.min(width * TULLY_RATIO, height * TULLY_HEIGHT_RATIO, MAX_TULLY);
 
   const scale = useSharedValue(MIN_SCALE);
   const progress = useSharedValue(0);
   /** `null` until the lead-in is over. Nothing is cued before the breath starts. */
   const [step, setStep] = useState<number | null>(null);
   /**
-   * Starts at the floor of the breath, where the circle also starts, so the
-   * frog is already sitting at the bottom when the screen fades in rather than
+   * Starts at the floor of the breath, where the circle also starts, so Tully
+   * is already sitting at the bottom when the screen fades in rather than
    * appearing mid-inhale.
    */
   const [pose, setPose] = useState<number>(LEAD_IN_POSE);
@@ -183,7 +184,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     const cycles = BREATH_CYCLES;
     let index = 0;
     let timeout: ReturnType<typeof setTimeout> | undefined;
-    // The frog's beats inside the current phase. At most two are ever pending,
+    // Tully's beats inside the current phase. At most four are ever pending,
     // and they are replaced wholesale on every phase change.
     let poseTimers: ReturnType<typeof setTimeout>[] = [];
     let cancelled = false;
@@ -196,7 +197,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     /**
      * Re-anchored to the phase boundary every time, rather than chained off the
      * previous pose. Over four cycles a chain would accumulate every timer's
-     * overshoot and the frog would end the minute visibly behind the circle;
+     * overshoot and Tully would end the minute visibly behind the circle;
      * this way each phase's error is at most one timer deep and never carries.
      */
     const schedulePoses = (beats: ReturnType<typeof posesFor>) => {
@@ -219,7 +220,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     );
 
     // Reduce Motion: the circle opens once and stays open. Everything below
-    // still runs, so the cues and the ticks keep pacing the breath. The frog's
+    // still runs, so the cues and the ticks keep pacing the breath. Tully's
     // half of this is a render-time substitution rather than a write from here
     // — see `shownPose`.
     if (reducedMotion) scale.value = withTiming(1, { duration: 400 });
@@ -240,8 +241,8 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
 
       // Honouring Reduce Motion by holding the circle still, rather than by
       // animating it more gently: someone who asked the system to stop things
-      // moving asked for exactly that. The frog is held for the same reason —
-      // it is the louder of the two, so animating it here would defeat the
+      // moving asked for exactly that. Tully is held for the same reason —
+      // they are the louder of the two, so animating them here would defeat the
       // setting more than the circle would.
       if (!reducedMotion) {
         scale.value = withTiming(current.scale, {
@@ -282,21 +283,21 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
 
   // Under Reduce Motion nothing schedules a pose, so `pose` is left at the
   // lead-in value. Substituting here rather than writing the still pose into
-  // state keeps the effect free of a synchronous setState, and means the frog
+  // state keeps the effect free of a synchronous setState, and means Tully
   // is correct on the very first render instead of one render later.
   const shownPose = reducedMotion ? STILL_POSE : pose;
 
   return (
     <View style={styles.root}>
-      {/* Top half. The frog is centred in it on both axes, which puts it
+      {/* Top half. Tully is centred in it on both axes, which puts them
           directly over the circle below — the two share a centre line, so the
           screen reads as one column rather than two stacked things.
 
-          The artwork's canvas is identical across all eight poses, so the frog
-          grows up and out of a fixed footprint as the breath fills it instead
+          The artwork's canvas is identical across all six poses, so Tully
+          grow up and out of a fixed footprint as the breath fills them instead
           of shifting around as the pose changes. */}
-      <View style={styles.frogHalf}>
-        <BreathingFrog pose={shownPose} size={frogSize} still={reducedMotion} />
+      <View style={styles.tullyHalf}>
+        <BreathingTully pose={shownPose} size={tullySize} still={reducedMotion} />
       </View>
 
       <View style={styles.breathHalf}>
@@ -355,10 +356,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   // Two equal halves rather than one centred column. The split is the layout:
-  // the frog is who you are breathing with and the circle is the breath, and
+  // Tully is who you are breathing with and the circle is the breath, and
   // stacking them at the same weight is what stops either reading as decoration
   // hung off the other.
-  frogHalf: {
+  tullyHalf: {
     flex: 1,
     alignSelf: 'stretch',
     alignItems: 'center',

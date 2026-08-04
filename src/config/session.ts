@@ -90,23 +90,31 @@ export const BREATH_CYCLES = Math.max(
 );
 
 /**
- * The frog that breathes along with the circle.
+ * Tully, who breathes along with the circle.
  *
- * It is drawn, not animated: eight poses, and the breath is which one is on
+ * He is drawn, not animated: six poses, and the breath is which one is on
  * screen. `poseMs` gives each pose its share of the phase it belongs to — one
  * array per phase, in cycle order, and each array has to sum to that phase's
- * duration above. `frog-cycle.test.ts` holds that invariant, because the
- * failure mode of breaking it is the frog quietly falling out of step with the
+ * duration above. `tully-cycle.test.ts` holds that invariant, because the
+ * failure mode of breaking it is Tully quietly falling out of step with the
  * circle rather than anything throwing.
  *
- * The distribution is deliberately lopsided. The inhale gets two evenly-paced
- * poses; the exhale gets three slower ones, because it runs nearly three times
- * as long and a frog that finished deflating early would leave the user still
- * breathing out at a frog that had stopped. The two poses the artwork draws
- * with open eyes land on `hold` and `rest` — the beats where nothing is being
- * asked, and the frog can look back at you.
+ * Only the inhale was drawn. The exhale is the same six poses walked back down,
+ * which is why the counts below are lopsided in the way they are: the inhale
+ * spends four beats climbing the ramp, and the exhale spends five coming back
+ * down over more than twice the time. Slower on the way down is the point —
+ * the exhale is the long phase, and a Tully who finished deflating early would
+ * leave the user still breathing out at a Tully who had stopped.
+ *
+ * The hold is a single beat on purpose. Splitting it would start Tully
+ * deflating during the phase whose whole job is that nothing moves, so the top
+ * drawing keeps all of it and the first step down belongs to the exhale.
+ *
+ * The two drawings with open eyes are the ends of the ramp, so they land on
+ * `hold` and `rest` — the beats where nothing is being asked, and Tully can
+ * look back at you.
  */
-export const FROG = {
+export const TULLY = {
   /**
    * How long one of the three hand-drawn outlines holds before the next.
    * ~8fps, which is the rate the wobble was drawn at — faster reads as noise,
@@ -114,10 +122,10 @@ export const FROG = {
    */
   shimmerMs: 120,
   poseMs: {
-    firstInhale: [1_500, 1_500],
-    secondInhale: [800],
-    hold: [900, 600],
-    exhale: [2_500, 2_800, 2_900],
+    firstInhale: [850, 850, 800],
+    secondInhale: [700],
+    hold: [1_500],
+    exhale: [1_150, 1_200, 1_250, 1_300, 1_300],
     rest: [1_000],
   },
 } as const;

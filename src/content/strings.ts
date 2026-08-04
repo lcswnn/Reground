@@ -154,7 +154,7 @@ export const BREATHE_INTRO = {
    * nothing.
    */
   shape: (rounds: number) =>
-    `${rounds} rounds, about a minute. The circle grows as you breathe in and shrinks as you breathe out, and the frog breathes with it.`,
+    `${rounds} rounds, about a minute. The circle grows as you breathe in and shrinks as you breathe out, and Tully breathes with it.`,
   /** Under the button, quiet. The screen waits: nothing starts on arrival. */
   hint: "Tap start to begin.",
   start: "Start",
