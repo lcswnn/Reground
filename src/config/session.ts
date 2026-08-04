@@ -76,6 +76,39 @@ export const BREATH_CYCLE_MS =
   BREATHING.restMs;
 
 /**
+ * The frog that breathes along with the circle.
+ *
+ * It is drawn, not animated: eight poses, and the breath is which one is on
+ * screen. `poseMs` gives each pose its share of the phase it belongs to — one
+ * array per phase, in cycle order, and each array has to sum to that phase's
+ * duration above. `frog-cycle.test.ts` holds that invariant, because the
+ * failure mode of breaking it is the frog quietly falling out of step with the
+ * circle rather than anything throwing.
+ *
+ * The distribution is deliberately lopsided. The inhale gets two evenly-paced
+ * poses; the exhale gets three slower ones, because it runs nearly three times
+ * as long and a frog that finished deflating early would leave the user still
+ * breathing out at a frog that had stopped. The two poses the artwork draws
+ * with open eyes land on `hold` and `rest` — the beats where nothing is being
+ * asked, and the frog can look back at you.
+ */
+export const FROG = {
+  /**
+   * How long one of the three hand-drawn outlines holds before the next.
+   * ~8fps, which is the rate the wobble was drawn at — faster reads as noise,
+   * slower reads as a stutter.
+   */
+  shimmerMs: 120,
+  poseMs: {
+    firstInhale: [1_500, 1_500],
+    secondInhale: [800],
+    hold: [900, 600],
+    exhale: [2_500, 2_800, 2_900],
+    rest: [1_000],
+  },
+} as const;
+
+/**
  * The 5-4-3-2-1's crossfade: out, a beat of nothing, in.
  *
  * The beat is the part that matters. A straight cut, or a fade with no gap

@@ -11,6 +11,13 @@
  * because the haptics have to fire on phase boundaries and a worklet sequence
  * gives no clean hook for that. The circle itself is still animated on the UI
  * thread; only the four transitions per cycle cross back.
+ *
+ * The frog on the top half is driven from the same machine. It is drawn rather
+ * than animated — eight poses, and the breath is which one is showing — so it
+ * cannot be interpolated the way the circle is, and it needs its own beats
+ * inside each phase. Those come from `frog-cycle.ts` and are scheduled off the
+ * phase's own start below, so the two halves cannot drift apart no matter how
+ * long the screen runs.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -32,6 +39,8 @@ import { BREATHING_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
+import { BreathingFrog } from '@/session/breathing/breathing-frog';
+import { FROG_CYCLE, LEAD_IN_POSE, STILL_POSE } from '@/session/breathing/frog-cycle';
 import { tickBreath } from '@/session/ui/haptics';
 
 type Phase = 'inhale-1' | 'inhale-2' | 'hold' | 'exhale' | 'rest';
@@ -44,8 +53,28 @@ const MIN_SCALE = 0.44;
 /** Where the first inhale stops, leaving the second one somewhere to go. */
 const MID_SCALE = 0.82;
 
-const DIAMETER_RATIO = 0.6;
-const MAX_DIAMETER = 300;
+/**
+ * The circle used to own the screen. It now has the bottom half of it, so it
+ * is bounded by height as well as width — on a short screen the width-derived
+ * size would push the cue and the track into the frog.
+ */
+const DIAMETER_RATIO = 0.58;
+const DIAMETER_HEIGHT_RATIO = 0.22;
+const MAX_DIAMETER = 260;
+
+/**
+ * The frog, bounded on the same two axes as the circle so the pair keep their
+ * relative sizes on any screen rather than one of them hitting a cap first.
+ *
+ * Sized as a square: the artwork is cropped to the union of all eight poses,
+ * which comes out at an aspect of 1.02, so a square box and `contain` leave
+ * almost nothing spare. Deliberately smaller than the circle — the circle is
+ * the thing to breathe with, and a frog that outweighs it turns the screen
+ * into a picture of a frog with a timer under it.
+ */
+const FROG_RATIO = 0.44;
+const FROG_HEIGHT_RATIO = 0.19;
+const MAX_FROG = 190;
 
 interface Step {
   phase: Phase;
@@ -56,6 +85,9 @@ interface Step {
   haptic: boolean;
   cue: string | null;
 }
+
+/** The frog poses that fill each phase. Keyed so the two lists can't slip. */
+const posesFor = (phase: Phase) => FROG_CYCLE[phase];
 
 const CYCLE: readonly Step[] = [
   {
@@ -118,12 +150,23 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
   const { width, height } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
 
-  const diameter = Math.min(Math.min(width, height) * DIAMETER_RATIO, MAX_DIAMETER);
+  const diameter = Math.min(
+    width * DIAMETER_RATIO,
+    height * DIAMETER_HEIGHT_RATIO,
+    MAX_DIAMETER,
+  );
+  const frogSize = Math.min(width * FROG_RATIO, height * FROG_HEIGHT_RATIO, MAX_FROG);
 
   const scale = useSharedValue(MIN_SCALE);
   const progress = useSharedValue(0);
   /** `null` until the lead-in is over. Nothing is cued before the breath starts. */
   const [step, setStep] = useState<number | null>(null);
+  /**
+   * Starts at the floor of the breath, where the circle also starts, so the
+   * frog is already sitting at the bottom when the screen fades in rather than
+   * appearing mid-inhale.
+   */
+  const [pose, setPose] = useState<number>(LEAD_IN_POSE);
 
   // Held in a ref so the effect below can stay mounted for the whole minute
   // instead of tearing down and restarting the breath on every phase change.
@@ -139,7 +182,33 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     const cycles = Math.max(1, Math.round(BREATHING.totalMs / BREATH_CYCLE_MS));
     let index = 0;
     let timeout: ReturnType<typeof setTimeout> | undefined;
+    // The frog's beats inside the current phase. At most two are ever pending,
+    // and they are replaced wholesale on every phase change.
+    let poseTimers: ReturnType<typeof setTimeout>[] = [];
     let cancelled = false;
+
+    const clearPoses = () => {
+      for (const id of poseTimers) clearTimeout(id);
+      poseTimers = [];
+    };
+
+    /**
+     * Re-anchored to the phase boundary every time, rather than chained off the
+     * previous pose. Over four cycles a chain would accumulate every timer's
+     * overshoot and the frog would end the minute visibly behind the circle;
+     * this way each phase's error is at most one timer deep and never carries.
+     */
+    const schedulePoses = (beats: ReturnType<typeof posesFor>) => {
+      clearPoses();
+      setPose(beats[0].pose);
+
+      let at = 0;
+      for (let i = 1; i < beats.length; i += 1) {
+        at += beats[i - 1].ms;
+        const next = beats[i].pose;
+        poseTimers.push(setTimeout(() => setPose(next), at));
+      }
+    };
 
     // Delayed by the same lead-in, so the line starts moving when the breath
     // does rather than while the circle is still.
@@ -149,13 +218,16 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     );
 
     // Reduce Motion: the circle opens once and stays open. Everything below
-    // still runs, so the cues and the ticks keep pacing the breath.
+    // still runs, so the cues and the ticks keep pacing the breath. The frog's
+    // half of this is a render-time substitution rather than a write from here
+    // — see `shownPose`.
     if (reducedMotion) scale.value = withTiming(1, { duration: 400 });
 
     const run = () => {
       if (cancelled) return;
 
       if (index >= cycles * CYCLE.length) {
+        clearPoses();
         onDoneRef.current();
         return;
       }
@@ -167,12 +239,15 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
 
       // Honouring Reduce Motion by holding the circle still, rather than by
       // animating it more gently: someone who asked the system to stop things
-      // moving asked for exactly that.
+      // moving asked for exactly that. The frog is held for the same reason —
+      // it is the louder of the two, so animating it here would defeat the
+      // setting more than the circle would.
       if (!reducedMotion) {
         scale.value = withTiming(current.scale, {
           duration: current.ms,
           easing: current.easing,
         });
+        schedulePoses(posesFor(current.phase));
       }
 
       index += 1;
@@ -186,6 +261,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     return () => {
       cancelled = true;
       if (timeout) clearTimeout(timeout);
+      clearPoses();
     };
   }, [progress, reducedMotion, scale]);
 
@@ -203,50 +279,69 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
 
   const cue = step === null ? null : CYCLE[step % CYCLE.length].cue;
 
+  // Under Reduce Motion nothing schedules a pose, so `pose` is left at the
+  // lead-in value. Substituting here rather than writing the still pose into
+  // state keeps the effect free of a synchronous setState, and means the frog
+  // is correct on the very first render instead of one render later.
+  const shownPose = reducedMotion ? STILL_POSE : pose;
+
   return (
     <View style={styles.root}>
-      <View style={styles.cueSlot}>
-        {cue ? (
+      {/* Top half. The frog is centred in it on both axes, which puts it
+          directly over the circle below — the two share a centre line, so the
+          screen reads as one column rather than two stacked things.
+
+          The artwork's canvas is identical across all eight poses, so the frog
+          grows up and out of a fixed footprint as the breath fills it instead
+          of shifting around as the pose changes. */}
+      <View style={styles.frogHalf}>
+        <BreathingFrog pose={shownPose} size={frogSize} still={reducedMotion} />
+      </View>
+
+      <View style={styles.breathHalf}>
+        <View style={styles.cueSlot}>
+          {cue ? (
+            <Animated.View
+              // Keyed on the word: this is a swap of one element for another,
+              // which is what gives each cue its own fade.
+              key={`${step}-${cue}`}
+              entering={FadeIn.duration(CUE_FADE_MS)}
+              exiting={FadeOut.duration(CUE_FADE_MS)}
+              style={styles.cue}>
+              <ThemedText type="subtitle" themeColor="textSecondary" style={styles.cueText}>
+                {cue}
+              </ThemedText>
+            </Animated.View>
+          ) : null}
+        </View>
+
+        <View style={[styles.stage, { width: diameter * 1.3, height: diameter * 1.3 }]}>
           <Animated.View
-            // Keyed on the word: this is a swap of one element for another,
-            // which is what gives each cue its own fade.
-            key={`${step}-${cue}`}
-            entering={FadeIn.duration(CUE_FADE_MS)}
-            exiting={FadeOut.duration(CUE_FADE_MS)}
-            style={styles.cue}>
-            <ThemedText type="subtitle" themeColor="textSecondary" style={styles.cueText}>
-              {cue}
-            </ThemedText>
-          </Animated.View>
-        ) : null}
-      </View>
+            style={[
+              styles.circle,
+              haloStyle,
+              { width: diameter, height: diameter, borderRadius: diameter / 2 },
+              { backgroundColor: theme.info },
+            ]}
+          />
+          <Animated.View
+            style={[
+              styles.circle,
+              coreStyle,
+              { width: diameter, height: diameter, borderRadius: diameter / 2 },
+              { backgroundColor: withAlpha(theme.info, 0.2), borderColor: theme.info },
+            ]}
+          />
+        </View>
 
-      <View style={[styles.stage, { width: diameter * 1.3, height: diameter * 1.3 }]}>
-        <Animated.View
-          style={[
-            styles.circle,
-            haloStyle,
-            { width: diameter, height: diameter, borderRadius: diameter / 2 },
-            { backgroundColor: theme.info },
-          ]}
-        />
-        <Animated.View
-          style={[
-            styles.circle,
-            coreStyle,
-            { width: diameter, height: diameter, borderRadius: diameter / 2 },
-            { backgroundColor: withAlpha(theme.info, 0.2), borderColor: theme.info },
-          ]}
-        />
-      </View>
-
-      {/* The only indication of time left, and it is a hairline at a third
-          opacity — visible if you look for it, invisible if you don't. A
-          countdown here would be something to watch instead of the breath. */}
-      <View style={[styles.track, { backgroundColor: theme.border }]}>
-        <Animated.View
-          style={[styles.fill, progressStyle, { backgroundColor: theme.textMuted }]}
-        />
+        {/* The only indication of time left, and it is a hairline at a third
+            opacity — visible if you look for it, invisible if you don't. A
+            countdown here would be something to watch instead of the breath. */}
+        <View style={[styles.track, { backgroundColor: theme.border }]}>
+          <Animated.View
+            style={[styles.fill, progressStyle, { backgroundColor: theme.textMuted }]}
+          />
+        </View>
       </View>
     </View>
   );
@@ -254,7 +349,26 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
 
 const styles = StyleSheet.create({
   root: {
+    flex: 1,
+    alignSelf: 'stretch',
     alignItems: 'center',
+  },
+  // Two equal halves rather than one centred column. The split is the layout:
+  // the frog is who you are breathing with and the circle is the breath, and
+  // stacking them at the same weight is what stops either reading as decoration
+  // hung off the other.
+  frogHalf: {
+    flex: 1,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingBottom: Spacing.two,
+  },
+  breathHalf: {
+    flex: 1,
+    alignSelf: 'stretch',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.four,
   },
   cueSlot: {
