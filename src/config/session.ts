@@ -92,27 +92,30 @@ export const BREATH_CYCLES = Math.max(
 /**
  * Tully, who breathes along with the circle.
  *
- * He is drawn, not animated: six poses, and the breath is which one is on
+ * Tully is drawn, not animated: nine poses, and the breath is which one is on
  * screen. `poseMs` gives each pose its share of the phase it belongs to — one
  * array per phase, in cycle order, and each array has to sum to that phase's
  * duration above. `tully-cycle.test.ts` holds that invariant, because the
  * failure mode of breaking it is Tully quietly falling out of step with the
  * circle rather than anything throwing.
  *
- * Only the inhale was drawn. The exhale is the same six poses walked back down,
- * which is why the counts below are lopsided in the way they are: the inhale
- * spends four beats climbing the ramp, and the exhale spends five coming back
- * down over more than twice the time. Slower on the way down is the point —
- * the exhale is the long phase, and a Tully who finished deflating early would
- * leave the user still breathing out at a Tully who had stopped.
+ * Only the way up was drawn. The exhale walks the same poses back down, which
+ * is why the counts below are lopsided in the way they are: eight beats climb,
+ * and seven come back down over more than twice the time. Slower on the way
+ * down is the point — the exhale is the long phase, and a Tully who finished
+ * deflating early would leave the user still breathing out at a Tully who had
+ * stopped.
+ *
+ * `secondInhale` is the tight one: three beats inside 700ms, which is roughly
+ * twice the shimmer rate below. That is the fastest anything here moves, and it
+ * is deliberate — the top-up is a snatched breath, and drawn at first-inhale
+ * pace it would read as one long inhale with a stumble in it. If it ever needs
+ * to breathe more, `BREATHING.secondInhaleMs` is the number to move, not this
+ * one; these only decide how that phase is divided up.
  *
  * The hold is a single beat on purpose. Splitting it would start Tully
  * deflating during the phase whose whole job is that nothing moves, so the top
  * drawing keeps all of it and the first step down belongs to the exhale.
- *
- * The two drawings with open eyes are the ends of the ramp, so they land on
- * `hold` and `rest` — the beats where nothing is being asked, and Tully can
- * look back at you.
  */
 export const TULLY = {
   /**
@@ -122,10 +125,10 @@ export const TULLY = {
    */
   shimmerMs: 120,
   poseMs: {
-    firstInhale: [850, 850, 800],
-    secondInhale: [700],
+    firstInhale: [500, 500, 500, 500, 500],
+    secondInhale: [235, 235, 230],
     hold: [1_500],
-    exhale: [1_150, 1_200, 1_250, 1_300, 1_300],
+    exhale: [800, 850, 880, 900, 900, 920, 950],
     rest: [1_000],
   },
 } as const;

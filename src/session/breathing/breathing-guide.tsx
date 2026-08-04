@@ -13,7 +13,7 @@
  * thread; only the four transitions per cycle cross back.
  *
  * Tully, on the top half, is driven from the same machine. They are drawn rather
- * than animated — six poses, and the breath is which one is showing — so they
+ * than animated — nine poses, and the breath is which one is showing — so they
  * cannot be interpolated the way the circle is, and they need their own beats
  * inside each phase. Those come from `tully-cycle.ts` and are scheduled off the
  * phase's own start below, so the two halves cannot drift apart no matter how
@@ -66,7 +66,7 @@ const MAX_DIAMETER = 260;
  * Tully, bounded on the same two axes as the circle so the pair keep their
  * relative sizes on any screen rather than one of them hitting a cap first.
  *
- * Sized as a square, and the artwork's 1.2 aspect means `contain` fits them to
+ * Sized as a square, and the artwork's 1.15 aspect means `contain` fits them to
  * the width and leaves the spare above and below. That spare is what they grow
  * into: the union crop is sized for their fullest pose, so at the bottom of the
  * breath they are a good deal shorter than the box. Deliberately smaller than
@@ -184,7 +184,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     const cycles = BREATH_CYCLES;
     let index = 0;
     let timeout: ReturnType<typeof setTimeout> | undefined;
-    // Tully's beats inside the current phase. At most four are ever pending,
+    // Tully's beats inside the current phase. At most six are ever pending,
     // and they are replaced wholesale on every phase change.
     let poseTimers: ReturnType<typeof setTimeout>[] = [];
     let cancelled = false;
@@ -293,7 +293,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
           directly over the circle below — the two share a centre line, so the
           screen reads as one column rather than two stacked things.
 
-          The artwork's canvas is identical across all six poses, so Tully
+          The artwork's canvas is identical across all nine poses, so Tully
           grow up and out of a fixed footprint as the breath fills them instead
           of shifting around as the pose changes. */}
       <View style={styles.tullyHalf}>

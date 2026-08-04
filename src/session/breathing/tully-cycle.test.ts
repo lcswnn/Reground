@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import { BREATH_CYCLE_MS } from '@/config/session';
 import {
+  EYES_OPEN,
   LEAD_IN_POSE,
   PHASE_MS,
   POSE,
@@ -12,6 +13,13 @@ import {
 
 const phases = Object.keys(TULLY_CYCLE) as (keyof typeof TULLY_CYCLE)[];
 const total = (bs: readonly PoseBeat[]) => bs.reduce((sum, b) => sum + b.ms, 0);
+
+/** The cycle split at the top, into the climb and the descent. */
+const halves = (): [number[], number[]] => {
+  const order = [LEAD_IN_POSE, ...phases.flatMap((p) => TULLY_CYCLE[p].map((b) => b.pose))];
+  const top = order.indexOf(POSE.peak);
+  return [order.slice(0, top + 1), order.slice(top)];
+};
 
 describe('the Tully cycle', () => {
   // The one that matters. Every other assertion here is a way of finding out
@@ -30,7 +38,7 @@ describe('the Tully cycle', () => {
     for (const beat of TULLY_CYCLE[phase]) expect(beat.ms).toBeGreaterThan(0);
   });
 
-  it('uses all six drawings', () => {
+  it('uses all nine drawings', () => {
     const used = new Set(phases.flatMap((p) => TULLY_CYCLE[p].map((b) => b.pose)));
     expect(used.size).toBe(POSE_COUNT);
   });
@@ -56,23 +64,39 @@ describe('the Tully cycle', () => {
     expect(order.at(-1)).toBe(LEAD_IN_POSE);
   });
 
-  // Only the inhale was drawn. The exhale is those drawings played backwards,
-  // and this is the assertion that keeps it that way — the whole cycle has to
-  // read as one ramp climbed and then descended, with no drawing appearing on
-  // the way down that was not on the way up.
+  // Only the way up was drawn. The exhale replays those drawings backwards, and
+  // this is the assertion that keeps it that way — the whole cycle has to read
+  // as one ramp climbed and then descended.
   it('climbs to the peak and comes back down the same drawings', () => {
     // Read with the resting pose in front: the cycle joins onto itself at
     // `bottom`, so the first inhale starts one drawing up from the floor and
     // the ramp is only whole once the rest before it is counted.
-    const order = [LEAD_IN_POSE, ...phases.flatMap((p) => TULLY_CYCLE[p].map((b) => b.pose))];
-    const top = order.indexOf(POSE.peak);
-
-    const up = order.slice(0, top + 1);
-    const down = order.slice(top);
+    const [up, down] = halves();
 
     expect(up).toStrictEqual([...up].sort((a, b) => a - b));
     expect(down).toStrictEqual([...down].sort((a, b) => b - a));
-    // Mirrored, not merely monotonic: the way down draws nothing new.
-    expect(new Set(down)).toStrictEqual(new Set(up));
+    // Nothing new on the way down. Not set equality — the descent is allowed to
+    // leave a drawing out, and does; see the two tests below.
+    for (const pose of down) expect(up).toContain(pose);
+  });
+
+  // The rule that lets the descent skip anything. Tully works with their eyes
+  // shut, so the only open-eyed drawing the exhale may show is the one it comes
+  // to rest on.
+  it('keeps Tully\'s eyes shut all the way down', () => {
+    const exhale = TULLY_CYCLE.exhale.map((b) => b.pose);
+    for (const pose of exhale.slice(0, -1)) expect(EYES_OPEN).not.toContain(pose);
+    expect(exhale.at(-1)).toBe(POSE.bottom);
+  });
+
+  // And the reason skipping is free: `brim` is the only drawing the descent
+  // leaves out, and `sip` is the same inflation with the eyes shut, so the way
+  // down loses a blink rather than a step of the breath.
+  it('gives up no inflation by skipping brim', () => {
+    const [up, down] = halves();
+    const skipped = up.filter((pose) => !down.includes(pose));
+
+    expect(skipped).toStrictEqual([POSE.brim]);
+    expect(down).toContain(POSE.sip);
   });
 });

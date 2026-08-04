@@ -2,9 +2,10 @@
  * Tully, drawn at whichever pose the breath has reached.
  *
  * Two clocks, deliberately unrelated. The pose comes down as a prop from the
- * phase machine in `breathing-guide.tsx`, so it changes ten times a cycle on
- * the same boundaries the circle and the haptics use. The shimmer — which of
- * the three outlines of that pose is showing — runs here on its own interval,
+ * phase machine in `breathing-guide.tsx`, so it changes fifteen times a cycle
+ * on the same boundaries the circle and the haptics use. The shimmer — which
+ * of the three outlines of that pose is showing — runs here on its own
+ * interval,
  * because it is not part of the breath. It is the thing that keeps Tully from
  * reading as a static image during the seconds they spend at the bottom, and
  * tying it to the breath would make those seconds still.
@@ -29,7 +30,7 @@ interface BreathingTullyProps {
   pose: number;
   /**
    * Side of the square Tully is drawn inside. The artwork is cropped to an
-   * aspect of 1.2, so `contain` fits them to the width and leaves a little
+   * aspect of 1.15, so `contain` fits them to the width and leaves a little
    * spare above and below.
    */
   size: number;

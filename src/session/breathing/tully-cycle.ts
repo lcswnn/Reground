@@ -7,17 +7,22 @@
  * little further from the circle every cycle. So the mapping is plain data in a
  * file with no React Native in it, and a test asserts the tiling.
  *
- * All six drawings are distinct inflations, in a clean ramp from emptiest to
- * fullest, and only the inhale was drawn. So the breath climbs the ramp and
- * then walks back down it, and four of the six are used twice — once on the
- * way up, once on the way down. That is why the pose names below describe an
- * inflation rather than a moment in the breath: `risen` is one drawing whether
- * the chest is filling or emptying, and it is the cycle that says which.
+ * The nine drawings are seven inflations, because two of them come in pairs:
+ * `brim`/`sip` are one size and `crest`/`peak` are another, each pair drawn
+ * once with the eyes open and once shut. That is the whole trick of the second
+ * inhale — Tully can close their eyes without changing size, and change size
+ * without opening them, so the top-up reads as a decision rather than as more
+ * of the same swelling.
  *
- * The two drawings with the eyes open are the two ends of the ramp, and they
- * land on the two phases where nothing is being asked — `bottom` on the rest
- * and `peak` on the hold. Tully looks back at you at the floor and at the top,
- * and has their eyes shut through the work in between.
+ * Only the way up was drawn. The exhale walks the same drawings back down, so
+ * the pose names describe an inflation rather than a moment in the breath:
+ * `risen` is one drawing whether the chest is filling or emptying, and it is
+ * the cycle below that says which.
+ *
+ * The three drawings with the eyes open are `bottom`, `brim` and `peak` — the
+ * floor, the top of the first inhale, and the top of the second. Tully looks at
+ * you at each of those and has their eyes shut for the work in between, which
+ * is why the descent skips `brim`: see `TULLY_CYCLE`.
  */
 
 import { BREATHING, TULLY } from '@/config/session';
@@ -33,12 +38,25 @@ export const POSE = {
   risen: 2,
   swelling: 3,
   full: 4,
-  /** Fullest, eyes open. The beat at the top. */
-  peak: 5,
+  /** Top of the first inhale, eyes open. Same size as `sip`. */
+  brim: 5,
+  /** `brim` with the eyes shut — the second inhale starting. */
+  sip: 6,
+  /** Fullest, eyes shut. What the top-up reaches. */
+  crest: 7,
+  /** `crest` with the eyes open. The beat at the top. */
+  peak: 8,
 } as const;
 
 /** How many poses exist, and so how many the cycle has to account for. */
 export const POSE_COUNT = Object.keys(POSE).length;
+
+/**
+ * The drawings Tully was given open eyes in. They are the three still points of
+ * the breath, and the exhale is defined against this set rather than against a
+ * list of pose numbers — so a drawing added later is placed by what it depicts.
+ */
+export const EYES_OPEN: ReadonlySet<number> = new Set([POSE.bottom, POSE.brim, POSE.peak]);
 
 export interface PoseBeat {
   /** An index into `TULLY_FRAMES`. */
@@ -55,21 +73,29 @@ const beats = (poses: readonly number[], durations: readonly number[]): readonly
  * `CYCLE` it has just entered without the two lists having to be kept in the
  * same order by hand.
  *
- * The hold is one beat, not two: `peak` has the whole of it, so the top of the
- * breath is one unbroken beat on the last drawing rather than a glimpse of it
- * followed by Tully starting to sag while the user is still holding. Nothing
- * moves until the exhale actually begins.
+ * The second inhale is the phase this was all drawn for. It is the shortest in
+ * the cycle and it used to be a single pose, which made it the one moment
+ * Tully was not visibly doing what the user was being asked to do. Now it runs
+ * `sip → crest → peak`: eyes shut at the size the first inhale left them,
+ * a real swell, then eyes open at the top. Three beats inside 700ms is fast,
+ * and meant to be — it is a snatched breath, not a second slow one.
  *
- * Which is why `full` heads the exhale. It is a smaller drawing than `peak`, so
- * that first beat is a visible letting-go on the boundary itself — the release
- * lands with the cue rather than ahead of it.
+ * The exhale skips `brim`, which is the rule Tully's face sets rather than an
+ * omission. The descent is the working half of the breath and Tully keeps their
+ * eyes shut through it, and `brim` is the eyes-open drawing of a size the
+ * eyes-shut `sip` already covers — so dropping it costs the descent no step of
+ * inflation at all. It only removes a blink that would read as Tully checking
+ * on you halfway through their own exhale.
  */
 export const TULLY_CYCLE = {
-  'inhale-1': beats([POSE.rising, POSE.risen, POSE.swelling], TULLY.poseMs.firstInhale),
-  'inhale-2': beats([POSE.full], TULLY.poseMs.secondInhale),
+  'inhale-1': beats(
+    [POSE.rising, POSE.risen, POSE.swelling, POSE.full, POSE.brim],
+    TULLY.poseMs.firstInhale,
+  ),
+  'inhale-2': beats([POSE.sip, POSE.crest, POSE.peak], TULLY.poseMs.secondInhale),
   hold: beats([POSE.peak], TULLY.poseMs.hold),
   exhale: beats(
-    [POSE.full, POSE.swelling, POSE.risen, POSE.rising, POSE.bottom],
+    [POSE.crest, POSE.sip, POSE.full, POSE.swelling, POSE.risen, POSE.rising, POSE.bottom],
     TULLY.poseMs.exhale,
   ),
   rest: beats([POSE.bottom], TULLY.poseMs.rest),
