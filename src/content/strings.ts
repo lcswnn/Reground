@@ -296,8 +296,8 @@ export const PARK_WORRY = {
 } as const;
 
 export const CLOSE = {
-  title: "That's it.",
-  body: "Put your phone down. Nothing here needs you again today.",
+  title: "That's all.",
+  body: "Now try to unwind without your device. Go on a walk, talk to a family member, or go master your hobby.",
   /** The only action on the screen. No rating, no share, no "come back". */
   done: "Close",
 } as const;
