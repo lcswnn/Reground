@@ -10,12 +10,29 @@
  * reading as a static image during the seconds they spend at the bottom, and
  * tying it to the breath would make those seconds still.
  *
- * All three outlines of the current pose stay mounted and the shimmer only
- * moves opacity between them. Swapping one `Image`'s source eight times a
- * second would work, but every swap is a decode the view might not have
- * finished before the next frame — the stack turns the common case into a
- * property change and leaves the decode for the pose change, where there is
- * time to absorb it.
+ * Every frame of every pose stays mounted, and opacity is the only thing that
+ * ever moves. No `Image` here is given a second source for as long as the
+ * screen is up.
+ *
+ * That is load-bearing, not tidiness. When a mounted `expo-image` has its
+ * `source` changed it keeps drawing the *previous* image until the new one has
+ * loaded — the documented behaviour that `recyclingKey` exists to opt out of.
+ * This component used to mount three views keyed by variant and swap all three
+ * sources on every pose change, which meant each view held its old drawing for
+ * however long its own load took, while the shimmer below kept revealing them
+ * on a 120ms clock. A view that had not caught up yet got shown still holding
+ * the previous pose, so Tully visibly jumped back a size and forward again,
+ * several times a second, all the way up the inhale and down the exhale. It
+ * only looked stable across the top of the breath because `crest` and `peak`
+ * are the same inflation, so there the stale frame was the same size.
+ *
+ * Mounting the lot costs a first decode of every frame, which lands during
+ * `BREATHING.leadInMs` — the screen is deliberately still for 1.4s before the
+ * first inhale, and this is the work that window is now absorbing. It also caps
+ * what the artwork may weigh: 27 frames resident is the reason `tully-frames`
+ * is scaled to the size Tully is actually drawn at rather than to a round
+ * multiple. Anything that grows the frame count or the canvas is spending
+ * memory that stays spent for the whole session.
  */
 
 import { useEffect, useState } from 'react';
@@ -65,18 +82,26 @@ export function BreathingTully({ pose, size, still = false }: BreathingTullyProp
       style={{ width: size, height: size }}
       accessibilityElementsHidden
       importantForAccessibility="no-hide-descendants">
-      {TULLY_FRAMES[pose].map((source, frame) => (
-        <Image
-          key={frame}
-          source={source}
-          style={[StyleSheet.absoluteFill, frame === showing ? styles.on : styles.off]}
-          contentFit="contain"
-          // The crossfade expo-image does by default would blur one outline
-          // into the next and undo the point of drawing three of them.
-          transition={0}
-          cachePolicy="memory-disk"
-        />
-      ))}
+      {TULLY_FRAMES.map((variants, at) =>
+        variants.map((source, frame) => (
+          <Image
+            // Keyed by pose as well as variant, so React never reuses one of
+            // these views for a different drawing. That is the whole point —
+            // see the note above.
+            key={`${at}-${frame}`}
+            source={source}
+            style={[
+              StyleSheet.absoluteFill,
+              at === pose && frame === showing ? styles.on : styles.off,
+            ]}
+            contentFit="contain"
+            // The crossfade expo-image does by default would blur one outline
+            // into the next and undo the point of drawing three of them.
+            transition={0}
+            cachePolicy="memory-disk"
+          />
+        )),
+      )}
     </View>
   );
 }

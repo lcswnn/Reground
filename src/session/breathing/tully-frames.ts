@@ -21,10 +21,16 @@
  *    fixed corner, so cropping each frame to its own bounds would re-centre
  *    every pose separately and make Tully jump as the breath changed them. The
  *    shared canvas is what keeps their feet in one place;
- *  - scaled 3× with nearest-neighbour, so the hard pixel edges survive being
- *    drawn at roughly 1:1 on a 3× screen instead of being resampled to mush.
+ *  - scaled 2× with nearest-neighbour, which is the multiple that lands
+ *    nearest 1:1 where Tully is actually drawn. `breathing-guide` caps them at
+ *    190pt and a typical phone gives them ~162pt, so a 3× screen asks for about
+ *    486px against the 522 here — near enough that the hard pixel edges survive
+ *    instead of being resampled to mush. 3× was the first guess and it was
+ *    wrong in both directions: a 0.62 downscale that crawled along the outlines,
+ *    and, once `BreathingTully` began mounting every frame at once, more than
+ *    twice the resident memory for the privilege.
  *
- * The result is 783×684 — an aspect of 1.15, so `BreathingTully` draws it inside
+ * The result is 522×456 — an aspect of 1.15, so `BreathingTully` draws it inside
  * a square with `contain` and leaves a little spare above and below. If the art
  * is ever re-exported with real alpha at a higher resolution, the crop and the
  * key stop being needed, but the union-crop rule still applies: whatever lands

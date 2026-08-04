@@ -189,7 +189,7 @@ export const PUZZLE_COPY = {
   worldFraming: "A few minutes of this. No score, no way to lose.",
   /** GROUP B — this is the step that matters, and we say why. */
   witnessedFraming:
-    "This next part helps stop that image from looping. It works better the longer you stay with it.",
+    "Use the buttons to move the shape, and place it where it fits.",
   rotate: "Rotate",
   place: "Place",
   left: "Left",

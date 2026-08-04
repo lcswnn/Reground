@@ -40,8 +40,37 @@ type CellState = 'empty' | 'settled' | 'active' | 'ghost';
 
 const MAX_BOARD_WIDTH = 320;
 const CELL_GAP = 3;
-/** Share of the screen height the grid is allowed. The rest is controls. */
-const BOARD_HEIGHT_RATIO = 0.52;
+
+/**
+ * The control heights, named rather than written into `styles` alone, because
+ * the grid's height budget is whatever is left after them and the two numbers
+ * have to agree. Change one and change the other.
+ */
+const CONTROL_HEIGHT = 56;
+const PLACE_HEIGHT = 56;
+
+/**
+ * The floor on a cell. A board that cannot fit its rows shrinks until it can,
+ * and this is where the shrinking stops — below this the shapes stop reading as
+ * shapes. Nothing currently hits it: the smallest screen the app supports lands
+ * around 27px.
+ */
+const MIN_CELL = 18;
+
+/**
+ * First-frame guess at the grid's share of the screen, used only until
+ * `onLayout` reports the real box on the very next frame.
+ *
+ * This used to be the whole sizing rule, and it was the reason "I'm done" could
+ * end up below the bottom of the screen. A share of the *window* is not a share
+ * of what is going spare: the safe-area insets, the back button, the heading and
+ * its framing copy, this board's own controls and the footer button all come out
+ * of the same column, and none of them were in the 0.52. On a small phone the
+ * total came to about 64px more than there was, and the footer is last in the
+ * column, so the footer is what fell off. Hence the measurement below — the
+ * board takes what is left rather than taking a cut off the top.
+ */
+const BOARD_HEIGHT_ESTIMATE = 0.42;
 
 export function PuzzleBoard() {
   const theme = useTheme();
@@ -56,14 +85,33 @@ export function PuzzleBoard() {
     Math.floor((PUZZLE.columns - piece.cells[0].length) / 2),
   );
 
+  /**
+   * The height this whole component was given, measured rather than assumed.
+   * `null` for one frame, before the first layout.
+   */
+  const [box, setBox] = useState<number | null>(null);
+
   // Sized off the shorter constraint of the two. Width alone overflows a small
   // phone once the controls and the framing copy are below it, and a board you
   // have to scroll to see all of is not a board.
+  //
+  // The height side is what is left of `box` once the controls underneath have
+  // taken theirs. Because the root is `flex: 1`, `box` is decided entirely by
+  // the parent and never by what is rendered into it, so measuring it here
+  // cannot feed back into its own size.
+  const budget =
+    box === null
+      ? height * BOARD_HEIGHT_ESTIMATE
+      : box - (CONTROL_HEIGHT + Spacing.three + PLACE_HEIGHT) - Spacing.four;
+
   const availableWidth = Math.min(width - Spacing.four * 2, MAX_BOARD_WIDTH);
-  const cellSize = Math.floor(
-    Math.min(
-      (availableWidth - CELL_GAP * (PUZZLE.columns - 1)) / PUZZLE.columns,
-      (height * BOARD_HEIGHT_RATIO - CELL_GAP * (PUZZLE.rows - 1)) / PUZZLE.rows,
+  const cellSize = Math.max(
+    MIN_CELL,
+    Math.floor(
+      Math.min(
+        (availableWidth - CELL_GAP * (PUZZLE.columns - 1)) / PUZZLE.columns,
+        (budget - CELL_GAP * (PUZZLE.rows - 1)) / PUZZLE.rows,
+      ),
     ),
   );
   const boardWidth = cellSize * PUZZLE.columns + CELL_GAP * (PUZZLE.columns - 1);
@@ -159,7 +207,9 @@ export function PuzzleBoard() {
   };
 
   return (
-    <View style={styles.root}>
+    <View
+      style={styles.root}
+      onLayout={(event) => setBox(event.nativeEvent.layout.height)}>
       <View style={[styles.grid, { width: boardWidth }]}>
         {display.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
@@ -234,8 +284,19 @@ function ControlButton({
 }
 
 const styles = StyleSheet.create({
+  // `flex: 1` so the board is handed the space the screen has left rather than
+  // asking for a share of the window — see `BOARD_HEIGHT_ESTIMATE`.
+  //
+  // Centred rather than spread: on a phone the grid very nearly fills its
+  // budget and there is nothing to distribute either way, but on a tablet the
+  // cell size is capped by width instead and a couple of hundred points go
+  // spare. Spreading would pin the controls to the bottom of the screen and
+  // leave them stranded from the board they drive; centring keeps the two
+  // reading as one object and puts the slack around the outside.
   root: {
+    flex: 1,
     alignItems: 'center',
+    justifyContent: 'center',
     gap: Spacing.four,
   },
   grid: {
@@ -259,7 +320,7 @@ const styles = StyleSheet.create({
   },
   control: {
     width: 64,
-    height: 56,
+    height: CONTROL_HEIGHT,
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth * 2,
     alignItems: 'center',
@@ -270,7 +331,7 @@ const styles = StyleSheet.create({
   },
   place: {
     alignSelf: 'stretch',
-    height: 56,
+    height: PLACE_HEIGHT,
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
