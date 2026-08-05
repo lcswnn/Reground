@@ -83,6 +83,32 @@ export function clearFullRows(board: Board): { board: Board; cleared: number } {
   return { board: [...empty, ...kept], cleared };
 }
 
+/**
+ * Takes the bottom `count` rows away and lets everything above them fall.
+ *
+ * This is what happens when the stack reaches the top, and it is the whole of
+ * the no-fail rule made concrete. Wiping the board — which is what this used to
+ * do — is not a gentle continuation of anything: the thing the player spent
+ * three minutes building disappears in a frame, and however carefully the copy
+ * avoids the word, that reads as losing. Dissolving the oldest rows from
+ * underneath leaves the shape of the stack intact, gives back room to carry on
+ * in, and looks like the board settling rather than the board ending.
+ *
+ * Asking for more rows than there are is not an error; it empties the board,
+ * which is the only sensible reading of it.
+ */
+export function dissolveLowest(board: Board, count: number): Board {
+  const columns = board[0].length;
+  const taken = Math.max(0, Math.min(count, board.length));
+  if (taken === 0) return board;
+
+  const kept = board.slice(0, board.length - taken);
+  const empty = Array.from({ length: taken }, () =>
+    Array.from({ length: columns }, () => false),
+  );
+  return [...empty, ...kept];
+}
+
 /** Keeps a piece's column in range as it is moved or rotated. */
 export function clampColumn(cells: ShapeGrid, column: number, columns: number): number {
   const width = cells[0].length;

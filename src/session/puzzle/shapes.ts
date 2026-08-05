@@ -8,6 +8,15 @@
  *
  * The mix is trominoes and pentominoes: three cells or five, never four. All
  * six need real mental rotation to place, which is the point of the task.
+ *
+ * ## Rotation-forced
+ *
+ * Every shape here has more than one distinct orientation, and that is checked
+ * in `shapes.test.ts` rather than left to whoever adds the next one. A piece
+ * that looks the same after a quarter-turn — the plus sign this set used to
+ * carry, or a square — can be placed without ever picturing it turned, and a
+ * turn of the bag that hands you one is a turn where the game does nothing it
+ * is here to do. See `distinctRotations`.
  */
 
 export type ShapeCell = 0 | 1;
@@ -54,12 +63,15 @@ export const SHAPES: readonly Shape[] = [
     id: 'bar',
     cells: [[1, 1, 1]],
   },
+  // Replaces the plus sign that used to sit here, which was the one piece in
+  // the set that a quarter-turn left unchanged — see the note above. This one
+  // is chiral, so its two orientations are genuinely different gaps.
   {
-    id: 'cross',
+    id: 'zag',
     cells: [
+      [1, 1, 0],
       [0, 1, 0],
-      [1, 1, 1],
-      [0, 1, 0],
+      [0, 1, 1],
     ],
   },
 ];
@@ -72,6 +84,24 @@ export function rotateClockwise(cells: ShapeGrid): ShapeGrid {
   return Array.from({ length: columns }, (_, row) =>
     Array.from({ length: rows }, (_, column) => cells[rows - 1 - column][row]),
   );
+}
+
+/**
+ * How many of a shape's four quarter-turns look different from each other.
+ *
+ * One means the rotate button does nothing visible to it, which is the property
+ * the set is not allowed to have — a piece like that is placed by looking
+ * rather than by turning it in your head.
+ */
+export function distinctRotations(cells: ShapeGrid): number {
+  const seen = new Set<string>();
+  let turned = cells;
+
+  for (let i = 0; i < 4; i += 1) {
+    seen.add(JSON.stringify(turned));
+    turned = rotateClockwise(turned);
+  }
+  return seen.size;
 }
 
 /**

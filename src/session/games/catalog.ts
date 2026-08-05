@@ -12,7 +12,16 @@
  * next door in `views.tsx`.
  */
 
-export type GameId = 'shapes' | 'bounce' | 'rotations' | 'maze';
+export type GameId =
+  | 'shapes'
+  | 'rotations'
+  | 'fold'
+  | 'net'
+  | 'cubes'
+  | 'mirror'
+  | 'silhouette'
+  | 'bounce'
+  | 'maze';
 
 /**
  * `included` is everything the app does today. `premium` is behind a purchase
@@ -29,15 +38,19 @@ export interface Game {
 }
 
 /**
- * Order is the order on screen, and it is not accidental: the shapes puzzle is
- * first because it is the one with the evidence behind it, and it is what
- * someone who has no preference should land on.
+ * Order is the order on screen, and it is not accidental.
  *
- * The two `premium` entries are not built. They are listed because the picker
- * has to show what a purchase would get you, and they are the two tasks worth
- * building next — both are visuospatial in the same way the first two are.
- * Nothing can reach them while `usePremiumAccess` returns false; if that ever
- * changes, they need implementations in `views.tsx` first.
+ * The shapes puzzle is first because it is the one with the evidence behind it,
+ * and it is what someone with no preference should land on. The mental-rotation
+ * games follow, roughly in order of how directly they ask for a picture to be
+ * generated and turned. `bounce` is last of the free list on purpose: it is the
+ * one that is mostly a fidget, and it is here for the people who cannot face a
+ * puzzle rather than as a recommendation.
+ *
+ * The single `premium` entry is not built. It is listed because the picker has
+ * to show what a purchase would get you. Nothing can reach it while
+ * `usePremiumAccess` returns false; if that changes, it needs an implementation
+ * in `views.tsx` first — `isPlayable` is what keeps that honest.
  */
 export const GAMES: readonly Game[] = [
   {
@@ -47,16 +60,46 @@ export const GAMES: readonly Game[] = [
     tier: 'included',
   },
   {
+    id: 'rotations',
+    title: 'Turn it around',
+    blurb: 'Two shapes, one angle apart. Say whether they match.',
+    tier: 'included',
+  },
+  {
+    id: 'fold',
+    title: 'Unfold the paper',
+    blurb: 'A sheet is folded and punched. Say what it looks like opened out.',
+    tier: 'included',
+  },
+  {
+    id: 'net',
+    title: 'Fold up the cube',
+    blurb: 'Six faces laid flat. Say which one ends up opposite another.',
+    tier: 'included',
+  },
+  {
+    id: 'cubes',
+    title: 'Count the blocks',
+    blurb: 'A pile of cubes. Count them, including the ones out of sight.',
+    tier: 'included',
+  },
+  {
+    id: 'mirror',
+    title: 'Finish the mirror',
+    blurb: 'Half a pattern is drawn. Tap the other half in.',
+    tier: 'included',
+  },
+  {
+    id: 'silhouette',
+    title: 'Fill the outline',
+    blurb: 'Turn a piece, then drag it in. It stays where you drop it.',
+    tier: 'included',
+  },
+  {
     id: 'bounce',
     title: 'Keep it in the air',
     blurb: 'One ball, one paddle. Drop it and you serve again.',
     tier: 'included',
-  },
-  {
-    id: 'rotations',
-    title: 'Turn it around',
-    blurb: 'Two shapes, one angle apart. Say whether they match.',
-    tier: 'premium',
   },
   {
     id: 'maze',

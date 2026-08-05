@@ -170,4 +170,13 @@ export const PUZZLE = {
   keepGoingMs: 3 * 60_000,
   columns: 6,
   rows: 9,
+  /**
+   * How many rows dissolve from the bottom when the stack reaches the top.
+   *
+   * A third of the board: enough that there is somewhere to put the next few
+   * pieces without having to think about it, and little enough that the stack
+   * the player built is still recognisably theirs afterwards. See
+   * `dissolveLowest` — this is the no-fail rule, as a number.
+   */
+  overflowRows: 3,
 } as const;

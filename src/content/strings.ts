@@ -187,9 +187,24 @@ export const PUZZLE_COPY = {
   title: "Fit the shapes.",
   /** GROUP A — a normal step in the sequence. */
   worldFraming: "A few minutes of this. No score, no way to lose.",
-  /** GROUP B — this is the step that matters, and we say why. */
+  /**
+   * GROUP B — this is the step that matters, and we say why.
+   *
+   * Says nothing about buttons or shapes, and it used to. There are eight games
+   * behind this screen now and the framing is shown above all of them, so a line
+   * that explains one of them is wrong seven times out of eight. Each game says
+   * what to do in its own words, on its own screen.
+   */
   witnessedFraming:
-    "Use the buttons to move the shape, and place it where it fits.",
+    "A few minutes of this. It competes with the picture you just brought to mind — that's what it's for.",
+  /**
+   * Above the board, for the whole session.
+   *
+   * The instruction the trials actually gave, and the difference between playing
+   * this and getting anything out of it: a player who turns the piece until it
+   * looks right has done no imagining at all.
+   */
+  prompt: "Picture how it will land before you turn it.",
   rotate: "Rotate",
   place: "Place",
   left: "Left",
@@ -197,6 +212,72 @@ export const PUZZLE_COPY = {
   done: "I'm done",
   keepGoing: "Keep going",
   timeUpPrompt: "That's the time. You can stop here or stay a while longer.",
+} as const;
+
+/**
+ * The judgement games — Rotation Match, Paper Fold, Net Fold, Hidden Cubes.
+ *
+ * These are the only screens in the app that tell anyone they got something
+ * wrong, and the wording is where that is kept survivable: it is about the
+ * answer, never about the person. "It was this one", not "wrong". See the note
+ * at the top of `games/ui/trial.tsx` for why they say anything at all.
+ */
+export const TRIAL = {
+  right: "Yes.",
+  wrong: "It was this one.",
+} as const;
+
+export const ROTATION_MATCH = {
+  prompt: "Same shape turned, or a mirror of it?",
+  same: "Same, turned",
+  mirror: "Mirrored",
+  /** Read out in place of the grids, which mean nothing to a screen reader. */
+  figureLabel: "The first figure",
+  candidateLabel: "The second figure",
+} as const;
+
+export const PAPER_FOLD = {
+  prompt: "Folded, then punched through. Which sheet is it, opened out?",
+  /** Between the fold steps. */
+  arrow: "→",
+  option: (n: number) => `Sheet ${n}`,
+  sheetLabel: "The sheet, flat",
+  foldLabel: (n: number) => `Folded ${n === 1 ? "once" : `${n} times`}`,
+  punchedLabel: "The folded sheet, with the hole punched through it",
+} as const;
+
+export const NET_FOLD = {
+  prompt: "Fold it into a cube. Which face ends up opposite the filled one?",
+  faceLabel: (pips: number) => `The face with ${pips}`,
+  netLabel: (marked: number) =>
+    `Six faces laid flat. The one with ${marked} is filled in.`,
+} as const;
+
+export const HIDDEN_CUBES = {
+  prompt: "How many cubes, counting the ones you can't see?",
+  stackLabel: "A stack of cubes, seen from one corner",
+} as const;
+
+export const MIRROR_COMPLETE = {
+  prompt: "Fill the empty half so it mirrors the other one.",
+  /** Shown when the reflection is right. There is no message for "not yet". */
+  done: "That's it.",
+  cellLabel: (row: number, column: number) => `Row ${row}, column ${column}`,
+} as const;
+
+export const SILHOUETTE = {
+  prompt: "Pick a piece, turn it, then drag it into the outline.",
+  /**
+   * Replaces the line above once a piece is in hand. The constraint has to be
+   * said out loud — a player who discovers it by trying to rotate mid-drag
+   * reads it as the app being broken rather than as the rule it is.
+   */
+  holding: "Turn it before you drag it. It can't be turned on the way in.",
+  done: "Filled. Here's another.",
+  rotate: "Turn the piece",
+  rotateGlyph: "⟳",
+  pieceLabel: "A piece. Tap to pick it up.",
+  boardLabel: "The outline. Drag a piece onto it to place it.",
 } as const;
 
 export const CALIBRATION_COPY = {

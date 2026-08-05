@@ -10,9 +10,17 @@
  * 2. NO SCORE, NO LEVELS, NO SPEED. Rows dissolve when they fill because a
  *    board that only fills up would end, not because clearing them is worth
  *    anything.
- * 3. NO FAIL STATE. If the stack reaches the top, the board quietly empties and
- *    play continues. There is no way to lose this and no way to be told you
- *    did badly at it.
+ * 3. NO FAIL STATE. If the stack reaches the top, the oldest rows dissolve from
+ *    underneath it and play continues — see `dissolveLowest`. There is no way
+ *    to lose this and no way to be told you did badly at it.
+ *
+ * And one thing that is not a decision about calm but about what the game is
+ * for: the line above the board. "Picture how it will land before you turn it"
+ * is the instruction the trials this borrows from actually gave, and it is the
+ * difference between a player who rotates the piece until it looks right and one
+ * who rotates it in their head first. Only the second is doing the thing the
+ * step exists to do, so the instruction stays on screen rather than being said
+ * once and scrolled past.
  */
 
 import { useCallback, useMemo, useState } from 'react';
@@ -29,6 +37,7 @@ import {
   clampColumn,
   clearFullRows,
   createBoard,
+  dissolveLowest,
   landingRow,
   place,
 } from '@/session/puzzle/board';
@@ -48,6 +57,8 @@ const CELL_GAP = 3;
  */
 const CONTROL_HEIGHT = 56;
 const PLACE_HEIGHT = 56;
+/** One line of `small` type, which is what the instruction above the grid is. */
+const PROMPT_HEIGHT = 24;
 
 /**
  * The floor on a cell. A board that cannot fit its rows shrinks until it can,
@@ -102,7 +113,11 @@ export function PuzzleBoard() {
   const budget =
     box === null
       ? height * BOARD_HEIGHT_ESTIMATE
-      : box - (CONTROL_HEIGHT + Spacing.three + PLACE_HEIGHT) - Spacing.four;
+      : box -
+        (CONTROL_HEIGHT + Spacing.three + PLACE_HEIGHT) -
+        // The instruction line and the root gap it added above the grid.
+        (PROMPT_HEIGHT + Spacing.four) -
+        Spacing.four;
 
   const availableWidth = Math.min(width - Spacing.four * 2, MAX_BOARD_WIDTH);
   const cellSize = Math.max(
@@ -143,10 +158,10 @@ export function PuzzleBoard() {
   const drop = useCallback(() => {
     const row = landingRow(board, piece.cells, column);
 
-    // No room at the top. Rather than ending anything, the board empties and
-    // the same piece gets another go — see the note at the top of the file.
+    // No room at the top. Rather than ending anything, the bottom rows dissolve
+    // and the same piece gets another go — see the note at the top of the file.
     if (row < 0) {
-      setBoard(createBoard(PUZZLE.rows, PUZZLE.columns));
+      setBoard((current) => dissolveLowest(current, PUZZLE.overflowRows));
       tickDissolve();
       return;
     }
@@ -210,6 +225,10 @@ export function PuzzleBoard() {
     <View
       style={styles.root}
       onLayout={(event) => setBox(event.nativeEvent.layout.height)}>
+      <ThemedText type="small" themeColor="textMuted" style={styles.prompt}>
+        {PUZZLE_COPY.prompt}
+      </ThemedText>
+
       <View style={[styles.grid, { width: boardWidth }]}>
         {display.map((row, rowIndex) => (
           <View key={rowIndex} style={styles.row}>
@@ -298,6 +317,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.four,
+  },
+  prompt: {
+    height: PROMPT_HEIGHT,
+    textAlign: 'center',
   },
   grid: {
     gap: CELL_GAP,

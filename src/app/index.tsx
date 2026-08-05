@@ -151,26 +151,22 @@ export default function WelcomeScreen() {
   return (
     <SessionScreen>
       <Animated.View style={[styles.root, screenStyle]}>
-        {/* Dropped clear of the status bar and centred over the button, rather
-            than set flush into the top-left corner like a page heading. The
-            screen is two things on one axis — a question and the answer to it —
-            and hanging the line above the middle of the circle is what makes
-            them read as a pair.
+        {/* The question and the answer to it, laid out as a single block and
+            centred on the page as one — so what sits in the middle of the
+            screen is the pair, rather than either half of it.
 
-            Taken out of the flow so it costs the layout nothing: as a sibling
-            in the column it pushed the circle down by its own height, and the
-            button ended up centred in the space under the title rather than on
-            the screen. */}
-        <View style={styles.header} pointerEvents="none">
+            The line used to be pinned to the top with `position: absolute`,
+            which kept it out of the button's way but meant the two were
+            centred against different things: the question against the top of
+            the screen, the circle against the whole of it. In the flow they
+            are one column, and centring that column puts the middle of the
+            pair on the middle of the page. The gap is the only thing holding
+            them apart. */}
+        <View style={styles.stack}>
           <ThemedText type="title" style={styles.title}>
             {WELCOME.title}
           </ThemedText>
-        </View>
 
-        {/* The button sits in the space under the line rather than directly
-            beneath it: the question is the top of the screen, the answer is the
-            middle of it. */}
-        <View style={styles.stage}>
           <Animated.View style={buttonStyle}>
             <Pressable
               accessibilityRole="button"
@@ -227,23 +223,18 @@ export default function WelcomeScreen() {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    gap: Spacing.five,
   },
-  header: {
-    position: "absolute",
-    top: Spacing.six,
-    left: 0,
-    right: 0,
+  // The question and the circle as one block, centred on both axes. Everything
+  // about where the pair sits on the page follows from this one rule; the gap
+  // is what sets them apart from each other.
+  stack: {
+    flex: 1,
     alignItems: "center",
+    justifyContent: "center",
+    gap: Spacing.five,
   },
   title: {
     textAlign: "center",
-  },
-  stage: {
-    flex: 1,
-    justifyContent: "center",
-    // Centred horizontally too, now that the button no longer spans the column.
-    alignItems: "center",
   },
   // Sized in the component: a circle's dimensions depend on the screen, and a
   // stylesheet cannot see one.

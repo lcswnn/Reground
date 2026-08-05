@@ -5,6 +5,7 @@ import {
   clampColumn,
   clearFullRows,
   createBoard,
+  dissolveLowest,
   landingRow,
   place,
   type Board,
@@ -83,6 +84,37 @@ describe('place and clearFullRows', () => {
   it('leaves a board with no full rows alone', () => {
     const board = boardFrom(['....', '###.']);
     expect(clearFullRows(board)).toEqual({ board, cleared: 0 });
+  });
+});
+
+describe('dissolveLowest', () => {
+  it('takes the bottom rows and lets the rest fall', () => {
+    const board = boardFrom(['....', '#...', '##..', '###.', '####']);
+    const settled = dissolveLowest(board, 2);
+
+    expect(settled).toHaveLength(board.length);
+    expect(settled[0].some(Boolean)).toBe(false);
+    expect(settled[1].some(Boolean)).toBe(false);
+    expect(settled[2].some(Boolean)).toBe(false);
+    // What was in the top three rows, two rows lower.
+    expect(settled[3]).toEqual(boardFrom(['#...'])[0]);
+    expect(settled[4]).toEqual(boardFrom(['##..'])[0]);
+  });
+
+  it('keeps something to carry on with rather than clearing everything', () => {
+    const board = boardFrom(['##..', '###.', '####']);
+    const settled = dissolveLowest(board, 1);
+    expect(settled.some((row) => row.some(Boolean))).toBe(true);
+  });
+
+  it('treats an over-long count as emptying the board', () => {
+    const board = boardFrom(['##..', '####']);
+    expect(dissolveLowest(board, 9)).toEqual(createBoard(2, 4));
+  });
+
+  it('does nothing when asked for no rows', () => {
+    const board = boardFrom(['##..', '####']);
+    expect(dissolveLowest(board, 0)).toBe(board);
   });
 });
 
