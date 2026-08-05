@@ -63,18 +63,44 @@ export const SHAPES: readonly Shape[] = [
     id: 'bar',
     cells: [[1, 1, 1]],
   },
-  // Replaces the plus sign that used to sit here, which was the one piece in
-  // the set that a quarter-turn left unchanged — see the note above. This one
-  // is chiral, so its two orientations are genuinely different gaps.
+  // `notch`, the other way round.
+  //
+  // This slot has now held two pieces that did not work, for opposite reasons.
+  // First a plus sign, which a quarter-turn left unchanged — placeable without
+  // ever turning it, which is the one thing the set may not contain. Then the
+  // Z-pentomino, which turns beautifully and fits nowhere: on a board six wide,
+  // with no gravity to slide anything sideways, the only gap it drops into is a
+  // Z-shaped one, and nothing else in the set makes those. It sat in the tray
+  // being rotated and then dropped somewhere it did not belong, which leaves
+  // holes, which makes the next piece harder — a difficulty spiral in a game
+  // whose whole claim is that it cannot be lost.
+  //
+  // A reflection of a piece that already packs well cannot have that problem,
+  // and it earns its place rather than padding the set: the two are easy to
+  // confuse and impossible to tell apart without turning one of them over in
+  // your head, which is precisely the work this step is for. The same reasoning
+  // puts both hands of the L in the mental-rotation figures — see `FIGURES`.
   {
-    id: 'zag',
+    id: 'jut',
     cells: [
-      [1, 1, 0],
-      [0, 1, 0],
-      [0, 1, 1],
+      [1, 1],
+      [1, 1],
+      [0, 1],
     ],
   },
 ];
+
+/**
+ * The most rows a piece can take up, whichever way it is turned.
+ *
+ * A quarter-turn swaps a shape's height and width, so this is the larger of the
+ * two over the whole set. The board reserves exactly this many rows above the
+ * playfield for the piece to wait in — see `HOVER_ROWS` in `puzzle-board.tsx`.
+ * Add a taller shape and the hover zone grows with it rather than clipping it.
+ */
+export const TALLEST_SHAPE = Math.max(
+  ...SHAPES.map((shape) => Math.max(shape.cells.length, shape.cells[0].length)),
+);
 
 /** 90° clockwise. Rotating four times returns the original grid. */
 export function rotateClockwise(cells: ShapeGrid): ShapeGrid {

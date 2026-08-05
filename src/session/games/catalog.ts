@@ -55,8 +55,12 @@ export interface Game {
 export const GAMES: readonly Game[] = [
   {
     id: 'shapes',
+    // The blurb carries the one instruction this game needs — picture the
+    // landing before turning the piece — because that is the whole difference
+    // between playing it and getting anything from it, and the board itself is
+    // no place to keep saying so. See the note at the top of `puzzle-board.tsx`.
     title: 'Fit the shapes',
-    blurb: 'Turn each piece and drop it where it fits. Nothing falls on a timer.',
+    blurb: 'Picture how a piece will land before you turn it. Nothing falls on a timer.',
     tier: 'included',
   },
   {

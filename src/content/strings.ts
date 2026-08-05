@@ -194,17 +194,13 @@ export const PUZZLE_COPY = {
    * behind this screen now and the framing is shown above all of them, so a line
    * that explains one of them is wrong seven times out of eight. Each game says
    * what to do in its own words, on its own screen.
-   */
-  witnessedFraming:
-    "A few minutes of this. It competes with the picture you just brought to mind — that's what it's for.",
-  /**
-   * Above the board, for the whole session.
    *
-   * The instruction the trials actually gave, and the difference between playing
-   * this and getting anything out of it: a player who turns the piece until it
-   * looks right has done no imagining at all.
+   * Kept to two lines on a phone, which is a layout constraint as much as an
+   * editing one: this sits directly above the game and every line of it is a
+   * line the board underneath does not get. A third line took a row off the
+   * falling-blocks grid.
    */
-  prompt: "Picture how it will land before you turn it.",
+  witnessedFraming: "A few minutes of this. It competes with the picture in your head.",
   rotate: "Rotate",
   place: "Place",
   left: "Left",
