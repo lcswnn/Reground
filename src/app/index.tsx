@@ -18,11 +18,28 @@
  * Start before it does. The difference is length: five seconds of one sentence
  * is a beat, and a beat does not need a front door of its own.
  *
- * The line writes itself out rather than appearing whole, which is the only
- * moving thing on the screen and is doing a job: a sentence that arrives at
- * reading speed sets the pace of the breath it is asking for, where a sentence
- * that is simply there is read in half a second and then stared at. See
- * `CHARACTERS` below for how it is drawn, and `WELCOME_BREATH` for the timings.
+ * ## The line is solid, and used to be typed
+ *
+ * It wrote itself out a character at a time, with every glyph its own `Text` and
+ * its own slice of one shared clock. The argument for it was that a sentence
+ * arriving at reading speed sets the pace of the breath it asks for. In practice
+ * it was the only moving thing on a screen whose whole point is that nothing is
+ * being asked of you yet, and a sentence still assembling itself is one you are
+ * waiting on rather than reading. It is now simply there, in the same quiet
+ * italic the last screen signs off with — see `StageDirection`, which the two
+ * ends of the session share so they stay the same weight as each other.
+ *
+ * What is left of the animation is a fade up and a fade out, and neither is the
+ * line being written: they are it being turned on and off. The time the typing
+ * used to take went into `holdMs`, so the screen lasts about as long as it
+ * always did.
+ *
+ * None of it starts until the splash begins to go. This screen is mounted behind
+ * it — the root renders as soon as the fonts are ready, which is sooner — so the
+ * fade is held back by whatever the splash has left to run. See
+ * `splashHoldsForMs`, and note that the navigation timer carries the same delay:
+ * the two are one schedule, and a screen that left before its own line had
+ * finished would be worse than one that started late.
  *
  * No session state is touched here. Someone who opens the app and puts it down
  * has done nothing that needs clearing.
@@ -36,95 +53,67 @@
 
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
-import { StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
-  Extrapolation,
-  interpolate,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
+  withSequence,
   withTiming,
-  type SharedValue,
 } from "react-native-reanimated";
 
-import { ThemedText } from "@/components/themed-text";
-import { WELCOME_BREATH, welcomeBreathMs } from "@/config/session";
+import { WELCOME_BREATH, WELCOME_BREATH_MS } from "@/config/session";
 import { WELCOME } from "@/content/strings";
+import { splashHoldsForMs } from "@/lib/splash";
 import { SessionScreen } from "@/session/ui/session-screen";
-
-/**
- * The line, split into words and then into characters.
- *
- * Every character is its own `Text` and every one of them is laid out from the
- * first frame — what animates is opacity, not the text. Revealing a growing
- * substring instead would be simpler to write and wrong to look at: the line
- * wraps differently at every length, so the words already on screen would shunt
- * around underneath the one being written.
- *
- * The split is by word rather than straight down the string because a wrapping
- * row of individual characters would break mid-word wherever the edge fell.
- * Each word is an unwrappable row, and the space that follows it rides along
- * inside it as a character of its own — so the gaps are the font's own metric
- * rather than a number picked here to look about right, and so the space takes
- * its turn to appear like everything else.
- *
- * That space is a non-breaking one. An ordinary space alone in a `Text` is
- * whitespace at the end of a line as far as a layout engine is concerned, and
- * the platforms disagree about whether such a thing has any width; U+00A0 is
- * the same glyph with none of that argument attached.
- */
-const WORD_SPACE = "\u00A0";
-
-const CHARACTERS = WELCOME.line.split(" ").map((word, index, words) => ({
-  word,
-  characters: [...word, ...(index < words.length - 1 ? [WORD_SPACE] : [])],
-}));
-
-/** Where each word starts in the line, so a character knows its own turn. */
-const WORD_OFFSETS = CHARACTERS.reduce<number[]>((offsets, { characters }) => {
-  const last = offsets[offsets.length - 1] ?? 0;
-  return [...offsets, last + characters.length];
-}, [0]);
-
-/** From the first character starting to the last one finishing. */
-const WRITING_MS =
-  Math.max(0, WELCOME.line.length - 1) * WELCOME_BREATH.charMs + WELCOME_BREATH.charFadeMs;
-
-const TOTAL_MS = welcomeBreathMs(WELCOME.line.length);
+import { StageDirection } from "@/session/ui/stage-direction";
 
 export default function WelcomeScreen() {
   const router = useRouter();
   const reducedMotion = useReducedMotion();
 
   /**
-   * Milliseconds into the writing, driven linearly. Every character reads its
-   * own opacity off this one value rather than owning a timer, so the whole
-   * line is one animation and the stagger is arithmetic.
-   *
-   * Under reduced motion it starts at the end: the line is simply there, and
-   * the screen is a sentence and a wait.
+   * Starts up under reduced motion: the line is simply there, and the screen is
+   * a sentence and a wait. Nothing below writes to it in that case.
    */
-  const written = useSharedValue(reducedMotion ? WRITING_MS : 0);
-  const opacity = useSharedValue(1);
+  const opacity = useSharedValue(reducedMotion ? 1 : 0);
 
   useEffect(() => {
-    if (!reducedMotion) {
-      // Linear, and the one place in the app where that is the right curve —
-      // an eased hand would write the middle of the sentence faster than the
-      // ends of it.
-      written.value = withTiming(WRITING_MS, {
-        duration: WRITING_MS,
-        easing: Easing.linear,
-      });
+    /**
+     * This screen mounts the moment the fonts are ready, which is before the
+     * splash comes off — so without this the line would fade up underneath an
+     * opaque splash and be revealed already at full strength.
+     *
+     * It waits for the splash to *start* going, not to have finished: the same
+     * instant `_layout.tsx` calls `hideAsync`, so the line's fade and the
+     * splash's overlap and the line rises through it. Waiting for the far side
+     * of that fade, plus the settling beat that used to follow it, put 550ms of
+     * empty screen in front of the first thing the app says.
+     *
+     * Measured here rather than passed in, because "now" at first mount is the
+     * instant that hide timer is set. See `splashHoldsForMs`.
+     */
+    const leadMs = splashHoldsForMs();
 
+    if (!reducedMotion) {
+      // One sequence rather than two assignments: the second would land on the
+      // same shared value in the same frame and simply replace the first.
       opacity.value = withDelay(
-        WRITING_MS + WELCOME_BREATH.holdMs,
-        withTiming(0, {
-          duration: WELCOME_BREATH.fadeOutMs,
-          easing: Easing.in(Easing.quad),
-        }),
+        leadMs,
+        withSequence(
+          withTiming(1, {
+            duration: WELCOME_BREATH.fadeInMs,
+            easing: Easing.out(Easing.quad),
+          }),
+          withDelay(
+            WELCOME_BREATH.holdMs,
+            withTiming(0, {
+              duration: WELCOME_BREATH.fadeOutMs,
+              easing: Easing.in(Easing.quad),
+            }),
+          ),
+        ),
       );
     }
 
@@ -133,85 +122,25 @@ export default function WelcomeScreen() {
      * the screen takes the same time either way — under reduced motion there is
      * nothing animating to finish, and a version of this screen that flashed
      * past in a frame would be worse than one that never existed.
+     *
+     * It carries the same lead as the animation. Leaving it out would spend the
+     * splash's remaining time out of this screen's budget, and the line would be
+     * cut off by a navigation that had started counting first.
      */
-    const timer = setTimeout(() => router.replace("/category"), TOTAL_MS);
+    const timer = setTimeout(
+      () => router.replace("/category"),
+      leadMs + WELCOME_BREATH_MS,
+    );
     return () => clearTimeout(timer);
-  }, [opacity, reducedMotion, router, written]);
+  }, [opacity, reducedMotion, router]);
 
-  const screenStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+  const lineStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
     <SessionScreen centered>
-      <Animated.View style={[styles.line, screenStyle]}>
-        {CHARACTERS.map(({ word, characters }, wordIndex) => (
-          <View key={`${word}-${wordIndex}`} style={styles.word}>
-            {characters.map((character, index) => (
-              <Character
-                key={index}
-                character={character}
-                position={WORD_OFFSETS[wordIndex] + index}
-                written={written}
-              />
-            ))}
-          </View>
-        ))}
+      <Animated.View style={lineStyle}>
+        <StageDirection>{WELCOME.line}</StageDirection>
       </Animated.View>
     </SessionScreen>
   );
 }
-
-interface CharacterProps {
-  character: string;
-  /** Its place in the line, which is the only thing setting its turn. */
-  position: number;
-  written: SharedValue<number>;
-}
-
-/**
- * One character, fading in when the writing reaches it.
- *
- * The opacity is on a wrapping view rather than on the text itself: animating a
- * `Text` directly would mean `createAnimatedComponent` around `ThemedText`,
- * which does not forward a ref, and nesting one `Text` inside another to get
- * around that changes how the glyph is laid out on iOS. A view is neither.
- */
-function Character({ character, position, written }: CharacterProps) {
-  const style = useAnimatedStyle(() => {
-    const start = position * WELCOME_BREATH.charMs;
-
-    return {
-      opacity: interpolate(
-        written.value,
-        [start, start + WELCOME_BREATH.charFadeMs],
-        [0, 1],
-        Extrapolation.CLAMP,
-      ),
-    };
-  });
-
-  return (
-    <Animated.View style={style}>
-      {/* `subtitle`, two steps down from where this screen started. Small
-          enough that the sentence sits on one line on a phone, which is worth
-          more here than the size is: a line that wraps is a line whose second
-          half is written into empty space below the first, and the eye has to
-          go looking for where it went. */}
-      <ThemedText type="subtitle">{character}</ThemedText>
-    </Animated.View>
-  );
-}
-
-const styles = StyleSheet.create({
-  // The words, wrapping as a paragraph would. Centred on both axes so the
-  // block sits where a single centred line used to.
-  line: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  // One word, which never breaks.
-  word: {
-    flexDirection: "row",
-  },
-});

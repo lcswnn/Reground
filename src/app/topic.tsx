@@ -11,11 +11,22 @@
  * Like the screen before it, tapping an answer advances immediately — the back
  * button undoes a mis-tap, and from the rating screen it returns here rather
  * than to the first question when there is a topic to change.
+ *
+ * ## It also starts the one network call the app makes
+ *
+ * Reaching this screen is the earliest moment the app knows the session will
+ * end up at `/calibration`, which is the only screen that wants data. That is
+ * five minutes and five screens away — a breath, a reactivation cue and a game —
+ * so the fetch is kicked off here and has all of that to land in. See
+ * `prefetchHumanity`; nothing on this screen waits on it or renders it, and a
+ * failure is invisible until the screen that would have used it.
  */
 
+import { useEffect } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Redirect, useRouter } from 'expo-router';
 
+import { prefetchHumanity } from '@/api/use-humanity';
 import { ThemedText } from '@/components/themed-text';
 import { TOPIC } from '@/content/strings';
 import { WORLD_TOPICS, type WorldTopic } from '@/content/topics';
@@ -33,6 +44,12 @@ export default function TopicScreen() {
   const active = useSessionGuard({ requireMood: false });
   const { categoryGroup, chooseTopic } = useSessionFlow();
   const back = useSessionBack('/topic');
+
+  // On mount rather than on the tap: every topic but one pulls charts, so there
+  // is nothing to gain by waiting to find out which, and the tap is the moment
+  // the user is already moving. Idempotent — a mis-tap and a return here does
+  // not start a second fetch.
+  useEffect(() => prefetchHumanity(), []);
 
   if (!active || !categoryGroup) return null;
 

@@ -11,6 +11,8 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 
 import { Colors } from '@/constants/theme';
+import { SPLASH } from '@/config/session';
+import { splashHoldsForMs } from '@/lib/splash';
 import { SessionFlowProvider } from '@/session/session-context';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 
@@ -18,7 +20,7 @@ SplashScreen.preventAutoHideAsync();
 
 // Without this the splash is swapped out on a single frame, which reads as a
 // jump cut.
-SplashScreen.setOptions({ fade: true, duration: 350 });
+SplashScreen.setOptions({ fade: true, duration: SPLASH.hideMs });
 
 /**
  * The app is the session and nothing else.
@@ -35,14 +37,26 @@ SplashScreen.setOptions({ fade: true, duration: 350 });
  * any of it back. Take that route rather than trusting the old screens to
  * still compile — they link to routes that no longer exist.
  *
- * Gone with it: Supabase, react-query, notifications and the data prefetch.
- * The session makes no network calls and holds no account, so there is nothing
+ * Gone with it: the Supabase client, react-query, notifications and the account.
+ * The session holds no identity and writes nothing to disk, so there is nothing
  * left for any of them to do.
  *
+ * ## It does make exactly one network call
+ *
+ * That was not true for a while and is again. `/calibration` shows the real
+ * series behind whatever the user said they were frightened of, and those come
+ * off the published artifact — one GET of one public static file, started at
+ * `/topic` and read five screens later. See `src/api/humanity.ts` for why it is
+ * fetched rather than bundled, and `calibration.tsx` for the rule that keeps it
+ * from costing anything when it fails.
+ *
+ * It stays a single unauthenticated GET of a public URL. No client, no session,
+ * no key, nothing sent. If a second call ever appears here, that is the thing
+ * worth arguing about.
+ *
  * The data layer itself is untouched and still running daily — see
- * `.github/workflows/data-refresh.yml`. Its consumer is now the WidgetKit
- * extension in `targets/widget/`, which fetches the published artifact
- * directly, not this app.
+ * `.github/workflows/data-refresh.yml`. It now has two consumers: the WidgetKit
+ * extension in `targets/widget/`, and this app again.
  */
 export default function RootLayout() {
   return (
@@ -83,8 +97,27 @@ function RootNavigator() {
   // to system text instead.
   const fontsSettled = fontsLoaded || !!fontError;
 
+  /**
+   * Two conditions, and the splash waits for both: the fonts have to be ready,
+   * or the first screen renders in the system face and then reflows into
+   * Playpen Sans — and the splash has to have been up for `SPLASH.minimumMs`.
+   *
+   * The wait is measured from launch rather than from here, so the two overlap
+   * instead of stacking. Fonts that take a second to decode spend that second
+   * inside the minimum, and by the time they land there is nothing left to
+   * wait for.
+   *
+   * `index.tsx` schedules its line off the very same call, so the line starts
+   * fading up as this fires rather than after the fade it kicks off has
+   * finished. It depends on this effect being where the wait begins — see
+   * `splashHoldsForMs`.
+   */
   useEffect(() => {
-    if (fontsSettled) void SplashScreen.hideAsync();
+    if (!fontsSettled) return;
+
+    const timer = setTimeout(() => void SplashScreen.hideAsync(), splashHoldsForMs());
+
+    return () => clearTimeout(timer);
   }, [fontsSettled]);
 
   if (!fontsSettled) return null;

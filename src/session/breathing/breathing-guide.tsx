@@ -95,7 +95,24 @@ const CYCLE: readonly Step[] = [
     phase: 'inhale-1',
     ms: BREATHING.firstInhaleMs,
     scale: MID_SCALE,
-    easing: Easing.out(Easing.cubic),
+    /**
+     * Eases in, and then keeps going. It must not coast to a stop, because the
+     * phase after it is the top-up and the handover is the whole shape of a sigh.
+     *
+     * This was `Easing.out(Easing.cubic)`, which had covered 99.2% of its travel
+     * by 80% of the phase — the last half-second of the first inhale moved the
+     * circle by under a point of scale, so it read as already finished and the
+     * second inhale looked like it arrived after a pause. There was never a pause
+     * in the machine; the phases are back to back. The stall was the curve.
+     *
+     * The bezier still starts gently — a breath doesn't jerk into motion — but
+     * leaves about 12% of the travel in the final fifth and hands over with real
+     * speed on the circle. The top-up now interrupts the first inhale, which is
+     * what it is supposed to do.
+     */
+    // `bezierFn`, not `bezier`: the latter returns a factory, and every other
+    // entry in this table is a plain easing function.
+    easing: Easing.bezierFn(0.33, 0, 0.55, 0.85),
     haptic: true,
     cue: BREATHING_COPY.inhale,
   },
@@ -138,8 +155,28 @@ const CYCLE: readonly Step[] = [
   },
 ];
 
-/** How long a cue takes to trade places with the next one. */
+/**
+ * How long a cue takes to trade places with the next one, at most.
+ *
+ * At most, because 600ms is longer than the second inhale is allowed to be
+ * interesting for. "In again" fades in over the same 600ms it used to take on
+ * every other cue, inside a phase that only lasts `secondInhaleMs` — so the word
+ * for the fastest movement in the breath was still arriving when the movement
+ * was over, and the top-up read as late for the same reason the circle did.
+ *
+ * `cueFadeFor` caps it against the phase the cue belongs to. Long phases are
+ * untouched; only the top-up is short enough for the cap to bite.
+ */
 const CUE_FADE_MS = 600;
+
+/**
+ * No cue may spend more than this share of its own phase arriving. A third
+ * leaves the word fully up for the middle of the phase and still reads as a
+ * fade rather than a cut.
+ */
+const CUE_FADE_SHARE = 0.34;
+
+const cueFadeFor = (ms: number) => Math.min(CUE_FADE_MS, Math.round(ms * CUE_FADE_SHARE));
 
 interface BreathingGuideProps {
   /** Called once, after the last full cycle. Never mid-exhale. */
@@ -279,7 +316,23 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     transform: [{ scaleX: progress.value }],
   }));
 
-  const cue = step === null ? null : CYCLE[step % CYCLE.length].cue;
+  const at = step === null ? null : step % CYCLE.length;
+  const cue = at === null ? null : CYCLE[at].cue;
+
+  /**
+   * A cue arrives no slower than its own phase can afford, and leaves no slower
+   * than the next one arrives.
+   *
+   * The second half is why `exiting` reads the *next* step rather than this one.
+   * Each word's fade-out plays after its element has been removed, so it is a
+   * statement about the handover, not about the phase it belongs to — and "In"
+   * dissolving over 600ms across the whole of a 700ms top-up is the other half
+   * of what made the second inhale feel late. The lookup is static: the cycle is
+   * a fixed ring, so the phase after this one is always known.
+   */
+  const cueEnterMs = at === null ? CUE_FADE_MS : cueFadeFor(CYCLE[at].ms);
+  const cueExitMs =
+    at === null ? CUE_FADE_MS : cueFadeFor(CYCLE[(at + 1) % CYCLE.length].ms);
 
   // Under Reduce Motion nothing schedules a pose, so `pose` is left at the
   // lead-in value. Substituting here rather than writing the still pose into
@@ -307,8 +360,8 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
               // Keyed on the word: this is a swap of one element for another,
               // which is what gives each cue its own fade.
               key={`${step}-${cue}`}
-              entering={FadeIn.duration(CUE_FADE_MS)}
-              exiting={FadeOut.duration(CUE_FADE_MS)}
+              entering={FadeIn.duration(cueEnterMs)}
+              exiting={FadeOut.duration(cueExitMs)}
               style={styles.cue}>
               <ThemedText type="subtitle" themeColor="textSecondary" style={styles.cueText}>
                 {cue}

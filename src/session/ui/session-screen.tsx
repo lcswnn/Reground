@@ -2,15 +2,20 @@
  * The frame every session screen sits in: safe area, one gutter, and a column
  * that doesn't run wider than a comfortable measure on a tablet.
  *
- * No header and no progress dots. There is now a back button, top-left, on
- * every screen that has somewhere to go back to — see `previousRoute` for which
- * do and where each one lands. It is drawn here rather than by each screen so
- * that it is in exactly the same place on all of them.
+ * No progress dots, and no header beyond one thin row of chrome: a back button
+ * top-left on the screens that have somewhere to go back to — see
+ * `previousRoute` for which do and where each one lands — and the appearance
+ * switch top-right on all of them without exception. Both are drawn here rather
+ * than by each screen so that they are in exactly the same place on every one,
+ * which for the switch is the whole point: a control that moves between screens
+ * is a control that has to be found again each time.
  *
- * It takes layout space rather than floating over the content: the screens that
- * start with a heading at the top of the page (`/games`, `/calibration`) have
- * nothing to spare up there, and a button overlapping a title is worse than a
- * title sitting a line lower.
+ * The row takes layout space rather than floating over the content: the screens
+ * that start with a heading at the top of the page (`/games`, `/calibration`)
+ * have nothing to spare up there, and a button overlapping a title is worse than
+ * a title sitting a line lower. It is drawn even on the screens with no back
+ * button, because the switch is on those too — `/`, `/category` and `/closed`
+ * now open with an empty row and the switch at the end of it.
  */
 
 import { StyleSheet, View, type ViewProps } from 'react-native';
@@ -19,6 +24,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { BackButton } from '@/session/ui/back-button';
+import { ThemeToggle } from '@/session/ui/theme-toggle';
 
 interface SessionScreenProps extends ViewProps {
   /** Centres the column vertically. Off for screens that scroll. */
@@ -53,9 +59,16 @@ export function SessionScreen({
       ]}
       {...rest}>
       <View style={styles.column}>
-        {onBack ? <BackButton onPress={onBack} /> : null}
+        {/* The spacer, not `space-between`, is what pins the switch to the
+            right on the screens that have no back button to sit opposite. */}
+        <View style={styles.chrome}>
+          {onBack ? <BackButton onPress={onBack} /> : null}
+          <View style={styles.spacer} />
+          <ThemeToggle />
+        </View>
+
         {/* Its own flex child so that `centered` still centres the screen's
-            content, not the content plus the button above it. */}
+            content, not the content plus the chrome above it. */}
         <View style={[styles.content, centered && styles.centered]}>{children}</View>
       </View>
     </View>
@@ -72,6 +85,14 @@ const styles = StyleSheet.create({
     flex: 1,
     width: '100%',
     maxWidth: MaxContentWidth,
+  },
+  chrome: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: Spacing.three,
+  },
+  spacer: {
+    flex: 1,
   },
   content: {
     flex: 1,

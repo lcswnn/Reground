@@ -1,5 +1,7 @@
 /**
- * The one control that sits in the same place on every screen.
+ * One of the two controls that sit in the same place on every screen — this one
+ * top-left, and the appearance switch in `theme-toggle.tsx` opposite it. They
+ * share a row, drawn by `SessionScreen`, and are deliberately drawn alike.
  *
  * Quiet on purpose — muted, small, and no chrome around it. It is a way out of
  * a mis-tap, not a step in the session, and it should never compete with the
@@ -37,10 +39,10 @@ export function BackButton({ onPress }: { onPress: () => void }) {
 
 const styles = StyleSheet.create({
   row: {
-    // Left-aligned in the column rather than stretched across it, so the
-    // pressable is the size of its label and not the width of the screen.
+    // Sized to its label rather than stretched, so the pressable is the width of
+    // the words and not of the screen. The space below the row, and the switch
+    // at the other end of it, belong to `SessionScreen`.
     alignSelf: 'flex-start',
-    marginBottom: Spacing.three,
   },
   button: {
     // Pulled back by its own padding so the arrow sits on the same left edge as

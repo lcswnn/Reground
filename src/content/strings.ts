@@ -22,7 +22,7 @@
  * breath" is read at the speed of any other sentence; this one can't be.
  */
 export const WELCOME = {
-  line: "Take a deeeeeeep breath.",
+  line: "Time to reground.",
 } as const;
 
 /**
@@ -35,6 +35,28 @@ export const WELCOME = {
 export const BACK = {
   arrow: "←",
   label: "Back",
+} as const;
+
+/**
+ * The appearance switch, top-right on every screen.
+ *
+ * Both options are named and the current one is simply the one drawn in ink,
+ * which is what makes it readable as a switch rather than as a label. A single
+ * word — "Dark" — would have been quieter and would have had to mean two
+ * different things depending on which mode you were already in, which is the
+ * one thing a control in the corner of every screen cannot afford.
+ *
+ * Sentence case, not caps. This is chrome, and the app has exactly one other
+ * piece of it (`BACK`) that this is meant to sit opposite without shouting.
+ */
+export const APPEARANCE = {
+  light: "Light",
+  dark: "Dark",
+  /** Between the two. A divider, not a bullet — nothing is being listed. */
+  separator: "·",
+  /** Read out in place of the words, which are only half a sentence each. */
+  label: (mode: "light" | "dark") =>
+    mode === "dark" ? "Dark appearance" : "Light appearance",
 } as const;
 
 /**
@@ -180,7 +202,8 @@ export const GAME_PICKER = {
    * doing real work here — it is *why* this step is a game and not a coping
    * tip, and someone who wants to look it up should be able to.
    */
-  visuospatialTitle: "Now, let's pick a visuospatial game to take your mind off things:",
+  visuospatialTitle:
+    "Now, let's pick a visuospatial game to take your mind off things:",
   /**
    * The other shelf, and deliberately not a mechanism.
    *
@@ -225,7 +248,8 @@ export const PUZZLE_COPY = {
    * line the board underneath does not get. A third line took a row off the
    * falling-blocks grid.
    */
-  visuospatialFraming: "A few minutes of this. It competes with the picture in your head.",
+  visuospatialFraming:
+    "A few minutes of this. It competes with the picture in your head.",
   rotate: "Rotate",
   place: "Place",
   left: "Left",
@@ -301,12 +325,45 @@ export const SILHOUETTE = {
   boardLabel: "The outline. Drag a piece onto it to place it.",
 } as const;
 
+/**
+ * The three headings are the screen's contract and the reason it works: what's
+ * going on, what's being done, what you can do. Every entry in
+ * `@/content/calibration` fills all three, in that order — see the note there
+ * on why ending on the action rather than the trend is the whole point.
+ */
 export const CALIBRATION_COPY = {
   title: "Where this actually stands.",
   trendHeading: "The trend",
   responseHeading: "What's being done",
   actionHeading: "One thing you can do",
   continue: "Next",
+
+  /**
+   * Shown while the artifact is still in flight. Almost nobody sees it — the
+   * fetch is warmed at the topic picker, five minutes upstream — so it is
+   * written for the one person on a bad connection rather than as a normal
+   * state of the screen.
+   */
+  dataLoading: "Getting the numbers…",
+  /**
+   * Shown when the fetch failed. It has to do two things at once: not pretend
+   * the charts are coming, and not leave the reader wondering whether the
+   * paragraph above them was also missing something. It wasn't — the copy is
+   * the screen, the charts are the receipts.
+   */
+  dataUnavailable:
+    "The charts need a connection and there isn't one right now. Nothing above depends on them.",
+  /**
+   * Shown for a topic with no series behind it at all — currently politics
+   * alone. Distinct from the line above on purpose: that one is a phone
+   * problem and will fix itself, this one is us saying we don't have it.
+   */
+  dataNone: "No charts for this one — see above for why.",
+
+  /** Under a chart whose headline is a nowcast rather than a reading. */
+  projected: (year: string) => `projected for today, last measured ${year}`,
+  /** Under a chart whose headline is the measurement itself. */
+  measured: (year: string) => `measured ${year}`,
 } as const;
 
 export const MOOD_AFTER = {

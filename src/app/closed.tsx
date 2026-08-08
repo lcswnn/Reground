@@ -7,7 +7,9 @@
  * last screen has no button, no link and nowhere to go.
  *
  * Small, muted and italic — as close to a stage direction as type gets. It is
- * not addressing the user so much as getting out of their way.
+ * not addressing the user so much as getting out of their way. `index.tsx` now
+ * opens on the same treatment, so the session is bookended by two lines in the
+ * same voice; the styling lives in `StageDirection` so they cannot drift.
  *
  * The session state was already cleared on the way in, so nothing entered is
  * still in memory behind this.
@@ -18,12 +20,12 @@
  */
 
 import { useEffect } from 'react';
-import { AppState, Platform, StyleSheet, View } from 'react-native';
+import { AppState } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { ThemedText } from '@/components/themed-text';
 import { CLOSED } from '@/content/strings';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { StageDirection } from '@/session/ui/stage-direction';
 
 export default function ClosedScreen() {
   const router = useRouter();
@@ -51,28 +53,7 @@ export default function ClosedScreen() {
 
   return (
     <SessionScreen centered>
-      <View style={styles.root}>
-        <ThemedText type="small" themeColor="textMuted" style={styles.line}>
-          {CLOSED.line}
-        </ThemedText>
-      </View>
+      <StageDirection>{CLOSED.line}</StageDirection>
     </SessionScreen>
   );
 }
-
-const styles = StyleSheet.create({
-  root: {
-    alignItems: 'center',
-  },
-  line: {
-    textAlign: 'center',
-    // Playpen Sans ships no italic cut (the family is a weight axis only), so
-    // this is honoured on Android and web, which synthesise an oblique, and
-    // quietly ignored on iOS, which does not. The skew below is what makes it
-    // actually lean there — a real slant on the real face, rather than dropping
-    // the line to a system italic that would look like it came from another
-    // app.
-    fontStyle: 'italic',
-    ...Platform.select({ ios: { transform: [{ skewX: '-9deg' }] } }),
-  },
-});

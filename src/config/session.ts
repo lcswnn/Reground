@@ -27,45 +27,73 @@ export const HIGH_DISTRESS_MOOD = 8;
 export const MEANINGFUL_MOOD_DROP = 2;
 
 /**
+ * The splash, which is the one number in this file that isn't part of the
+ * session — it is over before the session starts. It lives here anyway, because
+ * the alternative is a duration hard-coded in a component, and that is the rule
+ * this file exists to keep.
+ *
+ * A floor, not a delay: the splash is held until the app has been open this
+ * long, so time spent loading fonts counts towards it rather than being added
+ * to it. On a warm start where everything is ready immediately, this is the
+ * whole of what is on screen; on a cold one it may already have passed by the
+ * time the fonts land, and nothing waits.
+ *
+ * It is deliberately longer than it needs to be. The screen after it asks the
+ * user to take a breath, and arriving there half a second after tapping the
+ * icon undercuts that before it has been read — the app is asking someone to
+ * slow down, and the first thing it does should not be to hurry.
+ *
+ * `hideMs` is the fade out, and has to match `SplashScreen.setOptions` in
+ * `app/_layout.tsx` — it is written down here so the total is a number rather
+ * than a guess.
+ */
+export const SPLASH = {
+  minimumMs: 1_400,
+  hideMs: 350,
+} as const;
+
+/**
  * The opening line, which nobody taps through.
  *
- * The screen is one sentence and a timer, and the line writes itself out a
- * character at a time — so the pace of the writing is most of what these
- * numbers control. `charMs` is the gap between one character starting and the
- * next; `charFadeMs` is how long any one of them takes to arrive, and it runs
- * longer than the gap on purpose, so several are always in the middle of
- * appearing at once. That overlap is the difference between writing and a
- * teleprinter.
+ * The line arrives whole and then sits there. It used to write itself out a
+ * character at a time, on the argument that a sentence arriving at reading speed
+ * sets the pace of the breath it is asking for — `charMs` and `charFadeMs` were
+ * the pace of that hand. The typing was the only moving thing on a screen whose
+ * whole point is that nothing is being asked of you yet, and a line still
+ * assembling itself is a line you are waiting on rather than reading. So it is
+ * simply there now, and the hold does all the work.
  *
- * `holdMs` starts once the full stop lands, and it is the part doing the actual
- * work: long enough to take the breath the line asks for, short enough that
- * someone who ignored it isn't left waiting on an app that won't move.
+ * `holdMs` is that work: long enough to take the breath the line asks for, short
+ * enough that someone who ignored it isn't left waiting on an app that won't
+ * move. It briefly absorbed the time the writing used to take, which made this
+ * screen as long as it had ever been while having less on it than ever — five
+ * and a half seconds is a long time to hold four words nobody can act on. The
+ * hold is what came back down.
+ *
+ * `fadeInMs` is not the line being written, it is the line being turned up. It
+ * starts when the splash *begins* to dissolve rather than after it has gone (see
+ * `splashHoldsForMs`), so the two fades overlap and the line comes up through
+ * the splash as it clears.
  *
  * Everything else in the session waits for a tap. This one doesn't, which is
  * why the total is derived here rather than being whatever the animation
  * happened to add up to.
  */
 export const WELCOME_BREATH = {
-  charMs: 100,
-  charFadeMs: 420,
-  holdMs: 2_800,
+  fadeInMs: 400,
+  holdMs: 1_850,
   fadeOutMs: 700,
 } as const;
 
 /**
- * How long the whole screen lasts, for a line of `characters` characters.
+ * How long the whole screen lasts.
  *
- * The last character starts at `(characters - 1) * charMs` and takes
- * `charFadeMs` to finish, which is where the first term comes from — the hold
- * has to begin after the line is fully written, not after the last one started.
+ * A constant now rather than a function of the line's length — nothing here
+ * scales with the number of characters any more, which is most of the point of
+ * the line being solid.
  */
-export function welcomeBreathMs(characters: number): number {
-  const writtenMs =
-    Math.max(0, characters - 1) * WELCOME_BREATH.charMs +
-    WELCOME_BREATH.charFadeMs;
-
-  return writtenMs + WELCOME_BREATH.holdMs + WELCOME_BREATH.fadeOutMs;
-}
+export const WELCOME_BREATH_MS =
+  WELCOME_BREATH.fadeInMs + WELCOME_BREATH.holdMs + WELCOME_BREATH.fadeOutMs;
 
 /**
  * Cyclic sighing: two inhales stacked, then an exhale about twice their
@@ -73,10 +101,13 @@ export function welcomeBreathMs(characters: number): number {
  * the thing to preserve if these ever move — lengthening an inhale without
  * moving the exhale makes it a slower breath, not a calmer one.
  *
- * One cycle is 14.5s. `totalMs` is a target rather than a hard stop — the
+ * One cycle is 11.2s. `totalMs` is a target rather than a hard stop — the
  * screen runs whole cycles and ends on the nearest one, so a minute here is
- * four cycles and about 59 seconds including the lead-in. Cutting off
+ * four cycles and about 46 seconds including the lead-in. Cutting off
  * mid-exhale to hit exactly 60 would be worse than missing it.
+ *
+ * That rounding has a cliff in it, which `firstInhaleMs` documents: shorten a
+ * phase far enough and four rounds becomes five, and the breath gets *longer*.
  */
 export const BREATHING = {
   totalMs: 50_000,
@@ -91,7 +122,29 @@ export const BREATHING = {
    * breath starts where the user can see it start.
    */
   leadInMs: 1_400,
-  firstInhaleMs: 2_500,
+  /**
+   * The first inhale — full, but taken rather than drawn out.
+   *
+   * Was 2.5s, which is a long time to be filling one lungful, and it left people
+   * arriving at the top-up already wanting to breathe out. The sigh is two
+   * inhales *stacked*; the first one filling briskly is what leaves room for the
+   * second to be a real top-up rather than a formality.
+   *
+   * ## Two floors, and the lower one bites first
+   *
+   * `secondInhaleMs` is the obvious one: these two have to stay clearly
+   * different lengths, or the shape stops being a long inhale and a snatched one
+   * and becomes a single interrupted inhale. At 1.8s this still runs 2.6× the
+   * top-up.
+   *
+   * The one that actually binds is arithmetic, and it is not obvious at all.
+   * `BREATH_CYCLES` rounds `totalMs` to whole cycles, so shortening a phase
+   * shortens the cycle until the rounding tips — below about **1,712ms** here,
+   * four rounds becomes five and the whole breath jumps from ~46s to ~57s. A
+   * faster inhale would make the session a third longer. If this needs to come
+   * down further, move `totalMs` in the same commit.
+   */
+  firstInhaleMs: 1_800,
   /**
    * The top-up. Short and sharp is the point of it — it reinflates what the
    * first inhale left collapsed, which is what makes the long exhale actually
@@ -166,7 +219,12 @@ export const TULLY = {
    */
   shimmerMs: 120,
   poseMs: {
-    firstInhale: [500, 500, 500, 500, 500],
+    // Five beats, still even, now 360 each rather than 500 — `firstInhaleMs`
+    // came down and these have to re-tile it exactly or Tully drifts a little
+    // further from the circle every cycle. Five and not four: `brim` is the top
+    // of the first inhale and the only phase it appears in, so dropping a beat
+    // here would drop a drawing out of the app entirely.
+    firstInhale: [360, 360, 360, 360, 360],
     secondInhale: [235, 235, 230],
     hold: [1_500],
     exhale: [800, 850, 880, 900, 900, 920, 950],
