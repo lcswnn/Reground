@@ -8,6 +8,7 @@
  */
 
 import type { CategoryGroup } from '@/content/categories';
+import type { GameKind } from '@/session/games/catalog';
 import {
   HIGH_DISTRESS_MOOD,
   MEANINGFUL_MOOD_DROP,
@@ -36,9 +37,16 @@ export function skipsReactivation(moodBefore: number): boolean {
   return moodBefore >= HIGH_DISTRESS_MOOD;
 }
 
-/** GROUP B gets a longer default — the puzzle is the point of their session. */
-export function puzzleDurationMs(group: CategoryGroup): number {
-  return group === 'witnessed' ? PUZZLE.witnessedMs : PUZZLE.standardMs;
+/**
+ * The visuospatial shelf gets a longer default — that game is the point of the
+ * session it appears in, and the dose is what the trials varied.
+ *
+ * Keyed to the games rather than to the group, which is what it used to key on.
+ * The longer dose was only ever justified by the mechanism, and the calm shelf
+ * has no mechanism to dose — seven minutes of it is just a longer wait.
+ */
+export function puzzleDurationMs(kind: GameKind): number {
+  return kind === 'visuospatial' ? PUZZLE.visuospatialMs : PUZZLE.standardMs;
 }
 
 /**

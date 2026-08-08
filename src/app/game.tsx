@@ -1,17 +1,21 @@
 /**
- * Screen 5 — the visuospatial task itself, whichever game was picked.
+ * Screen 5 — the game itself, whichever one was picked.
  *
  * The screen is the frame, not the game: it owns the framing copy, the dose
  * timer and the way out, and renders whatever `/games` chose inside that. Every
- * game on the list is interchangeable from here, which is the point — the
- * mechanism is "occupy visual working memory", and nothing about the timing or
- * the copy depends on which one does it.
+ * game on a shelf is interchangeable from here, which is the point — nothing
+ * about the timing or the copy depends on which of them is running.
  *
- * This screen is framed differently for the two groups. For GROUP B — someone
- * who saw something — it is the point of the whole session, it runs longer,
- * and the copy says what it is for. For GROUP A it is one step among several
- * and is introduced as such. The branch is on the group, never on the specific
- * category.
+ * What it does depend on is which shelf. For the visuospatial games the
+ * mechanism is "occupy visual working memory", it is the point of the whole
+ * session, it runs longer, and the copy says what it is for. The calm games
+ * claim nothing and run the standard dose, and the line above them says only
+ * that there is no way to lose.
+ *
+ * That is keyed to `gameKind`, not to the group. The two used to be the same
+ * split and are not any more — the personal/other answer sits in the same group
+ * as "Something I saw" and gets the calm shelf. Neither is ever keyed to the
+ * specific category.
  *
  * The user is never trapped: "I'm done" is on screen the entire time, not only
  * once the timer is up.
@@ -37,7 +41,7 @@ import { useSessionGuard } from '@/session/use-session-guard';
 export default function GameScreen() {
   const router = useRouter();
   const active = useSessionGuard();
-  const { categoryGroup, game } = useSessionFlow();
+  const { categoryGroup, gameKind, game } = useSessionFlow();
   const back = useSessionBack('/game');
 
   const [timeUp, setTimeUp] = useState(false);
@@ -45,7 +49,9 @@ export default function GameScreen() {
   const [extensions, setExtensions] = useState(0);
 
   const group = categoryGroup ?? 'world';
-  const durationMs = extensions === 0 ? puzzleDurationMs(group) : PUZZLE.keepGoingMs;
+  /** Matches the picker's fallback: an unknown session gets the calm shelf. */
+  const kind = gameKind ?? 'calm';
+  const durationMs = extensions === 0 ? puzzleDurationMs(kind) : PUZZLE.keepGoingMs;
 
   const chosen = game ? findGame(game) : undefined;
   const GameView = game ? GAME_VIEWS[game] : undefined;
@@ -76,9 +82,9 @@ export default function GameScreen() {
         <View style={styles.heading}>
           <ThemedText type="subtitle">{chosen?.title ?? PUZZLE_COPY.title}</ThemedText>
           <ThemedText themeColor="textSecondary">
-            {group === 'witnessed'
-              ? PUZZLE_COPY.witnessedFraming
-              : PUZZLE_COPY.worldFraming}
+            {kind === 'visuospatial'
+              ? PUZZLE_COPY.visuospatialFraming
+              : PUZZLE_COPY.calmFraming}
           </ThemedText>
         </View>
 

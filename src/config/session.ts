@@ -203,10 +203,15 @@ export const GROUNDING_FADE = {
  * likely thing in the app to need tuning once there is real usage data.
  */
 export const PUZZLE = {
-  /** GROUP A — the puzzle is one step among several. */
+  /** The calm shelf — the game is one step among several, and claims nothing. */
   standardMs: 5 * 60_000,
-  /** GROUP B — the puzzle is the point of the session, so it runs longer. */
-  witnessedMs: 7 * 60_000,
+  /**
+   * The visuospatial shelf — the game is the point of that session, so it runs
+   * longer. Named for the shelf rather than the group since `puzzleDurationMs`
+   * stopped keying on the group: the dose follows the mechanism, and only the
+   * visuospatial games have one.
+   */
+  visuospatialMs: 7 * 60_000,
   /** Added each time the user chooses "keep going". */
   keepGoingMs: 3 * 60_000,
   columns: 6,

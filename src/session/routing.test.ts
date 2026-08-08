@@ -26,10 +26,12 @@ describe('skipsReactivation', () => {
 });
 
 describe('group routing', () => {
-  it('gives witnessed content the longer puzzle', () => {
-    expect(puzzleDurationMs('witnessed')).toBe(PUZZLE.witnessedMs);
-    expect(puzzleDurationMs('world')).toBe(PUZZLE.standardMs);
-    expect(PUZZLE.witnessedMs).toBeGreaterThan(PUZZLE.standardMs);
+  // Keyed to the shelf rather than the group: the longer dose was only ever
+  // justified by the visuospatial mechanism, and the calm shelf has none.
+  it('gives the visuospatial games the longer dose', () => {
+    expect(puzzleDurationMs('visuospatial')).toBe(PUZZLE.visuospatialMs);
+    expect(puzzleDurationMs('calm')).toBe(PUZZLE.standardMs);
+    expect(PUZZLE.visuospatialMs).toBeGreaterThan(PUZZLE.standardMs);
   });
 
   it('shows calibration only for world-state fears', () => {

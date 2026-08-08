@@ -15,12 +15,19 @@ import type { ReactNode } from 'react';
 
 import type { Category, CategoryGroup } from '@/content/categories';
 import type { WorldTopic } from '@/content/topics';
-import type { GameId } from '@/session/games/catalog';
+import type { GameId, GameKind } from '@/session/games/catalog';
 
 export interface SessionState {
   category: Category | null;
   /** Duplicated from `category` because it is the actual routing signal. */
   categoryGroup: CategoryGroup | null;
+  /**
+   * Which shelf of games this session gets, and how the game step is framed
+   * and timed. Duplicated from `category` for the same reason the group is:
+   * every screen that needs it needs only this, and reading it off the category
+   * would spread the knowledge that it lives there.
+   */
+  gameKind: GameKind | null;
   /**
    * Which thing, for GROUP A. Null for GROUP B, which is never asked — and
    * null for GROUP A too until the picker, so a screen reading this before
@@ -46,6 +53,7 @@ export interface SessionState {
 const EMPTY_SESSION: SessionState = {
   category: null,
   categoryGroup: null,
+  gameKind: null,
   topic: null,
   moodBefore: null,
   moodAfter: null,
@@ -78,6 +86,7 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
       ...EMPTY_SESSION,
       category,
       categoryGroup: category.group,
+      gameKind: category.games,
     });
   }, []);
 

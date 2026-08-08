@@ -180,7 +180,18 @@ export const GAME_PICKER = {
    * doing real work here — it is *why* this step is a game and not a coping
    * tip, and someone who wants to look it up should be able to.
    */
-  title: "Now, let's pick a visuospatial game to take your mind off things:",
+  visuospatialTitle: "Now, let's pick a visuospatial game to take your mind off things:",
+  /**
+   * The other shelf, and deliberately not a mechanism.
+   *
+   * The word "visuospatial" is worth its space on the other title because it is
+   * a claim that holds: those games compete with an image. Nothing on this
+   * shelf does anything of the kind, and dressing a ball-and-paddle up in the
+   * same language would be borrowing evidence that does not cover it.
+   * Something to do with your hands is the whole offer, so that is what it
+   * says.
+   */
+  calmTitle: "Now, let's pick something to do for a few minutes:",
   /** Above the paid list. Not a pitch — a label. */
   lockedHeading: "Reground Plus",
   lockedNote: "Not available yet.",
@@ -191,10 +202,18 @@ export const GAME_PICKER = {
 export const PUZZLE_COPY = {
   /** Fallback only — the play screen titles itself from the chosen game. */
   title: "Fit the shapes.",
-  /** GROUP A — a normal step in the sequence. */
-  worldFraming: "A few minutes of this. No score, no way to lose.",
   /**
-   * GROUP B — this is the step that matters, and we say why.
+   * The calm shelf — a normal step in the sequence, and no claim made for it.
+   *
+   * Keyed to the games rather than to the group, which is what it was keyed to
+   * before. The two are no longer the same thing: the personal/other answer is
+   * in the same group as "Something I saw" and now gets these games, and
+   * telling that person their ball-and-paddle competes with a picture would be
+   * a promise about a mechanism that isn't running.
+   */
+  calmFraming: "A few minutes of this. No score, no way to lose.",
+  /**
+   * The visuospatial shelf — this is the step that matters, and we say why.
    *
    * Says nothing about buttons or shapes, and it used to. There are eight games
    * behind this screen now and the framing is shown above all of them, so a line
@@ -206,7 +225,7 @@ export const PUZZLE_COPY = {
    * line the board underneath does not get. A third line took a row off the
    * falling-blocks grid.
    */
-  witnessedFraming: "A few minutes of this. It competes with the picture in your head.",
+  visuospatialFraming: "A few minutes of this. It competes with the picture in your head.",
   rotate: "Rotate",
   place: "Place",
   left: "Left",
