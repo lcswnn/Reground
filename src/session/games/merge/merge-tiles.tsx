@@ -50,7 +50,6 @@ import {
   View,
 } from 'react-native';
 import Animated, {
-  ZoomIn,
   useAnimatedStyle,
   useSharedValue,
   withDelay,
@@ -85,6 +84,8 @@ const BOX_ESTIMATE = { width: 300, height: 300 };
 const MOVE_MS = 110;
 /** The bump a merged tile gives once it has landed. */
 const POP_MS = 90;
+/** How long a newly dropped tile takes to grow in. */
+const ENTER_MS = 130;
 
 /**
  * How far a finger has to travel before it counts as a swipe, in points.
@@ -279,11 +280,26 @@ function TileView({ tile, cell, step }: { tile: Tile; cell: number; step: number
   const row = useSharedValue(tile.row);
   const column = useSharedValue(tile.column);
   const pop = useSharedValue(1);
+  const grown = useSharedValue(0);
 
   useEffect(() => {
     row.value = withTiming(tile.row, { duration: MOVE_MS });
     column.value = withTiming(tile.column, { duration: MOVE_MS });
   }, [column, row, tile.column, tile.row]);
+
+  /**
+   * The entrance, as a scale inside the same transform as everything else —
+   * deliberately not one of Reanimated's `entering` presets.
+   *
+   * A layout animation owns the view's whole `transform` while it runs, which
+   * means it overwrites the translate this style is putting there: a new tile
+   * spent its entrance pinned at the board's top-left corner and then jumped to
+   * its square when the animation handed the property back. One transform, one
+   * owner, no jump.
+   */
+  useEffect(() => {
+    grown.value = withTiming(1, { duration: ENTER_MS });
+  }, [grown]);
 
   /**
    * The bump on a merge. Held until the slide is over — a tile that swells while
@@ -309,7 +325,7 @@ function TileView({ tile, cell, step }: { tile: Tile; cell: number; step: number
     transform: [
       { translateX: column.value * step },
       { translateY: row.value * step },
-      { scale: pop.value },
+      { scale: grown.value * pop.value },
     ],
   }));
 
@@ -326,7 +342,6 @@ function TileView({ tile, cell, step }: { tile: Tile; cell: number; step: number
   return (
     <Animated.View
       pointerEvents="none"
-      entering={ZoomIn.duration(MOVE_MS)}
       style={[
         styles.tile,
         position,

@@ -45,7 +45,10 @@ export const MEANINGFUL_MOOD_DROP = 2;
  *
  * `hideMs` is the fade out, and has to match `SplashScreen.setOptions` in
  * `app/_layout.tsx` — it is written down here so the total is a number rather
- * than a guess.
+ * than a guess. It is load-bearing beyond that call now: the welcome line waits
+ * out this fade before it starts, so a value here that does not match what the
+ * splash actually does would have the line begin over the tail of it. See
+ * `splashClearsInMs`.
  */
 export const SPLASH = {
   minimumMs: 1_400,
@@ -71,9 +74,10 @@ export const SPLASH = {
  * hold is what came back down.
  *
  * `fadeInMs` is not the line being written, it is the line being turned up. It
- * starts when the splash *begins* to dissolve rather than after it has gone (see
- * `splashHoldsForMs`), so the two fades overlap and the line comes up through
- * the splash as it clears.
+ * starts once the splash has gone rather than while it is dissolving (see
+ * `splashClearsInMs`), so the line comes up on a screen that is already clear.
+ * The two fades used to overlap, which read as the app talking over itself on
+ * the way out of its own front door.
  *
  * Everything else in the session waits for a tap. This one doesn't, which is
  * why the total is derived here rather than being whatever the animation
