@@ -5,249 +5,213 @@
  * and moving every comment down one would cost more than it explains. Screen 1
  * is still the question that starts the session; this one starts nothing.
  *
- * One line and one button. The button says what the user was doing rather than
- * asking them to, which is the only thing it is for: something recognisable
- * enough to press without deciding anything. The choice that actually branches
- * the session — see `category.tsx` — is the next screen, unchanged.
+ * One line, and nothing to press. It used to be a line and a large circular
+ * button whose label said what the user was doing ("I'm feeling a bit anxious
+ * right now") — a tap that cost nothing and decided nothing, which is exactly
+ * why it went: a decision-free tap is still a thing asked of someone who opened
+ * this app wound up. The line now asks for the one thing that is worth doing
+ * before the first question, and the screen waits while they do it.
+ *
+ * That makes it the only screen in the session that moves on its own without
+ * the user having agreed to it first — the breath in `breathe.tsx` runs on a
+ * clock too, but `breathe-intro.tsx` exists precisely so that someone taps
+ * Start before it does. The difference is length: five seconds of one sentence
+ * is a beat, and a beat does not need a front door of its own.
+ *
+ * The line writes itself out rather than appearing whole, which is the only
+ * moving thing on the screen and is doing a job: a sentence that arrives at
+ * reading speed sets the pace of the breath it is asking for, where a sentence
+ * that is simply there is read in half a second and then stared at. See
+ * `CHARACTERS` below for how it is drawn, and `WELCOME_BREATH` for the timings.
  *
  * No session state is touched here. Someone who opens the app and puts it down
  * has done nothing that needs clearing.
  *
  * One of the two screens with no back button, the other being `closed.tsx`.
  * Nothing has happened yet, so there is nothing behind this to return to — see
- * `previousRoute`, which is where that decision is written down.
+ * `previousRoute`, which is where that decision is written down, and note that
+ * `/category` is now in the same position for a different reason: a back button
+ * pointing here would land on a screen that immediately walks forward again.
  */
 
 import { useRouter } from "expo-router";
-import { useRef } from "react";
-import { Pressable, StyleSheet, View, useWindowDimensions } from "react-native";
+import { useEffect } from "react";
+import { StyleSheet, View } from "react-native";
 import Animated, {
   Easing,
-  runOnJS,
+  Extrapolation,
+  interpolate,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
-  withSequence,
   withTiming,
+  type SharedValue,
 } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/themed-text";
-import { Spacing } from "@/constants/theme";
+import { WELCOME_BREATH, welcomeBreathMs } from "@/config/session";
 import { WELCOME } from "@/content/strings";
-import { useTheme } from "@/hooks/use-theme";
-import { tickSelection } from "@/session/ui/haptics";
 import { SessionScreen } from "@/session/ui/session-screen";
 
 /**
- * The press, in two movements: down under the finger, then up and away as the
- * screen leaves. It is the one flourish in the app, and it is here because this
- * is the only tap in the session that costs the user nothing — everything after
- * it is a question about how they feel, and none of those should bounce.
+ * The line, split into words and then into characters.
+ *
+ * Every character is its own `Text` and every one of them is laid out from the
+ * first frame — what animates is opacity, not the text. Revealing a growing
+ * substring instead would be simpler to write and wrong to look at: the line
+ * wraps differently at every length, so the words already on screen would shunt
+ * around underneath the one being written.
+ *
+ * The split is by word rather than straight down the string because a wrapping
+ * row of individual characters would break mid-word wherever the edge fell.
+ * Each word is an unwrappable row, and the space that follows it rides along
+ * inside it as a character of its own — so the gaps are the font's own metric
+ * rather than a number picked here to look about right, and so the space takes
+ * its turn to appear like everything else.
+ *
+ * That space is a non-breaking one. An ordinary space alone in a `Text` is
+ * whitespace at the end of a line as far as a layout engine is concerned, and
+ * the platforms disagree about whether such a thing has any width; U+00A0 is
+ * the same glyph with none of that argument attached.
  */
-const PRESS_IN_MS = 130;
-const LIFT_MS = 420;
-const FADE_MS = 380;
-/** How far it gives under the finger, and how far it rises afterwards. */
-const PRESS_SCALE = 0.97;
-const LIFT_SCALE = 1.06;
+const WORD_SPACE = "\u00A0";
 
-/**
- * The circle, as a share of the screen's width and as a hard ceiling.
- *
- * A circle cannot use the full width the way a bar could — at the gutters it
- * would be a disc with the label crammed into a lens-shaped middle, and on a
- * tablet it would be enormous. This lands it comfortably inside the column with
- * room around it, which is most of why the shape reads as calm rather than as a
- * target.
- */
-const DIAMETER_RATIO = 0.78;
-const MAX_DIAMETER = 340;
-/**
- * Share of the diameter the label is allowed. A circle's usable width is its
- * middle band, not its full span — text run to the edges would collide with the
- * curve on the first and last lines.
- *
- * Widened twice now to carry larger type without breaking "doomscrolling" onto
- * a line of its own at every size. This is the number to move if the label ever
- * crowds the curve: it trades margin for line length, and the two are the same
- * thing in a circle.
- */
-const LABEL_WIDTH_RATIO = 0.78;
+const CHARACTERS = WELCOME.line.split(" ").map((word, index, words) => ({
+  word,
+  characters: [...word, ...(index < words.length - 1 ? [WORD_SPACE] : [])],
+}));
 
-/**
- * The label's size, and the one place in the app that sits off the type scale.
- *
- * `title` (33) crowded the circle and `subtitle` (25) reads as a caption inside
- * something this large; the tier between them does not exist because no other
- * screen has ever needed it. Set here rather than added to `ThemedText` for
- * exactly that reason — a scale earns a step when a second caller wants it.
- *
- * Line height is proportionally tighter than the scale's, because this is three
- * short lines stacked in a circle rather than a paragraph: the scale's leading
- * would push the block against the curve top and bottom.
- */
-const LABEL_FONT_SIZE = 29;
-const LABEL_LINE_HEIGHT = 36;
+/** Where each word starts in the line, so a character knows its own turn. */
+const WORD_OFFSETS = CHARACTERS.reduce<number[]>((offsets, { characters }) => {
+  const last = offsets[offsets.length - 1] ?? 0;
+  return [...offsets, last + characters.length];
+}, [0]);
+
+/** From the first character starting to the last one finishing. */
+const WRITING_MS =
+  Math.max(0, WELCOME.line.length - 1) * WELCOME_BREATH.charMs + WELCOME_BREATH.charFadeMs;
+
+const TOTAL_MS = welcomeBreathMs(WELCOME.line.length);
 
 export default function WelcomeScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const reducedMotion = useReducedMotion();
-  const { width } = useWindowDimensions();
 
-  const diameter = Math.min(width * DIAMETER_RATIO, MAX_DIAMETER);
+  /**
+   * Milliseconds into the writing, driven linearly. Every character reads its
+   * own opacity off this one value rather than owning a timer, so the whole
+   * line is one animation and the stagger is arithmetic.
+   *
+   * Under reduced motion it starts at the end: the line is simply there, and
+   * the screen is a sentence and a wait.
+   */
+  const written = useSharedValue(reducedMotion ? WRITING_MS : 0);
+  const opacity = useSharedValue(1);
 
-  const scale = useSharedValue(1);
-  const screen = useSharedValue(1);
+  useEffect(() => {
+    if (!reducedMotion) {
+      // Linear, and the one place in the app where that is the right curve —
+      // an eased hand would write the middle of the sentence faster than the
+      // ends of it.
+      written.value = withTiming(WRITING_MS, {
+        duration: WRITING_MS,
+        easing: Easing.linear,
+      });
 
-  /** A ref, not state: the button must not re-render mid-animation. */
-  const leaving = useRef(false);
-
-  const go = () => router.replace("/category");
-
-  const press = () => {
-    if (leaving.current) return;
-    leaving.current = true;
-
-    tickSelection();
-
-    if (reducedMotion) {
-      go();
-      return;
+      opacity.value = withDelay(
+        WRITING_MS + WELCOME_BREATH.holdMs,
+        withTiming(0, {
+          duration: WELCOME_BREATH.fadeOutMs,
+          easing: Easing.in(Easing.quad),
+        }),
+      );
     }
 
-    scale.value = withSequence(
-      withTiming(PRESS_SCALE, {
-        duration: PRESS_IN_MS,
-        easing: Easing.out(Easing.quad),
-      }),
-      withTiming(LIFT_SCALE, {
-        duration: LIFT_MS,
-        easing: Easing.out(Easing.cubic),
-      }),
-    );
+    /**
+     * The move is a timer rather than the fade's completion callback, so that
+     * the screen takes the same time either way — under reduced motion there is
+     * nothing animating to finish, and a version of this screen that flashed
+     * past in a frame would be worse than one that never existed.
+     */
+    const timer = setTimeout(() => router.replace("/category"), TOTAL_MS);
+    return () => clearTimeout(timer);
+  }, [opacity, reducedMotion, router, written]);
 
-    // Held back until the button has finished giving way, so the two movements
-    // read as cause and effect rather than as one thing happening twice.
-    screen.value = withDelay(
-      PRESS_IN_MS,
-      withTiming(
-        0,
-        { duration: FADE_MS, easing: Easing.inOut(Easing.quad) },
-        (finished) => {
-          "worklet";
-          if (finished) runOnJS(go)();
-        },
-      ),
-    );
-  };
-
-  const screenStyle = useAnimatedStyle(() => ({ opacity: screen.value }));
-  const buttonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const screenStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
 
   return (
-    <SessionScreen>
-      <Animated.View style={[styles.root, screenStyle]}>
-        {/* The question and the answer to it, laid out as a single block and
-            centred on the page as one — so what sits in the middle of the
-            screen is the pair, rather than either half of it.
-
-            The line used to be pinned to the top with `position: absolute`,
-            which kept it out of the button's way but meant the two were
-            centred against different things: the question against the top of
-            the screen, the circle against the whole of it. In the flow they
-            are one column, and centring that column puts the middle of the
-            pair on the middle of the page. The gap is the only thing holding
-            them apart. */}
-        <View style={styles.stack}>
-          <ThemedText type="title" style={styles.title}>
-            {WELCOME.title}
-          </ThemedText>
-
-          <Animated.View style={buttonStyle}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={WELCOME.action}
-              onPress={press}
-              style={({ pressed }) => [
-                styles.action,
-                {
-                  width: diameter,
-                  height: diameter,
-                  borderRadius: diameter / 2,
-                  backgroundColor: theme.brand,
-                },
-                // Only while the finger is down and nothing else is running —
-                // once the animation has the button, the look is the
-                // animation's to own.
-                pressed && !leaving.current && styles.pressed,
-              ]}
-            >
-              {/* `title` — the same tier as the question above it, which is as
-                  large as a label with a thirteen-letter word in it can go
-                  inside a circle. It wraps to three lines, which a circle wears
-                  better than a bar would: the lines stack into the shape
-                  instead of stretching it.
-
-                  The shrink-to-fit is a floor, not the plan. "Doomscrolling" at
-                  this size is within a few points of the band's width, and the
-                  band is derived from the screen — on the narrowest phone still
-                  supported it would otherwise break mid-word. It only engages
-                  where it has to, and never below 80% of the size. */}
-              <ThemedText
-                type="title"
-                numberOfLines={3}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-                style={[
-                  styles.actionLabel,
-                  {
-                    width: diameter * LABEL_WIDTH_RATIO,
-                    color: theme.textOnBrand,
-                  },
-                ]}
-              >
-                {WELCOME.action}
-              </ThemedText>
-            </Pressable>
-          </Animated.View>
-        </View>
+    <SessionScreen centered>
+      <Animated.View style={[styles.line, screenStyle]}>
+        {CHARACTERS.map(({ word, characters }, wordIndex) => (
+          <View key={`${word}-${wordIndex}`} style={styles.word}>
+            {characters.map((character, index) => (
+              <Character
+                key={index}
+                character={character}
+                position={WORD_OFFSETS[wordIndex] + index}
+                written={written}
+              />
+            ))}
+          </View>
+        ))}
       </Animated.View>
     </SessionScreen>
   );
 }
 
+interface CharacterProps {
+  character: string;
+  /** Its place in the line, which is the only thing setting its turn. */
+  position: number;
+  written: SharedValue<number>;
+}
+
+/**
+ * One character, fading in when the writing reaches it.
+ *
+ * The opacity is on a wrapping view rather than on the text itself: animating a
+ * `Text` directly would mean `createAnimatedComponent` around `ThemedText`,
+ * which does not forward a ref, and nesting one `Text` inside another to get
+ * around that changes how the glyph is laid out on iOS. A view is neither.
+ */
+function Character({ character, position, written }: CharacterProps) {
+  const style = useAnimatedStyle(() => {
+    const start = position * WELCOME_BREATH.charMs;
+
+    return {
+      opacity: interpolate(
+        written.value,
+        [start, start + WELCOME_BREATH.charFadeMs],
+        [0, 1],
+        Extrapolation.CLAMP,
+      ),
+    };
+  });
+
+  return (
+    <Animated.View style={style}>
+      {/* `subtitle`, two steps down from where this screen started. Small
+          enough that the sentence sits on one line on a phone, which is worth
+          more here than the size is: a line that wraps is a line whose second
+          half is written into empty space below the first, and the eye has to
+          go looking for where it went. */}
+      <ThemedText type="subtitle">{character}</ThemedText>
+    </Animated.View>
+  );
+}
+
 const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-  },
-  // The question and the circle as one block, centred on both axes. Everything
-  // about where the pair sits on the page follows from this one rule; the gap
-  // is what sets them apart from each other.
-  stack: {
-    flex: 1,
-    alignItems: "center",
+  // The words, wrapping as a paragraph would. Centred on both axes so the
+  // block sits where a single centred line used to.
+  line: {
+    flexDirection: "row",
+    flexWrap: "wrap",
     justifyContent: "center",
-    gap: Spacing.five,
-  },
-  title: {
-    textAlign: "center",
-  },
-  // Sized in the component: a circle's dimensions depend on the screen, and a
-  // stylesheet cannot see one.
-  action: {
     alignItems: "center",
-    justifyContent: "center",
   },
-  actionLabel: {
-    textAlign: "center",
-    fontSize: LABEL_FONT_SIZE,
-    lineHeight: LABEL_LINE_HEIGHT,
-  },
-  pressed: {
-    opacity: 0.9,
+  // One word, which never breaks.
+  word: {
+    flexDirection: "row",
   },
 });

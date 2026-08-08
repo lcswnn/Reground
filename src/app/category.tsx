@@ -1,9 +1,14 @@
 /**
- * Screen 1 — one question, two answers. The start of the session proper.
+ * Screen 1 — one question, two answers. The start of the session proper, and
+ * the first thing in the app that asks anything of the user.
  *
  * Still no logo and no onboarding: the screen in front of this one (`index.tsx`)
- * is a door, not a welcome, and someone arriving here has already had enough
- * happen to them today.
+ * is a line and a timer, not a welcome, and someone arriving here has already
+ * had enough happen to them today.
+ *
+ * No back button, which is why `useSessionBack` isn't called here — the door
+ * moves on its own, so a button back to it would be a wait, not a return. See
+ * `previousRoute`.
  *
  * Tapping an answer advances immediately rather than arming a Start button.
  * With two options there is nothing to confirm, and the saved tap matters more
@@ -20,13 +25,11 @@ import { Spacing } from '@/constants/theme';
 import { OptionCard } from '@/session/ui/option-card';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { needsTopic } from '@/session/routing';
-import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 
 export default function EntryScreen() {
   const router = useRouter();
   const { begin } = useSessionFlow();
-  const back = useSessionBack('/category');
 
   const choose = (category: Category) => {
     begin(category);
@@ -36,7 +39,7 @@ export default function EntryScreen() {
   };
 
   return (
-    <SessionScreen centered onBack={back}>
+    <SessionScreen centered>
       <View style={styles.root}>
         <ThemedText type="title">{ENTRY.title}</ThemedText>
 

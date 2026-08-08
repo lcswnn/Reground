@@ -27,6 +27,47 @@ export const HIGH_DISTRESS_MOOD = 8;
 export const MEANINGFUL_MOOD_DROP = 2;
 
 /**
+ * The opening line, which nobody taps through.
+ *
+ * The screen is one sentence and a timer, and the line writes itself out a
+ * character at a time — so the pace of the writing is most of what these
+ * numbers control. `charMs` is the gap between one character starting and the
+ * next; `charFadeMs` is how long any one of them takes to arrive, and it runs
+ * longer than the gap on purpose, so several are always in the middle of
+ * appearing at once. That overlap is the difference between writing and a
+ * teleprinter.
+ *
+ * `holdMs` starts once the full stop lands, and it is the part doing the actual
+ * work: long enough to take the breath the line asks for, short enough that
+ * someone who ignored it isn't left waiting on an app that won't move.
+ *
+ * Everything else in the session waits for a tap. This one doesn't, which is
+ * why the total is derived here rather than being whatever the animation
+ * happened to add up to.
+ */
+export const WELCOME_BREATH = {
+  charMs: 100,
+  charFadeMs: 420,
+  holdMs: 2_800,
+  fadeOutMs: 700,
+} as const;
+
+/**
+ * How long the whole screen lasts, for a line of `characters` characters.
+ *
+ * The last character starts at `(characters - 1) * charMs` and takes
+ * `charFadeMs` to finish, which is where the first term comes from — the hold
+ * has to begin after the line is fully written, not after the last one started.
+ */
+export function welcomeBreathMs(characters: number): number {
+  const writtenMs =
+    Math.max(0, characters - 1) * WELCOME_BREATH.charMs +
+    WELCOME_BREATH.charFadeMs;
+
+  return writtenMs + WELCOME_BREATH.holdMs + WELCOME_BREATH.fadeOutMs;
+}
+
+/**
  * Cyclic sighing: two inhales stacked, then an exhale about twice their
  * combined length. The exhale is the part that does the work, so the ratio is
  * the thing to preserve if these ever move — lengthening an inhale without

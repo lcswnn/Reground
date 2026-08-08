@@ -11,19 +11,18 @@
  */
 
 /**
- * The door. One line and one button, and the button is the answer to the line
- * rather than a "continue" — nobody arrives here needing to be eased in, but
- * naming the thing they were just doing is a different move from asking them to
- * file it.
+ * The door. One line, no button — it fades in, waits, and goes.
+ *
+ * An instruction rather than a greeting, because it is the only thing on screen
+ * and nothing is waiting on the user to answer it. "How are you today?" needed
+ * a button to be a question; this needs the user to do one thing, and the
+ * screen holds still long enough for them to do it.
+ *
+ * The stretched vowel is the timing, written into the word. "Take a deep
+ * breath" is read at the speed of any other sentence; this one can't be.
  */
 export const WELCOME = {
-  title: "Hey, how are you today?",
-  /**
-   * Says it for them. The whole point is that it should be recognisable enough
-   * to be pressed without being thought about — the question that actually
-   * branches the session is on the next screen.
-   */
-  action: "I\'m feeling a bit anxious right now.",
+  line: "Take a deeeeeeep breath.",
 } as const;
 
 /**
@@ -48,8 +47,15 @@ export const DISCLOSURE = {
 } as const;
 
 export const ENTRY = {
-  /** No logo, no onboarding. Straight to why they opened this. */
-  title: "What seemed to trigger that anxiety?",
+  /**
+   * No logo, no onboarding. Straight to why they opened this.
+   *
+   * "That anxiety" until the door lost its button — it was pointing at the
+   * label the user had just pressed ("I'm feeling a bit anxious right now"),
+   * and with nothing to press there is nothing for "that" to refer back to.
+   * "Your" is the version that stands on its own.
+   */
+  title: "What seemed to trigger your anxiety?",
 } as const;
 
 /**

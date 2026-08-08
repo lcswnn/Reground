@@ -65,16 +65,19 @@ describe('previousRoute', () => {
     ...over,
   });
 
-  it('gives the door and the dead end no way back', () => {
+  // The door moves on a timer, so the first question counts as a door too: a
+  // button back to a screen that walks forward again is a button that does
+  // nothing slowly.
+  it('gives the door, the first question and the dead end no way back', () => {
     expect(previousRoute('/', context())).toBeNull();
+    expect(previousRoute('/category', context())).toBeNull();
     expect(previousRoute('/closed', context())).toBeNull();
   });
 
-  // The only two that are null. A screen added without a target would be a
+  // The only three that are null. A screen added without a target would be a
   // screen the user can be stuck on, so this is the check that catches it.
   it('gives every other screen one', () => {
     const routes: SessionRoute[] = [
-      '/category',
       '/topic',
       '/mood',
       '/breathe-intro',

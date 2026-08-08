@@ -113,6 +113,11 @@ export interface BackContext {
  *  - `/games` goes back to `/breathe-intro` rather than `/reactivate` when the
  *    cue was auto-skipped for high distress — `/reactivate` would bounce them
  *    straight forward again, which is a back button that does nothing.
+ *
+ * And one screen that stopped having a target for the same reason: `/category`
+ * used to return to the door, which was a line and a button. The door now moves
+ * on a timer, so going back to it lands on a screen that walks forward again a
+ * few seconds later — the `/games` case above, with the bounce slowed down.
  */
 export function previousRoute(
   route: SessionRoute,
@@ -120,13 +125,14 @@ export function previousRoute(
 ): SessionRoute | null {
   switch (route) {
     // The door starts nothing, and the dead end has already cleared the
-    // session. Neither has anything behind it worth returning to.
+    // session. Neither has anything behind it worth returning to. The first
+    // question joins them: the door is now a timed line, and returning to it
+    // only means waiting to be sent here again.
     case '/':
+    case '/category':
     case '/closed':
       return null;
 
-    case '/category':
-      return '/';
     case '/topic':
       return '/category';
     case '/mood':
