@@ -107,10 +107,10 @@ function RootNavigator() {
    * inside the minimum, and by the time they land there is nothing left to
    * wait for.
    *
-   * `index.tsx` schedules its line off the very same call, so the line starts
-   * fading up as this fires rather than after the fade it kicks off has
-   * finished. It depends on this effect being where the wait begins — see
-   * `splashHoldsForMs`.
+   * `index.tsx` schedules its line off this wait plus the fade below, so the
+   * line starts once the splash has finished clearing rather than over the top
+   * of it. It depends on this effect being where the wait begins — see
+   * `splashClearsInMs`.
    */
   useEffect(() => {
     if (!fontsSettled) return;

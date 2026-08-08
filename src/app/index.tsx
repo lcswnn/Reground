@@ -34,12 +34,12 @@
  * used to take went into `holdMs`, so the screen lasts about as long as it
  * always did.
  *
- * None of it starts until the splash begins to go. This screen is mounted behind
- * it — the root renders as soon as the fonts are ready, which is sooner — so the
- * fade is held back by whatever the splash has left to run. See
- * `splashHoldsForMs`, and note that the navigation timer carries the same delay:
- * the two are one schedule, and a screen that left before its own line had
- * finished would be worse than one that started late.
+ * None of it starts until the splash has gone. This screen is mounted behind it
+ * — the root renders as soon as the fonts are ready, which is sooner — so the
+ * fade is held back by whatever the splash has left to run *and* by the fade it
+ * runs on the way out. See `splashClearsInMs`, and note that the navigation
+ * timer carries the same delay: the two are one schedule, and a screen that left
+ * before its own line had finished would be worse than one that started late.
  *
  * No session state is touched here. Someone who opens the app and puts it down
  * has done nothing that needs clearing.
@@ -65,7 +65,7 @@ import Animated, {
 
 import { WELCOME_BREATH, WELCOME_BREATH_MS } from "@/config/session";
 import { WELCOME } from "@/content/strings";
-import { splashHoldsForMs } from "@/lib/splash";
+import { splashClearsInMs } from "@/lib/splash";
 import { SessionScreen } from "@/session/ui/session-screen";
 import { StageDirection } from "@/session/ui/stage-direction";
 
@@ -85,16 +85,17 @@ export default function WelcomeScreen() {
      * splash comes off — so without this the line would fade up underneath an
      * opaque splash and be revealed already at full strength.
      *
-     * It waits for the splash to *start* going, not to have finished: the same
-     * instant `_layout.tsx` calls `hideAsync`, so the line's fade and the
-     * splash's overlap and the line rises through it. Waiting for the far side
-     * of that fade, plus the settling beat that used to follow it, put 550ms of
-     * empty screen in front of the first thing the app says.
+     * It waits for the splash to have *finished* going: the hold, plus the fade
+     * `_layout.tsx` kicks off at the end of it. The two fades used to overlap,
+     * so that the line rose through the splash as it cleared, and what that
+     * actually looked like was the app talking over itself while still opening.
+     * The line is the first thing this app says and it now gets a screen of its
+     * own to say it on.
      *
      * Measured here rather than passed in, because "now" at first mount is the
-     * instant that hide timer is set. See `splashHoldsForMs`.
+     * instant that hide timer is set. See `splashClearsInMs`.
      */
-    const leadMs = splashHoldsForMs();
+    const leadMs = splashClearsInMs();
 
     if (!reducedMotion) {
       // One sequence rather than two assignments: the second would land on the

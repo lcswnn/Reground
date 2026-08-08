@@ -30,6 +30,7 @@ export type GameId =
   | 'mirror'
   | 'silhouette'
   | 'bounce'
+  | 'merge'
   | 'maze';
 
 /**
@@ -80,9 +81,11 @@ export interface Game {
  * same idea given its own screen and a group of people it is actually the right
  * answer for.
  *
- * NOTE: `calm` currently has exactly one playable game on it. The shelf is
- * built to hold more and wants them — a picker with one card is a question with
- * one answer.
+ * `merge` follows it, and the pair is the point: the ball is for someone who
+ * cannot face thinking, the tiles are for someone who would rather have
+ * something to think about than sit with what they were thinking about. Two
+ * cards is the smallest number that makes the picker a question — it was one
+ * for a while, and a question with one answer is a screen you tap through.
  *
  * The single `premium` entry is not built. It is listed because the picker has
  * to show what a purchase would get you. Nothing can reach it while
@@ -147,6 +150,16 @@ export const GAMES: readonly Game[] = [
     id: 'bounce',
     title: 'Keep it in the air',
     blurb: 'One ball, one paddle. Drop it and you serve again.',
+    kind: 'calm',
+    tier: 'included',
+  },
+  {
+    // The blurb says "two of the same" rather than "2048" on purpose — naming
+    // a tile to reach would put a target on a shelf that keeps no score. See
+    // the note at the top of `merge/merge-tiles.tsx`.
+    id: 'merge',
+    title: 'Join the numbers',
+    blurb: 'Swipe to slide the tiles. Two of the same become one, doubled.',
     kind: 'calm',
     tier: 'included',
   },

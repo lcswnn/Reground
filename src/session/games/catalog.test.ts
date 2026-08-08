@@ -60,6 +60,14 @@ describe('the two shelves', () => {
     expect(calm).not.toContain('shapes');
   });
 
+  /**
+   * The picker is a choice or it is a screen to tap through, and the calm shelf
+   * spent a while being the second of those.
+   */
+  it('gives the calm shelf something to choose between', () => {
+    expect(gamesOfKind('calm').length).toBeGreaterThan(1);
+  });
+
   it('keeps the evidence-backed puzzle at the head of the other one', () => {
     expect(gamesOfKind('visuospatial')[0]?.id).toBe('shapes');
   });

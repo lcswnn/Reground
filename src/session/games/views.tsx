@@ -13,6 +13,7 @@ import type { ComponentType } from 'react';
 import type { GameId } from '@/session/games/catalog';
 import { BounceGame } from '@/session/games/bounce-game';
 import { HiddenCubes } from '@/session/games/cubes/hidden-cubes';
+import { MergeTiles } from '@/session/games/merge/merge-tiles';
 import { MirrorComplete } from '@/session/games/mirror/mirror-complete';
 import { NetFold } from '@/session/games/net-fold/net-fold';
 import { PaperFold } from '@/session/games/paper-fold/paper-fold';
@@ -29,6 +30,7 @@ export const GAME_VIEWS: Partial<Record<GameId, ComponentType>> = {
   mirror: MirrorComplete,
   silhouette: SilhouetteFit,
   bounce: BounceGame,
+  merge: MergeTiles,
 };
 
 export function isPlayable(id: GameId): boolean {

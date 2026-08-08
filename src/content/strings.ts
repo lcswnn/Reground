@@ -326,6 +326,38 @@ export const SILHOUETTE = {
 } as const;
 
 /**
+ * Join the Numbers — 2048 on the calm shelf.
+ *
+ * The prompt is two short sentences and no more, because most people arriving
+ * at this board have played it before and the ones who haven't will find the
+ * rule out on their first swipe. It does not mention 2048, a target, or how
+ * high the numbers go: naming a tile to reach is the score this shelf does not
+ * keep, wearing a different hat.
+ *
+ * `stuck` is the one line that had to be argued over. It is what shows when the
+ * board fills with nothing to join — the moment ordinary 2048 says "game over"
+ * — and it says what is about to happen rather than what has gone wrong. No
+ * apology, no "unfortunately", and nothing that could be read as a verdict on
+ * how the last few minutes went.
+ */
+export const MERGE_TILES = {
+  prompt: "Swipe to slide everything one way. Two of the same become one.",
+  stuck: "Out of room. The smallest tiles go, and you carry on.",
+  boardLabel: "A grid of numbered tiles. Swipe in any direction to slide them.",
+  /**
+   * Offered to a screen reader in place of the swipe. The names are the four
+   * `Direction` values, which is what makes them safe to hand straight to the
+   * move — see `onAccessibilityAction` in `merge-tiles.tsx`.
+   */
+  actions: [
+    { name: "up", label: "Slide up" },
+    { name: "down", label: "Slide down" },
+    { name: "left", label: "Slide left" },
+    { name: "right", label: "Slide right" },
+  ],
+} as const;
+
+/**
  * The three headings are the screen's contract and the reason it works: what's
  * going on, what's being done, what you can do. Every entry in
  * `@/content/calibration` fills all three, in that order — see the note there
