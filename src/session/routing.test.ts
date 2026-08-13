@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 
 import { HIGH_DISTRESS_MOOD, MEANINGFUL_MOOD_DROP, PUZZLE } from '@/config/session';
 import {
-  aftercareKind,
   moodOutcome,
   needsTopic,
   previousRoute,
@@ -39,11 +38,6 @@ describe('group routing', () => {
     expect(showsCalibration('witnessed')).toBe(false);
   });
 
-  it('offers grounding for images and postponement for worries', () => {
-    expect(aftercareKind('witnessed')).toBe('grounding');
-    expect(aftercareKind('world')).toBe('park-worry');
-  });
-
   it('asks the topic follow-up only for world-state fears', () => {
     expect(needsTopic('world')).toBe(true);
     expect(needsTopic('witnessed')).toBe(false);
@@ -63,7 +57,7 @@ describe('previousRoute', () => {
     group: 'world',
     hasTopic: true,
     moodBefore: 5,
-    moodAfter: 5,
+    oneMore: null,
     ...over,
   });
 
@@ -89,7 +83,7 @@ describe('previousRoute', () => {
       '/game',
       '/calibration',
       '/mood-after',
-      '/aftercare',
+      '/one-more',
       '/check-in',
       '/close',
     ];
@@ -139,23 +133,31 @@ describe('previousRoute', () => {
     expect(previousRoute('/mood-after', context({ group: 'witnessed' }))).toBe('/game');
   });
 
-  describe('the closing screen, which has three ways in', () => {
-    it('goes back to the rating when the rating is what ended the session', () => {
-      const improved = context({ moodBefore: 8, moodAfter: 8 - MEANINGFUL_MOOD_DROP });
-      expect(previousRoute('/close', improved)).toBe('/mood-after');
+  // Everybody passes through the offer of one last thing now, whatever their
+  // rating did, so this is the screen the second rating hands off to.
+  it('sends the offer of one last thing back to the second rating', () => {
+    const improved = context({ moodBefore: 8 });
+    const stuck = context({ moodBefore: 5 });
+    expect(previousRoute('/one-more', improved)).toBe('/mood-after');
+    expect(previousRoute('/one-more', stuck)).toBe('/mood-after');
+  });
+
+  describe('the closing screen, which has two ways in', () => {
+    // The only option on the list with a screen after it.
+    it('goes back through the check-in when the 5-4-3-2-1 ran', () => {
+      expect(previousRoute('/close', context({ oneMore: 'grounding' }))).toBe('/check-in');
     });
 
-    it('goes back through whichever aftercare step actually ran', () => {
-      const stuck = { moodBefore: 6, moodAfter: 6 };
-      expect(previousRoute('/close', context({ ...stuck, group: 'witnessed' }))).toBe('/check-in');
-      expect(previousRoute('/close', context({ ...stuck, group: 'world' }))).toBe('/aftercare');
+    it('goes back to the list for an option that ends on the door', () => {
+      expect(previousRoute('/close', context({ oneMore: 'somatic' }))).toBe('/one-more');
+      expect(previousRoute('/close', context({ oneMore: 'pmr' }))).toBe('/one-more');
     });
 
-    // A reload empties the provider, and a screen with no button is worse than
-    // one whose button lands a step early.
-    it('falls back to the rating when there is no state to reconstruct from', () => {
-      expect(previousRoute('/close', context({ moodAfter: null }))).toBe('/mood-after');
-      expect(previousRoute('/close', context({ group: null }))).toBe('/mood-after');
+    // Declining the offer, and also what a reload that emptied the provider
+    // looks like. Both want the list: it is where the session actually was.
+    it('goes back to the list when nothing was picked at all', () => {
+      expect(previousRoute('/close', context({ oneMore: null }))).toBe('/one-more');
+      expect(previousRoute('/close', context({ oneMore: null, group: null }))).toBe('/one-more');
     });
   });
 });

@@ -417,8 +417,54 @@ export const MOOD_AFTER = {
   continue: "Next",
   /** Shown when the rating dropped by at least `MEANINGFUL_MOOD_DROP`. */
   improved: "Good. That was the point.",
-  /** Shown when it did not. One option follows, not a menu. */
+  /**
+   * Shown when it did not. Both answers now lead to the same screen — the
+   * offer of one more thing — so this line no longer promises anything the
+   * other one doesn't. What it still does is say the thing out loud, which is
+   * the half of it that mattered.
+   */
   unchanged: "That didn't shift it. One more thing, then we're done.",
+} as const;
+
+/**
+ * The last question: one more thing, or nothing.
+ *
+ * The question mark is doing real work — this is an offer and it has to be
+ * refusable, which is what `skip` is for. A menu with no way past it is not a
+ * question, and someone who feels fine now is exactly the person this screen
+ * should be quickest to let go.
+ *
+ * `lead` says the session ends after this, because it does: there is no loop
+ * back to the start and the user should know they are picking a last thing
+ * rather than opening a drawer.
+ *
+ * The five options name themselves — see `@/content/one-more`, which holds
+ * their titles the same way the game catalog holds its own.
+ */
+export const ONE_MORE = {
+  title: 'One more thing before we finish?',
+  lead: 'Pick one if you want it. Nothing after this either way.',
+  /** Quiet, under the list. Not a button — an exit. */
+  skip: "Nothing, I'm done",
+} as const;
+
+/**
+ * Four of the five options have nothing behind them yet.
+ *
+ * They are still on the list and still tappable, and this is the screen that
+ * makes that honest. It says the app hasn't built it — not that the user picked
+ * wrong, and not that something went wrong — and it puts the way back to the
+ * list next to the way out, because a dead end at the end of a session about
+ * anxiety is a poor last impression.
+ *
+ * Delete an entry from here as each exercise lands, and this screen stops being
+ * reachable at all when the last one does.
+ */
+export const NOT_YET = {
+  eyebrow: 'Not built yet',
+  body: "This one isn't in the app yet — it's on the list. Pick something else, or call it here.",
+  back: 'Pick something else',
+  done: 'Finish up',
 } as const;
 
 /**
@@ -448,9 +494,10 @@ export const SUPPORT_RESOURCE = {
 export const GROUNDING = {
   /**
    * Shown on its own before the first prompt, the same way the breath is
-   * introduced before it starts. Naming the method matters here: someone who
-   * has been told twice that nothing shifted is owed a reason to try a third
-   * thing, and "5-4-3-2-1" is a name they may already know or can look up.
+   * introduced before it starts. It is a beat between picking the thing and
+   * being given the first instruction — the sequence used to open cold on
+   * "find five things you can see", which is an instruction arriving with no
+   * idea what it is the first of.
    */
   intro: "Let's try the 5-4-3-2-1 method to center yourself.",
   introHint: "Tap start to begin.",

@@ -1,10 +1,10 @@
 /**
  * The check-in after the 5-4-3-2-1.
  *
- * The grounding sequence is the last thing the app does for someone whose
- * rating didn't move, and it used to end by dropping them onto the closing
- * screen mid-count-down — the exercise finished and nobody asked how it went.
- * One question, two answers, no scale.
+ * The grounding sequence is the last thing the app does for anyone who picks it
+ * off `/one-more`, and it used to end by dropping them onto the closing screen
+ * mid-count-down — the exercise finished and nobody asked how it went. One
+ * question, two answers, no scale.
  *
  * Both answers lead to the same place. This is not a gate: "not really" does
  * not unlock a fourth thing to try, because there isn't one and pretending
@@ -12,9 +12,9 @@
  * it changes is what the screen says back — and, for the answer that warrants
  * it, whether the pointer to a real person is on screen.
  *
- * Shown for the grounding branch only. `park-worry` ends on an agreement about
- * a time, and "did that help?" is the wrong question to ask of it — nothing was
- * meant to have shifted yet.
+ * Shown for the 5-4-3-2-1 only. It is the one option on that list with anything
+ * after it, which is also what `routeIntoClose` keys off to send the closing
+ * screen's back button here rather than at the list.
  */
 
 import { useState } from 'react';

@@ -8,6 +8,7 @@
  */
 
 import type { CategoryGroup } from '@/content/categories';
+import type { OneMoreId } from '@/content/one-more';
 import type { GameKind } from '@/session/games/catalog';
 import {
   HIGH_DISTRESS_MOOD,
@@ -91,7 +92,7 @@ export type SessionRoute =
   | '/game'
   | '/calibration'
   | '/mood-after'
-  | '/aftercare'
+  | '/one-more'
   | '/check-in'
   | '/close'
   | '/closed';
@@ -102,7 +103,12 @@ export interface BackContext {
   /** GROUP A answered the follow-up, so there is a second screen behind them. */
   hasTopic: boolean;
   moodBefore: number | null;
-  moodAfter: number | null;
+  /**
+   * Which last thing was picked, or null for nobody-picked-anything. The only
+   * thing that says which way the session left `/one-more` — see
+   * `routeIntoClose`.
+   */
+  oneMore: OneMoreId | null;
 }
 
 /**
@@ -165,45 +171,27 @@ export function previousRoute(
       return context.group !== null && showsCalibration(context.group)
         ? '/calibration'
         : '/game';
-    case '/aftercare':
+    case '/one-more':
       return '/mood-after';
     case '/check-in':
-      return '/aftercare';
+      return '/one-more';
     case '/close':
       return routeIntoClose(context);
   }
 }
 
 /**
- * The closing screen has three ways in — straight from the second rating when
- * it improved, from the check-in after grounding, and from the worry-parking
- * screen — so its back target is the only one that has to be reconstructed
- * from state rather than read off the flow.
+ * The closing screen has two ways in, and the rating is no longer one of them:
+ * everybody passes through `/one-more` now, whatever their rating did. So the
+ * question this answers is only ever "did the last thing they picked run to a
+ * check-in", and `oneMore` is what says so.
+ *
+ * A null choice means they went straight past the offer, which lands on the
+ * same place as an exercise that doesn't check in — the list they declined.
+ * That is also the answer when a reload has emptied the provider, and it is a
+ * safe one for the same reason the rating screen used to be: every path to the
+ * closing screen goes through the list.
  */
 function routeIntoClose(context: BackContext): SessionRoute {
-  const { group, moodBefore, moodAfter } = context;
-
-  // Nothing to reconstruct from: the rating screen is the safe answer, since
-  // every path to here passes through it.
-  if (group === null || moodBefore === null || moodAfter === null) return '/mood-after';
-
-  if (moodOutcome(moodBefore, moodAfter).improved) return '/mood-after';
-
-  return aftercareKind(group) === 'grounding' ? '/check-in' : '/aftercare';
-}
-
-export type AftercareKind = 'grounding' | 'park-worry';
-
-/**
- * The one extra thing offered when the rating didn't move. Exactly one, chosen
- * for them — a menu at this point is another decision handed to someone who
- * has already told us they feel no better.
- *
- * Which one is driven by the group, because the two do different jobs:
- * grounding pulls attention out of a replaying image (GROUP B), while
- * worry-postponement gives an unresolved future fear somewhere to sit until
- * later (GROUP A). Neither is a substitute for the other.
- */
-export function aftercareKind(group: CategoryGroup): AftercareKind {
-  return group === 'witnessed' ? 'grounding' : 'park-worry';
+  return context.oneMore === 'grounding' ? '/check-in' : '/one-more';
 }

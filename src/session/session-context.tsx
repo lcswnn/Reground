@@ -14,6 +14,7 @@ import { createContext, useCallback, useContext, useMemo, useState } from 'react
 import type { ReactNode } from 'react';
 
 import type { Category, CategoryGroup } from '@/content/categories';
+import type { OneMoreId } from '@/content/one-more';
 import type { WorldTopic } from '@/content/topics';
 import type { GameId, GameKind } from '@/session/games/catalog';
 
@@ -48,6 +49,16 @@ export interface SessionState {
    * choice is not a preference to be remembered, it is one tap in one session.
    */
   game: GameId | null;
+  /**
+   * Which last thing they picked on `/one-more`, and null both before the
+   * choice and after backing out of one — that screen draws the list again
+   * when this is null, so clearing it is how "pick something else" is done.
+   *
+   * Session state rather than the screen's own, unlike the two-phase local
+   * state inside it, because the closing screen's back button has to know
+   * which way the session left the list — see `routeIntoClose`.
+   */
+  oneMore: OneMoreId | null;
 }
 
 const EMPTY_SESSION: SessionState = {
@@ -59,6 +70,7 @@ const EMPTY_SESSION: SessionState = {
   moodAfter: null,
   reactivationSkipped: false,
   game: null,
+  oneMore: null,
 };
 
 interface SessionApi extends SessionState {
@@ -73,6 +85,8 @@ interface SessionApi extends SessionState {
   setReactivationSkipped: (skipped: boolean) => void;
   chooseGame: (game: GameId) => void;
   setMoodAfter: (mood: number) => void;
+  /** Null puts the user back on the list. See `oneMore` above. */
+  chooseOneMore: (choice: OneMoreId | null) => void;
   reset: () => void;
 }
 
@@ -110,6 +124,10 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
     setState((current) => ({ ...current, moodAfter: mood }));
   }, []);
 
+  const chooseOneMore = useCallback((choice: OneMoreId | null) => {
+    setState((current) => ({ ...current, oneMore: choice }));
+  }, []);
+
   const reset = useCallback(() => setState(EMPTY_SESSION), []);
 
   const value = useMemo<SessionApi>(
@@ -121,6 +139,7 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
       setReactivationSkipped,
       chooseGame,
       setMoodAfter,
+      chooseOneMore,
       reset,
     }),
     [
@@ -131,6 +150,7 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
       setReactivationSkipped,
       chooseGame,
       setMoodAfter,
+      chooseOneMore,
       reset,
     ],
   );

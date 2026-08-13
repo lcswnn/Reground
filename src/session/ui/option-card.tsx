@@ -1,5 +1,6 @@
 /**
- * An answer on one of the two picker screens.
+ * An answer on one of the picker screens: the opening question, the topic
+ * follow-up, and the offer of one last thing at the end.
  *
  * A full-width card rather than a chip: they carry a line of explanation each,
  * and the first screen's pair are the single most consequential tap in the
@@ -11,6 +12,10 @@
  * the type scale. The alternative was making the topic list scroll, and a
  * decision screen where some of the options are below the fold is a worse
  * trade than smaller text.
+ *
+ * The last screen's five are compact for the same reason, and it does scroll —
+ * nothing branches on that answer and the session ends either way, so an option
+ * below the fold there costs a flick rather than a decision.
  */
 
 import { Pressable, StyleSheet } from 'react-native';

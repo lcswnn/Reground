@@ -1,16 +1,19 @@
 /**
- * Screen 7 — the second rating, and the last branch in the session.
+ * Screen 7 — the second rating.
  *
- * Three things are decided here:
- *  - Dropped by `MEANINGFUL_MOOD_DROP` or more: say so once, plainly, and end.
- *  - Didn't drop: exactly one more thing is offered, chosen for the user
- *    rather than presented as a menu. See `aftercareKind`.
+ * It used to be the last branch in the session as well: an improved rating went
+ * straight to the door and everything else was routed into an aftercare step.
+ * It no longer routes anywhere but `/one-more`, which everyone now sees. What
+ * the rating still decides is what this screen says back:
+ *
+ *  - Dropped by `MEANINGFUL_MOOD_DROP` or more: say so once, plainly.
+ *  - Didn't drop: say that plainly too, rather than moving on as if it had.
  *  - Still at or above `HIGH_DISTRESS_MOOD`: a pointer to real support, shown
  *    right here rather than on the closing screen — this is where the number
  *    that triggered it was just entered, and the closing screen has one job.
  *
- * The two branches are independent: someone can go from 10 to 8, which is a
- * real improvement and still a bad place to be.
+ * The two are independent: someone can go from 10 to 8, which is a real
+ * improvement and still a bad place to be.
  */
 
 import { useState } from 'react';
@@ -43,9 +46,12 @@ export default function MoodAfterScreen() {
   const outcome = mood === null ? null : moodOutcome(moodBefore, mood);
 
   const advance = () => {
-    if (mood === null || outcome === null) return;
+    if (mood === null) return;
     setMoodAfter(mood);
-    router.replace(outcome.improved ? '/close' : '/aftercare');
+    // One destination whatever the number did. Feeling better is not a reason
+    // to be shown the door faster — the offer of one last thing is the same
+    // offer either way, and it is refusable on its own screen.
+    router.replace('/one-more');
   };
 
   return (
