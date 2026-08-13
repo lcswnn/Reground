@@ -318,11 +318,23 @@ export const SILHOUETTE = {
    * reads it as the app being broken rather than as the rule it is.
    */
   holding: "Turn it before you drag it. It can't be turned on the way in.",
+  /**
+   * Shown once something is down and nothing is in hand, which is the only
+   * moment this is worth saying — and the moment someone who has just put a
+   * piece in the wrong place is looking for a way out of it.
+   *
+   * Says the gesture rather than pointing at the undo button, because the
+   * gesture is the one that cannot be found by looking. The button is on
+   * screen and will be found on its own.
+   */
+  lift: "Drag a piece back out of the outline to take it off.",
   done: "Filled. Here's another.",
   rotate: "Turn the piece",
   rotateGlyph: "⟳",
+  undo: "Take back the last piece",
+  undoGlyph: "↺",
   pieceLabel: "A piece. Tap to pick it up.",
-  boardLabel: "The outline. Drag a piece onto it to place it.",
+  boardLabel: "The outline. Drag a piece onto it to place it, or drag one out to take it off.",
 } as const;
 
 /**

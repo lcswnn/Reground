@@ -13,15 +13,33 @@
  * A drop is likewise final — there is no nudging a piece a cell to the left
  * once it is down.
  *
- * ## But a piece can be lifted back out
+ * ## But nothing is ever stuck
  *
  * Any placement that fits is allowed, including ones that make the puzzle
- * unfinishable, and there is no hint system to warn anybody. So tapping a piece
- * that is already down lifts it back to the tray. That is not a softening of the
- * rule above: lifting is deliberate, it costs the placement entirely, and the
- * piece comes back to the tray to be aimed again. What it prevents is the one
- * outcome this app cannot have — someone stuck in front of a puzzle that cannot
- * be finished, in a step whose whole purpose is that there is no way to fail it.
+ * unfinishable, and there is no hint system to warn anybody. So taking a piece
+ * back has to be easy, or this becomes the one thing the app cannot have —
+ * someone stranded in front of a puzzle that cannot be finished, in a step whose
+ * whole purpose is that there is no way to fail it.
+ *
+ * That is not a softening of the rule above. Taking a piece back costs the whole
+ * placement: it returns to the tray to be aimed again, not to the cell next
+ * door. There are three ways to do it, because one was not enough:
+ *
+ * - **Touch a placed piece and it comes up**, whatever else is selected. It used
+ *   to be ignored while another piece was in hand, which was a dead end with no
+ *   way out of it — nothing on screen deselects a piece, so a board with a
+ *   misplaced piece and a piece in hand could not be untangled at all. Letting
+ *   go without moving puts it straight back, so a stray touch costs nothing;
+ *   this replaces a tap that used to remove a piece outright, which is the
+ *   wrong thing for the clumsiest gesture on the screen to do.
+ * - **Drag it off the outline and let go.** Out of bounds is just another
+ *   placement that doesn't fit, so the piece stays in the tray. The board used
+ *   to clamp the finger to the grid, which made dragging a piece away from the
+ *   board mean nothing at all.
+ * - **Undo**, next to the rotate button, which takes back the last placement.
+ *   The two gestures above are only discoverable by trying them; this is a
+ *   control that is simply there, and it is the only one a screen reader can
+ *   reach.
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -63,6 +81,29 @@ interface Placement extends TrayPiece {
   column: number;
 }
 
+/**
+ * A drag in progress: the cell under the finger, and where in the piece the
+ * finger took hold of it.
+ *
+ * The offset is the half that matters. A piece picked out of the tray is taken
+ * by its middle, so it sits centred under the finger rather than trailing
+ * behind it by half its own width. A piece picked up off the board is taken by
+ * the cell that was actually touched, so it stays exactly where it was until
+ * the finger moves — it used to snap its middle to the touch the instant it was
+ * grabbed, which reads as the board rearranging itself rather than as picking
+ * something up.
+ *
+ * `row` and `column` are not clamped to the grid, so dragging away from the
+ * board gives coordinates outside it, and `fits` rejects them like any other bad
+ * placement. That is the whole of "drag it off to take it back".
+ */
+interface Drag {
+  row: number;
+  column: number;
+  offsetRow: number;
+  offsetColumn: number;
+}
+
 const CELL_GAP = 2;
 /**
  * The board takes the width it is given, up to this.
@@ -75,8 +116,16 @@ const CELL_GAP = 2;
  */
 const MAX_CELL = 64;
 const MIN_CELL = 16;
-const TRAY_CELL = 9;
-const CONTROL_HEIGHT = 52;
+/**
+ * How big a tray piece's cells are drawn.
+ *
+ * Was 9, which put a three-cell piece inside 27 points and left the tray a row
+ * of small dark smudges — and the shape of a piece in the tray is the entire
+ * question this game asks. The tray scrolls, so the extra width costs nothing
+ * but a scroll on the largest puzzle.
+ */
+const TRAY_CELL = 13;
+const CONTROL_HEIGHT = 56;
 const BOX_ESTIMATE = { width: 300, height: 260 };
 /** How long a finished silhouette is left up before the next puzzle. */
 const SETTLE_MS = 2_000;
@@ -110,12 +159,25 @@ export function SilhouetteFit() {
   const [index, setIndex] = useState(0);
   const puzzle = BOARDS[index];
 
-  const [tray, setTray] = useState<TrayPiece[]>(() => scramble(BOARDS[0]));
+  /**
+   * Every piece in the puzzle at its current orientation, placed or not — the
+   * tray is derived from it rather than being its own list.
+   *
+   * Two lists is what it was, and taking a piece back meant appending it to the
+   * tray, so the tray silently reordered itself every time. On a five-piece
+   * puzzle that is the row of shapes you are choosing from shuffling underneath
+   * you as a reward for changing your mind.
+   */
+  const [pieces, setPieces] = useState<TrayPiece[]>(() => scramble(BOARDS[0]));
   const [placed, setPlaced] = useState<Placement[]>([]);
   const [held, setHeld] = useState<string | null>(null);
-  const [drag, setDrag] = useState<{ row: number; column: number } | null>(null);
+  const [drag, setDrag] = useState<Drag | null>(null);
   const [done, setDone] = useState(false);
   const [box, setBox] = useState(BOX_ESTIMATE);
+
+  const tray = pieces.filter(
+    (piece) => !placed.some((placement) => placement.id === piece.id),
+  );
 
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   useEffect(
@@ -137,7 +199,10 @@ export function SilhouetteFit() {
   const gridWidth = cellSize * puzzle.columns + CELL_GAP * (puzzle.columns - 1);
   const gridHeight = cellSize * puzzle.rows + CELL_GAP * (puzzle.rows - 1);
 
-  const heldPiece = tray.find((piece) => piece.id === held) ?? null;
+  // Looked up in `pieces` rather than in the derived tray: a held piece is never
+  // a placed one — `held` is cleared the moment a placement lands — so the two
+  // give the same answer, and this one is a read straight off state.
+  const heldPiece = pieces.find((piece) => piece.id === held) ?? null;
   const taken = useMemo(() => {
     const cells = new Set<string>();
     for (const placement of placed) {
@@ -148,14 +213,11 @@ export function SilhouetteFit() {
     return cells;
   }, [placed]);
 
-  /** Where the held piece's top-left corner goes, for a finger at (row, column). */
+  /** Where the dragged piece's top-left corner sits, given where it was taken by. */
   const anchor = useCallback(
-    (at: { row: number; column: number }, cells: Grid) => ({
-      // Centred under the finger rather than hung from its top-left corner: a
-      // piece that trails behind the touch by half its own width is a piece you
-      // aim by trial and error.
-      row: at.row - Math.floor((cells.length - 1) / 2),
-      column: at.column - Math.floor((cells[0].length - 1) / 2),
+    (at: Drag) => ({
+      row: at.row - at.offsetRow,
+      column: at.column - at.offsetColumn,
     }),
     [],
   );
@@ -171,7 +233,7 @@ export function SilhouetteFit() {
     }
 
     if (heldPiece && drag) {
-      const corner = anchor(drag, heldPiece.cells);
+      const corner = anchor(drag);
       const legal = fits(puzzle, taken, heldPiece.cells, corner.row, corner.column);
 
       for (const cell of cellsAt(heldPiece.cells, corner.row, corner.column)) {
@@ -188,50 +250,73 @@ export function SilhouetteFit() {
   const startNextPuzzle = useCallback(() => {
     const next = (index + 1) % BOARDS.length;
     setIndex(next);
-    setTray(scramble(BOARDS[next]));
+    setPieces(scramble(BOARDS[next]));
     setPlaced([]);
     setHeld(null);
     setDrag(null);
     setDone(false);
   }, [index]);
 
+  /**
+   * Which cell the finger is over — deliberately not clamped to the board.
+   *
+   * Off the top or the side gives a negative row or one past the last column,
+   * which `fits` rejects the same way it rejects any placement that isn't
+   * wholly inside the outline. Clamping was what made dragging a piece away
+   * from the board a no-op instead of the obvious way to put it back.
+   */
   const cellUnder = (event: GestureResponderEvent) => ({
-    row: Math.max(
-      0,
-      Math.min(puzzle.rows - 1, Math.floor(event.nativeEvent.locationY / step)),
-    ),
-    column: Math.max(
-      0,
-      Math.min(puzzle.columns - 1, Math.floor(event.nativeEvent.locationX / step)),
-    ),
+    row: Math.floor(event.nativeEvent.locationY / step),
+    column: Math.floor(event.nativeEvent.locationX / step),
   });
 
-  /** Tapping a piece that is already down takes it back — see the note above. */
-  const lift = (at: { row: number; column: number }) => {
-    const found = placed.find((placement) =>
+  /** The placed piece covering a cell, if any. */
+  const placedAt = (at: { row: number; column: number }) =>
+    placed.find((placement) =>
       cellsAt(placement.cells, placement.row, placement.column).some(
         (cell) => cell.row === at.row && cell.column === at.column,
       ),
     );
-    if (!found) return;
-
-    setPlaced((current) => current.filter((placement) => placement.id !== found.id));
-    setTray((current) => [...current, { id: found.id, cells: found.cells }]);
-    setHeld(found.id);
-    tickDissolve();
-  };
 
   const onGrant = (event: GestureResponderEvent) => {
     if (done) return;
 
     const at = cellUnder(event);
-    if (heldPiece) setDrag(at);
-    else lift(at);
+    const under = placedAt(at);
+
+    // Touching a piece that is down always picks that piece up, whatever is
+    // selected — see the note at the top of the file. It takes hold of the exact
+    // cell that was touched, so nothing moves until the finger does, and a touch
+    // released without moving lands it back where it was. Picking up is a
+    // selection rather than an impact; the tick for a piece actually leaving the
+    // board is fired on release, by the drop that doesn't fit.
+    if (under) {
+      setPlaced((current) => current.filter((placement) => placement.id !== under.id));
+      setHeld(under.id);
+      setDrag({
+        ...at,
+        offsetRow: at.row - under.row,
+        offsetColumn: at.column - under.column,
+      });
+      tickSelection();
+      return;
+    }
+
+    // Otherwise this is the selected piece being aimed, taken by its middle: a
+    // piece that trails behind the touch by half its own width is a piece you
+    // aim by trial and error.
+    if (heldPiece) {
+      setDrag({
+        ...at,
+        offsetRow: Math.floor((heldPiece.cells.length - 1) / 2),
+        offsetColumn: Math.floor((heldPiece.cells[0].length - 1) / 2),
+      });
+    }
   };
 
   const onMove = (event: GestureResponderEvent) => {
-    if (done || !heldPiece) return;
-    setDrag(cellUnder(event));
+    if (done) return;
+    setDrag((current) => (current ? { ...current, ...cellUnder(event) } : null));
   };
 
   const onRelease = () => {
@@ -240,20 +325,20 @@ export function SilhouetteFit() {
       return;
     }
 
-    const corner = anchor(drag, heldPiece.cells);
+    const corner = anchor(drag);
     setDrag(null);
 
     if (!fits(puzzle, taken, heldPiece.cells, corner.row, corner.column)) {
-      // Nothing happens, and the piece stays in hand. No shake, no sound: a
-      // placement that does not fit is a thing that did not happen, not a
-      // mistake that needs marking.
+      // The piece stays in the tray, still selected, ready to be aimed again.
+      // No shake and no sound beyond the one tick: a placement that does not fit
+      // is a thing that did not happen, not a mistake that needs marking. This
+      // is also the landing for a piece dragged off the board on purpose.
       tickDissolve();
       return;
     }
 
     const placement: Placement = { ...heldPiece, row: corner.row, column: corner.column };
     setPlaced((current) => [...current, placement]);
-    setTray((current) => current.filter((piece) => piece.id !== heldPiece.id));
     setHeld(null);
     tickPlacement();
 
@@ -263,11 +348,28 @@ export function SilhouetteFit() {
     }
   };
 
+  /**
+   * The last placement, back to the tray and into the hand.
+   *
+   * The button version of picking a piece up off the board. It exists because
+   * both of the gestures that do the same thing have to be guessed at, and
+   * because it is the only one of the three a screen reader can operate.
+   */
+  const undoLast = () => {
+    const last = placed[placed.length - 1];
+    if (done || !last) return;
+
+    setPlaced((current) => current.slice(0, -1));
+    setHeld(last.id);
+    setDrag(null);
+    tickDissolve();
+  };
+
   const turnHeld = () => {
-    if (!heldPiece) return;
+    if (!heldPiece || done) return;
 
     tickSelection();
-    setTray((current) =>
+    setPieces((current) =>
       current.map((piece) =>
         piece.id === heldPiece.id ? { ...piece, cells: rotateCells(piece.cells) } : piece,
       ),
@@ -293,8 +395,17 @@ export function SilhouetteFit() {
 
   return (
     <View style={styles.root}>
+      {/* Four states, and the third is the one that was missing: someone who has
+          put a piece down and let go is the only person for whom "you can take
+          it back out" is useful information, so that is when it is said. */}
       <ThemedText type="small" themeColor="textMuted" style={styles.prompt}>
-        {done ? SILHOUETTE.done : held ? SILHOUETTE.holding : SILHOUETTE.prompt}
+        {done
+          ? SILHOUETTE.done
+          : held
+            ? SILHOUETTE.holding
+            : placed.length > 0
+              ? SILHOUETTE.lift
+              : SILHOUETTE.prompt}
       </ThemedText>
 
       <View
@@ -331,9 +442,13 @@ export function SilhouetteFit() {
       </View>
 
       <View style={styles.controls}>
+        {/* `flexShrink` on the scroller, not just `flex`: without it the tray
+            sizes to its contents and walks the two buttons off the right-hand
+            edge on the five-piece puzzle. */}
         <ScrollView
           horizontal
           showsHorizontalScrollIndicator={false}
+          style={styles.trayScroll}
           contentContainerStyle={styles.tray}>
           {tray.map((piece) => (
             <Pressable
@@ -365,12 +480,29 @@ export function SilhouetteFit() {
 
         <Pressable
           accessibilityRole="button"
+          accessibilityLabel={SILHOUETTE.undo}
+          accessibilityState={{ disabled: placed.length === 0 || done }}
+          disabled={placed.length === 0 || done}
+          onPress={undoLast}
+          style={({ pressed }) => [
+            styles.control,
+            { backgroundColor: theme.backgroundElement, borderColor: theme.border },
+            (placed.length === 0 || done) && styles.disabled,
+            pressed && styles.pressed,
+          ]}>
+          <ThemedText type="subtitle" style={styles.glyph}>
+            {SILHOUETTE.undoGlyph}
+          </ThemedText>
+        </Pressable>
+
+        <Pressable
+          accessibilityRole="button"
           accessibilityLabel={SILHOUETTE.rotate}
           accessibilityState={{ disabled: !heldPiece }}
           disabled={!heldPiece}
           onPress={turnHeld}
           style={({ pressed }) => [
-            styles.rotate,
+            styles.control,
             { backgroundColor: theme.backgroundElement, borderColor: theme.border },
             !heldPiece && styles.disabled,
             pressed && styles.pressed,
@@ -403,6 +535,10 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.three,
   },
+  trayScroll: {
+    flexGrow: 1,
+    flexShrink: 1,
+  },
   tray: {
     alignItems: 'center',
     gap: Spacing.two,
@@ -417,7 +553,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  rotate: {
+  control: {
     width: CONTROL_HEIGHT,
     height: CONTROL_HEIGHT,
     borderRadius: Radius.md,
