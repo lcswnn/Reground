@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/refs */
 /**
  * A grid of squares, which is most of what the visuospatial games draw.
  *
@@ -12,16 +13,16 @@
  * a grid that measured itself would fight the layout it was dropped into.
  */
 
-import { Fragment, useMemo, useRef } from 'react';
+import { Fragment, useMemo, useRef } from "react";
 import {
   PanResponder,
   Pressable,
   StyleSheet,
   View,
   type GestureResponderEvent,
-} from 'react-native';
+} from "react-native";
 
-import { Radius } from '@/constants/theme';
+import { Radius } from "@/constants/theme";
 
 /**
  * How far the finger has to travel before a touch stops being a tap and becomes
@@ -100,8 +101,12 @@ export function CellGrid<T>({
     const paint = (event: GestureResponderEvent) => {
       const { cellSize: size, gap: space, cells: rows } = layout.current;
       const pitch = size + space;
-      const column = Math.floor((event.nativeEvent.pageX - origin.current.x) / pitch);
-      const row = Math.floor((event.nativeEvent.pageY - origin.current.y) / pitch);
+      const column = Math.floor(
+        (event.nativeEvent.pageX - origin.current.x) / pitch,
+      );
+      const row = Math.floor(
+        (event.nativeEvent.pageY - origin.current.y) / pitch,
+      );
 
       // Off the edge: the finger has wandered out of the grid. Nothing is
       // painted and nothing is clamped — a stroke that leaves the side should
@@ -116,10 +121,11 @@ export function CellGrid<T>({
     };
 
     const finish = () => {
-      painted.current = null;
+    p
       dragEnd.current?.();
     };
 
+    // eslint-disable-next-line react-hooks/refs
     return PanResponder.create({
       // Never on touch-down. The cell's own `Pressable` owns taps, and taking
       // the gesture here would cost the grid its press feedback and its
@@ -153,7 +159,8 @@ export function CellGrid<T>({
         })
       }
       style={{ gap }}
-      {...(onDragCell ? responder.panHandlers : null)}>
+      {...(onDragCell ? responder.panHandlers : null)}
+    >
       {cells.map((row, rowIndex) => (
         <View key={rowIndex} style={[styles.row, { gap }]}>
           {row.map((value, columnIndex) => {
@@ -195,7 +202,7 @@ export function CellGrid<T>({
 
 const styles = StyleSheet.create({
   row: {
-    flexDirection: 'row',
+    flexDirection: "row",
   },
   pressed: {
     opacity: 0.6,

@@ -18,6 +18,10 @@
  * inside each phase. Those come from `tully-cycle.ts` and are scheduled off the
  * phase's own start below, so the two halves cannot drift apart no matter how
  * long the screen runs.
+ *
+ * Tully is currently switched off — see `SHOW_TULLY`. Everything above is still
+ * true of the code and stops being true of the screen only while that flag is
+ * false.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -46,6 +50,21 @@ import { tickBreath } from '@/session/ui/haptics';
 type Phase = 'inhale-1' | 'inhale-2' | 'hold' | 'exhale' | 'rest';
 
 /**
+ * Tully on the breathing screen: off for now, and one word from being back.
+ *
+ * Nothing was deleted to do this. The artwork, the pose cycle, the beats inside
+ * each phase and the layout that gave them the top half are all still here and
+ * all still correct — this only decides whether any of it runs. Flip to `true`
+ * and the screen is exactly what it was: Tully above, circle below, sharing a
+ * centre line. Left as `false`, the circle takes the whole screen back at the
+ * size it had before Tully arrived, and their beats are never scheduled.
+ *
+ * Annotated `boolean` rather than left to infer `false`, so both branches stay
+ * type-checked and neither rots while the flag is down.
+ */
+const SHOW_TULLY: boolean = false;
+
+/**
  * Not zero, and not near it: an emptied circle reads as "finished" rather than
  * as the bottom of a breath.
  */
@@ -61,6 +80,14 @@ const MID_SCALE = 0.82;
 const DIAMETER_RATIO = 0.58;
 const DIAMETER_HEIGHT_RATIO = 0.22;
 const MAX_DIAMETER = 260;
+
+/**
+ * And the sizing from before that, for while Tully is off: one ratio against
+ * the shorter side, because with nothing above it the circle is no longer
+ * competing for height with anything and can go back to owning the screen.
+ */
+const SOLO_DIAMETER_RATIO = 0.6;
+const SOLO_MAX_DIAMETER = 300;
 
 /**
  * Tully, bounded on the same two axes as the circle so the pair keep their
@@ -188,11 +215,9 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
   const { width, height } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
 
-  const diameter = Math.min(
-    width * DIAMETER_RATIO,
-    height * DIAMETER_HEIGHT_RATIO,
-    MAX_DIAMETER,
-  );
+  const diameter = SHOW_TULLY
+    ? Math.min(width * DIAMETER_RATIO, height * DIAMETER_HEIGHT_RATIO, MAX_DIAMETER)
+    : Math.min(Math.min(width, height) * SOLO_DIAMETER_RATIO, SOLO_MAX_DIAMETER);
   const tullySize = Math.min(width * TULLY_RATIO, height * TULLY_HEIGHT_RATIO, MAX_TULLY);
 
   const scale = useSharedValue(MIN_SCALE);
@@ -286,7 +311,11 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
           duration: current.ms,
           easing: current.easing,
         });
-        schedulePoses(posesFor(current.phase));
+        // No timers for a Tully nobody can see: with the flag down this is the
+        // only thing between the phase machine and up to six pending callbacks
+        // per phase, for a whole minute, driving a state update that renders
+        // nothing.
+        if (SHOW_TULLY) schedulePoses(posesFor(current.phase));
       }
 
       index += 1;
@@ -349,9 +378,11 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
           The artwork's canvas is identical across all nine poses, so Tully
           grow up and out of a fixed footprint as the breath fills them instead
           of shifting around as the pose changes. */}
-      <View style={styles.tullyHalf}>
-        <BreathingTully pose={shownPose} size={tullySize} still={reducedMotion} />
-      </View>
+      {SHOW_TULLY ? (
+        <View style={styles.tullyHalf}>
+          <BreathingTully pose={shownPose} size={tullySize} still={reducedMotion} />
+        </View>
+      ) : null}
 
       <View style={styles.breathHalf}>
         <View style={styles.cueSlot}>
@@ -408,10 +439,15 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     alignItems: 'center',
   },
-  // Two equal halves rather than one centred column. The split is the layout:
-  // Tully is who you are breathing with and the circle is the breath, and
-  // stacking them at the same weight is what stops either reading as decoration
-  // hung off the other.
+  // Two equal halves rather than one centred column, while there are two of
+  // them. The split is the layout: Tully is who you are breathing with and the
+  // circle is the breath, and stacking them at the same weight is what stops
+  // either reading as decoration hung off the other.
+  //
+  // With `SHOW_TULLY` false the top half is not rendered at all, so `breathHalf`
+  // is the only flex child and its `justifyContent: 'center'` centres the circle
+  // on the screen rather than in a bottom half. Nothing here needs changing to
+  // switch between the two.
   tullyHalf: {
     flex: 1,
     alignSelf: 'stretch',
