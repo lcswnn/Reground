@@ -101,6 +101,7 @@ export default function GameScreen() {
                   <Button
                     title={PUZZLE_COPY.keepGoing}
                     variant="secondary"
+                    stretch
                     onPress={() => {
                       setTimeUp(false);
                       setExtensions((count) => count + 1);
@@ -108,7 +109,7 @@ export default function GameScreen() {
                   />
                 </View>
                 <View style={styles.choiceItem}>
-                  <Button title={PUZZLE_COPY.done} onPress={finish} />
+                  <Button title={PUZZLE_COPY.done} stretch onPress={finish} />
                 </View>
               </View>
             </>

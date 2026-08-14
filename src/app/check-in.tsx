@@ -56,6 +56,7 @@ export default function CheckInScreen() {
             <Button
               title={CHECK_IN.helped}
               variant={answer === 'helped' ? 'primary' : 'secondary'}
+              stretch
               onPress={() => setAnswer('helped')}
             />
           </View>
@@ -63,6 +64,7 @@ export default function CheckInScreen() {
             <Button
               title={CHECK_IN.didNot}
               variant={answer === 'did-not' ? 'primary' : 'secondary'}
+              stretch
               onPress={() => setAnswer('did-not')}
             />
           </View>

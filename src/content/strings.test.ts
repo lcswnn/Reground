@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import { BREATHING, BREATH_CYCLES, BREATH_CYCLE_MS } from '@/config/session';
-import { BREATHE_INTRO, GROUNDING } from '@/content/strings';
+import { BREATHE_INTRO, CLOSE, GROUNDING, pickUnwindIdea } from '@/content/strings';
 
 /**
  * Also worth a test, for a different reason: this copy makes two checkable
@@ -51,5 +51,32 @@ describe('the grounding sequence', () => {
     senses.forEach((sense, index) => {
       expect(GROUNDING.steps[index].toLowerCase()).toContain(sense);
     });
+  });
+});
+
+/**
+ * The suggestion on the last screen is assembled rather than written out, so
+ * two things that prose would have got right for free need checking: that the
+ * template's full stop isn't doubling one already in the entry, and that the
+ * picker can actually reach every idea in the list.
+ */
+describe('the unwind idea', () => {
+  it('leaves the closing punctuation to the template', () => {
+    CLOSE.ideas.forEach((idea) => {
+      expect(idea.endsWith('.')).toBe(false);
+      expect(CLOSE.idea(idea)).toBe(`Idea: ${idea}.`);
+    });
+  });
+
+  it('only ever suggests something from the list', () => {
+    for (let i = 0; i < 200; i += 1) {
+      expect(CLOSE.ideas).toContain(pickUnwindIdea());
+    }
+  });
+
+  it('can reach every idea', () => {
+    const seen = new Set<string>();
+    for (let i = 0; i < 500; i += 1) seen.add(pickUnwindIdea());
+    expect(seen.size).toBe(CLOSE.ideas.length);
   });
 });

@@ -33,7 +33,7 @@ const styles = StyleSheet.create({
   },
   line: {
     textAlign: 'center',
-    // Playpen Sans ships no italic cut (the family is a weight axis only), so
+    // Fredoka ships no italic cut (the family is a weight axis only), so
     // this is honoured on Android and web, which synthesise an oblique, and
     // quietly ignored on iOS, which does not. The skew below is what makes it
     // actually lean there — a real slant on the real face, rather than dropping

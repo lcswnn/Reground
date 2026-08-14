@@ -160,41 +160,47 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * strings everywhere else, so a missing load shows up as system fallback text
  * rather than a crash.
  *
- * Playpen Sans throughout: a handwriting face, so the whole app reads as
- * something jotted down rather than published at you — which is most of why it
- * feels calm before a single word is parsed. It is the legible end of that
- * genre: upright, unjoined, and rounded, where a more cursive script makes a
- * page of statistics work to read. It is also a touch bouncier than the Patrick
- * Hand it replaced — closer to a note left for someone than to handwriting on a
- * form — which is worth looking at on a device before it is settled on.
+ * Fredoka throughout: a rounded geometric sans, soft-cornered and even, which
+ * is a quieter way of getting to the same place Playpen Sans was reaching for.
+ * The handwriting face made the app read as something jotted down; this one
+ * reads as something drawn with a felt tip — friendly, but it holds still. That
+ * matters most on the two screens made of numbers, where an irregular face is
+ * doing the eye no favours.
  *
- * ## Two weights, unlike every face before it
+ * ## Two weights
  *
- * This is the first face here that ships more than one cut, so `semibold` is
- * finally a real semibold rather than an alias. That matters most on button
- * labels and the `defaultSemiBold` tier, which have carried emphasis by size
- * and colour alone until now.
+ * Fredoka ships five (300–700) and two are loaded, so `semibold` is a real
+ * semibold rather than an alias. That carries emphasis on button labels and the
+ * `defaultSemiBold` tier, which have nothing else to carry it with.
  *
- * `fontWeight` still does not appear anywhere: naming a weight rather than the
- * file drops iOS back to the system font. The weight is selected by loading
- * `PlaypenSans_600SemiBold` as its own family and asking for it by name, which
- * is why both cuts are registered in the root layout.
+ * `fontWeight` does not appear anywhere: naming a weight rather than the file
+ * drops iOS back to the system font. The weight is selected by loading
+ * `Fredoka_600SemiBold` as its own family and asking for it by name, which is
+ * why both cuts are registered in the root layout.
  *
- * `display` uses the 600 as well — a heading in a handwriting face needs the
- * extra weight more than it needs the extra points, and the type scale was
- * inherited from a one-weight face that had no other option.
+ * `display` uses the 600 as well — a heading wants the extra weight more than
+ * it wants the extra points.
+ *
+ * ## The type scale is inherited and is worth a second look
+ *
+ * Every size in `themed-text.tsx` sits ~10% above where it ran before Playpen
+ * Sans, and that bump was bought specifically to give irregular hand-drawn
+ * letterforms room to be read. Fredoka's are regular and wide, so the argument
+ * for the bump is gone even though the numbers are still there. Nothing was
+ * changed with the face — sizes are their own decision and worth making on a
+ * device — but if the app now reads a touch large, that is where it comes from.
  */
-export const PlaypenSansRegular = "PlaypenSans_400Regular";
-export const PlaypenSansSemiBold = "PlaypenSans_600SemiBold";
+export const FredokaRegular = "Fredoka_400Regular";
+export const FredokaSemiBold = "Fredoka_600SemiBold";
 
 export const Fonts = Platform.select({
   ios: {
     /** Headings. The 600 cut — see above. */
-    display: PlaypenSansSemiBold,
+    display: FredokaSemiBold,
     /** Emphasis inside body copy, and the smaller headings. */
-    semibold: PlaypenSansSemiBold,
+    semibold: FredokaSemiBold,
     /** Everything that isn't a heading. */
-    body: PlaypenSansRegular,
+    body: FredokaRegular,
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
     /** iOS `UIFontDescriptorSystemDesignSerif` */
@@ -203,24 +209,27 @@ export const Fonts = Platform.select({
     rounded: "ui-rounded",
     /**
      * iOS `UIFontDescriptorSystemDesignMonospaced`. Stays a system face:
-     * Playpen Sans has no monospaced cut, and the one thing `code` has to do is
-     * line digits up.
+     * Fredoka has no monospaced cut, and the one thing `code` has to do is line
+     * digits up.
      */
     mono: "ui-monospace",
   },
   default: {
-    display: PlaypenSansSemiBold,
-    semibold: PlaypenSansSemiBold,
-    body: PlaypenSansRegular,
+    display: FredokaSemiBold,
+    semibold: FredokaSemiBold,
+    body: FredokaRegular,
     sans: "normal",
     serif: "serif",
     rounded: "normal",
     mono: "monospace",
   },
   web: {
-    display: `${PlaypenSansRegular}, var(--font-display)`,
-    semibold: `${PlaypenSansRegular}, var(--font-display)`,
-    body: `${PlaypenSansRegular}, var(--font-display)`,
+    // All three on the regular cut, as they were before the face changed. The
+    // stack falls through to `--font-display` in `global.css`, which names the
+    // family for a browser that already has it.
+    display: `${FredokaRegular}, var(--font-display)`,
+    semibold: `${FredokaRegular}, var(--font-display)`,
+    body: `${FredokaRegular}, var(--font-display)`,
     sans: "var(--font-display)",
     serif: "var(--font-serif)",
     rounded: "var(--font-rounded)",

@@ -15,7 +15,8 @@ import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
 import { BREATHING_COPY } from '@/content/strings';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
+import { useTheme } from '@/hooks/use-theme';
 import { BreathingGuide } from '@/session/breathing/breathing-guide';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
@@ -25,6 +26,7 @@ export default function BreatheScreen() {
   const router = useRouter();
   const active = useSessionGuard();
   const back = useSessionBack('/breathe');
+  const theme = useTheme();
 
   // To the cue rather than straight to the picker: it decides for itself
   // whether to show anything, so the high-distress skip lives in one place.
@@ -40,7 +42,11 @@ export default function BreatheScreen() {
         <Pressable
           accessibilityRole="button"
           onPress={advance}
-          style={styles.skip}
+          style={({ pressed }) => [
+            styles.skip,
+            { borderColor: theme.border },
+            pressed && styles.skipPressed,
+          ]}
           hitSlop={Spacing.three}>
           <ThemedText type="small" themeColor="textMuted">
             {BREATHING_COPY.skip}
@@ -58,7 +64,19 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.six,
   },
+  // The same outline the ghost buttons wear — pill, hairline, `theme.border` —
+  // at this screen's scale rather than theirs. Bare text read as a caption; the
+  // edge is what says it can be pressed. It stays small and muted on purpose:
+  // the point of the outline is to be findable when looked for, not to pull the
+  // eye off the breath.
   skip: {
-    padding: Spacing.two,
+    alignSelf: 'center',
+    paddingVertical: Spacing.two,
+    paddingHorizontal: Spacing.four,
+    borderWidth: 1,
+    borderRadius: Radius.pill,
+  },
+  skipPressed: {
+    opacity: 0.75,
   },
 });

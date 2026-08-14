@@ -1,8 +1,8 @@
 // Imported per weight rather than from the package root. The root re-exports
-// all eight cuts, and Metro follows every one of them into the bundle — 6MB of
-// fonts for the two the app actually asks for.
-import { PlaypenSans_400Regular } from '@expo-google-fonts/playpen-sans/400Regular';
-import { PlaypenSans_600SemiBold } from '@expo-google-fonts/playpen-sans/600SemiBold';
+// every cut in the family, and Metro follows all of them into the bundle —
+// megabytes of fonts for the two the app actually asks for.
+import { Fredoka_400Regular } from '@expo-google-fonts/fredoka/400Regular';
+import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -86,11 +86,11 @@ function RootNavigator() {
   // Loaded at runtime rather than through the expo-font config plugin, which
   // would need a native rebuild to pick up.
   //
-  // Two cuts, because Playpen Sans actually has them — see the note on `Fonts`
-  // in `constants/theme.ts` for why the previous face made this a single file.
+  // Two cuts of Fredoka, which ships five — see the note on `Fonts` in
+  // `constants/theme.ts` for why both are registered as their own families.
   const [fontsLoaded, fontError] = useFonts({
-    PlaypenSans_400Regular,
-    PlaypenSans_600SemiBold,
+    Fredoka_400Regular,
+    Fredoka_600SemiBold,
   });
 
   // A font that fails to decode shouldn't hold the app hostage — fall through
@@ -100,7 +100,7 @@ function RootNavigator() {
   /**
    * Two conditions, and the splash waits for both: the fonts have to be ready,
    * or the first screen renders in the system face and then reflows into
-   * Playpen Sans — and the splash has to have been up for `SPLASH.minimumMs`.
+   * Fredoka — and the splash has to have been up for `SPLASH.minimumMs`.
    *
    * The wait is measured from launch rather than from here, so the two overlap
    * instead of stacking. Fonts that take a second to decode spend that second

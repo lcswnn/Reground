@@ -304,7 +304,12 @@ export const HIDDEN_CUBES = {
 } as const;
 
 export const MIRROR_COMPLETE = {
-  prompt: "Fill the empty half so it mirrors the other one.",
+  /**
+   * The drag is worth a clause. A grid of squares reads as tappable on sight,
+   * so nobody goes looking for a stroke — and drawing a nine-cell shape one tap
+   * at a time is the fiddly version of a game meant to be the gentlest here.
+   */
+  prompt: "Fill the empty half so it mirrors the other one. Tap the squares, or drag across them.",
   /** Shown when the reflection is right. There is no message for "not yet". */
   done: "That's it.",
   cellLabel: (row: number, column: number) => `Row ${row}, column ${column}`,
@@ -334,7 +339,8 @@ export const SILHOUETTE = {
   undo: "Take back the last piece",
   undoGlyph: "↺",
   pieceLabel: "A piece. Tap to pick it up.",
-  boardLabel: "The outline. Drag a piece onto it to place it, or drag one out to take it off.",
+  boardLabel:
+    "The outline. Drag a piece onto it to place it, or drag one out to take it off.",
 } as const;
 
 /**
@@ -442,10 +448,10 @@ export const MOOD_AFTER = {
  * their titles the same way the game catalog holds its own.
  */
 export const ONE_MORE = {
-  title: 'One more thing before we finish?',
-  lead: 'Pick one if you want it. Nothing after this either way.',
+  title: "One more thing before we finish.",
+  lead: "Pick one extra exercise if you need it.",
   /** Quiet, under the list. Not a button — an exit. */
-  skip: "Nothing, I'm done",
+  skip: "Let's finish up. I'm done.",
 } as const;
 
 /**
@@ -461,10 +467,10 @@ export const ONE_MORE = {
  * reachable at all when the last one does.
  */
 export const NOT_YET = {
-  eyebrow: 'Not built yet',
+  eyebrow: "Not built yet",
   body: "This one isn't in the app yet — it's on the list. Pick something else, or call it here.",
-  back: 'Pick something else',
-  done: 'Finish up',
+  back: "Pick something else",
+  done: "Finish up",
 } as const;
 
 /**
@@ -545,12 +551,48 @@ export const PARK_WORRY = {
   done: "Done",
 } as const;
 
+/** Hoisted only because `CLOSE` cannot refer to itself while being built. */
+const IDEA_LABEL = "Idea:";
+
 export const CLOSE = {
   title: "That's all.",
-  body: "Now try to unwind without your device. Go on a walk, talk to a family member, or go master your hobby.",
+  body: "Now try to unwind without your device for a while.",
+  /**
+   * One idea, picked at random, instead of the list of three the body used to
+   * carry. A list is a decision to make and this screen is trying to end the
+   * session, not start a new one — a single suggestion is easier to either take
+   * or ignore.
+   *
+   * Every entry has to be doable with the phone face-down: that is the whole
+   * qualification, and the reason none of them names an app. Written without
+   * closing punctuation so the template supplies it and they stay uniform.
+   */
+  ideas: [
+    "Go master your hobby",
+    "Go read a chapter or two of your favorite book",
+    "Go talk to a family member",
+    "Go for a walk outside (if weather permits)",
+    "Watch a couple episodes of your favorite show, or discover a new one",
+    "Bundle up and watch your favorite movie, or discover a new one",
+  ],
+  /**
+   * Split out because the label is set in the semibold cut while the suggestion
+   * itself is not — see `close.tsx`. `idea()` still assembles the whole line,
+   * which is what the screen hands to a screen reader.
+   */
+  ideaLabel: IDEA_LABEL,
+  idea: (idea: string) => `${IDEA_LABEL} ${idea}.`,
   /** The only action on the screen. No rating, no share, no "come back". */
   done: "Close",
 } as const;
+
+/**
+ * Picked once per visit, in the screen's initial state — not on every render,
+ * which would reshuffle the suggestion under the user while they read it.
+ */
+export function pickUnwindIdea(): string {
+  return CLOSE.ideas[Math.floor(Math.random() * CLOSE.ideas.length)];
+}
 
 /**
  * The last thing in the app. One line, and nothing to tap — see `closed.tsx`
