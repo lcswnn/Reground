@@ -180,9 +180,14 @@ export const BREATHE_INTRO = {
    * minute" is held to `BREATHING.totalMs` by `strings.test.ts` for the same
    * reason — being told a minute and given two is worse than being told
    * nothing.
+   *
+   * This used to end "…and Tully breathes with it", which stopped being true
+   * the moment `SHOW_TULLY` went false in `breathing-guide.tsx`: the line
+   * promised a character the next screen no longer has. Put the clause back
+   * when the flag goes back up — it belongs with it, not without it.
    */
   shape: (rounds: number) =>
-    `${rounds} rounds, about a minute. The circle grows as you breathe in and shrinks as you breathe out, and Tully breathes with it.`,
+    `${rounds} rounds, about a minute. The circle grows as you breathe in and shrinks as you breathe out.`,
   /** Under the button, quiet. The screen waits: nothing starts on arrival. */
   hint: "Tap start to begin.",
   start: "Start",

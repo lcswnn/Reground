@@ -121,7 +121,7 @@ export function CellGrid<T>({
     };
 
     const finish = () => {
-    p
+      painted.current = null;
       dragEnd.current?.();
     };
 

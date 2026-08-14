@@ -4,8 +4,10 @@
  * Two screens use it and they are the two ends of the same session: "Time to
  * reground." on the way in, "You may now close the app." on the way out. Both
  * are the app talking about itself rather than to the user — as close to a stage
- * direction as type gets — and neither is a thing to be done. Small, muted and
- * leaning, so it reads as an aside and gets out of the way.
+ * direction as type gets — and neither is a thing to be done. Muted and leaning,
+ * so it reads as an aside and gets out of the way — but at the body tier rather
+ * than the small one: each is the only line on its screen, and the small tier
+ * left them looking like a footnote to a page that wasn't there.
  *
  * Extracted the moment the second one wanted it. The styling below is fiddlier
  * than it looks (see the italic note), and two copies of it would have agreed on
@@ -20,7 +22,7 @@ import { ThemedText } from '@/components/themed-text';
 export function StageDirection({ children }: { children: string }) {
   return (
     <View style={styles.root}>
-      <ThemedText type="small" themeColor="textMuted" style={styles.line}>
+      <ThemedText type="default" themeColor="textMuted" style={styles.line}>
         {children}
       </ThemedText>
     </View>
