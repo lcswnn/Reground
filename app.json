@@ -41,7 +41,6 @@
         }
       ],
       "expo-sqlite",
-      "@bacons/apple-targets",
       "expo-audio"
     ],
     "experiments": {

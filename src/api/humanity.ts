@@ -68,7 +68,7 @@ export interface HumanityArtifact {
 
 /**
  * Public bucket, so no key and no Supabase client — this is a plain GET of a
- * static file. The widget target reads the same URL; see `targets/widget/index.swift:14`.
+ * static file.
  *
  * Null rather than a throw when the env var is missing. It is inlined at bundle
  * time, so an unset value is a build that shipped wrong — and the session has

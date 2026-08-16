@@ -55,8 +55,7 @@ SplashScreen.setOptions({ fade: true, duration: SPLASH.hideMs });
  * worth arguing about.
  *
  * The data layer itself is untouched and still running daily — see
- * `.github/workflows/data-refresh.yml`. It now has two consumers: the WidgetKit
- * extension in `targets/widget/`, and this app again.
+ * `.github/workflows/data-refresh.yml`. This app is its only consumer.
  */
 export default function RootLayout() {
   return (
