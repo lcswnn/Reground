@@ -460,7 +460,7 @@ export const ONE_MORE = {
 } as const;
 
 /**
- * Four of the five options have nothing behind them yet.
+ * Three of the five options have nothing behind them yet.
  *
  * They are still on the list and still tappable, and this is the screen that
  * makes that honest. It says the app hasn't built it — not that the user picked
@@ -545,6 +545,121 @@ export const CHECK_IN = {
    */
   didNotResponse: "Then it didn't, and that's not something you got wrong.",
   done: "Done",
+} as const;
+
+/**
+ * The somatic movements — the screen chrome, the rules that apply to all six,
+ * and the three beats a movement runs through.
+ *
+ * The movements themselves name and explain themselves in `@/content/somatic`,
+ * the same way the game catalog and the one-more list hold their own titles.
+ * What is here is everything that is true of the step rather than of a movement.
+ *
+ * ## Why `principles` exists at all
+ *
+ * Every source on somatic work says some version of the same four things, and
+ * they are not decoration around the exercises — they are the difference
+ * between the exercises working and the exercises being a set of stretches
+ * somebody is trying to win at. Two of them cut directly against what an
+ * anxious person will do on their own: they will go harder to get it over with,
+ * and they will keep going through something that has started to feel worse
+ * because stopping looks like failing. So the rules are said once, up front,
+ * where they cover all six.
+ *
+ * Behind a tap, not on the screen, and that is the `Disclosure` argument again:
+ * someone who wants to get on with it should see six options and not a preamble,
+ * and someone who wants to know how to do this properly should not have to guess.
+ * The one exception is `stop`, which is repeated in the open on the timer screen
+ * — see `stopHint`. A rule about when to stop is worth nothing if it is folded
+ * away at the moment it applies.
+ */
+export const SOMATIC_COPY = {
+  title: "Somatic movements.",
+  /**
+   * Says what the family of exercises is for in one line, because "somatic" is
+   * the one word on the one-more list that names a method most people have not
+   * heard of. Unlike "visuospatial" on the game picker — which is worth its
+   * space because it is a claim about a mechanism — this is worth its space
+   * because without it the card is a label with nothing behind it.
+   */
+  lead: "Small movements that go at the anxiety through your body instead of through your head. Pick one.",
+
+  /** The tap that opens `principles`. Phrased as what the reader gets. */
+  principlesLabel: "How to do these so they work",
+  /**
+   * The four rules, in the order they bite. Slow first because it is the one
+   * that is disobeyed immediately; the stopping rule last because it is the one
+   * that matters most and last is where it will be read.
+   */
+  principles: [
+    "Slow is the instruction, not a gentler version of it. None of these work better done harder or faster.",
+    "You are not trying to make the feeling go away. You are paying attention to what your body is doing while it is here. Anything that loosens, loosens on its own.",
+    "Odd things are normal — yawning, sighing, a shiver, your eyes watering, your stomach making noise. That is the nervous system offloading, not something going wrong.",
+    "If something starts to feel worse instead of steadier, stop it. That is information, not failure. Put both feet on the floor and look around the room instead.",
+  ],
+  /**
+   * Under the four. The honest limit of what this screen is, and it is here
+   * rather than in `SUPPORT_RESOURCE` because it is not about crisis — it is
+   * about the specific thing somatic work is used for by people who know what
+   * they are doing, which is not a thing six timed exercises in an app can do.
+   */
+  principlesLimit:
+    "These are the ones that are safe to do on your own from a screen. The deeper somatic work is real, and it wants a person in the room who knows how — it is not what this is.",
+
+  /** Above the steps on the tutorial screen. */
+  howHeading: "How",
+  /** Above the `notice` line. Not "tip" — it is the exercise, not a bonus. */
+  noticeHeading: "What to notice",
+  /** Under the Begin button, quiet. Nothing starts on arrival. */
+  introHint: "Nothing starts until you tap begin.",
+  begin: "Begin",
+  /** Ghost, on both the tutorial and the settle screen. */
+  another: "Pick a different one",
+
+  /**
+   * Shown in place of the clock during `SOMATIC.setMs`, while the user gets
+   * into position. Says which way it is going, so the wait reads as part of the
+   * exercise rather than as the app hesitating.
+   *
+   * The 3-2-1 that follows it is digits and needs no copy — see `countLabel`
+   * for the only part of it that is words.
+   */
+  leadIn: "Get yourself set.",
+  /**
+   * Read out in place of a bare numeral, which a screen reader would otherwise
+   * announce as a quantity of nothing in particular. Says what the number is
+   * counting towards, because on this screen that is the whole of its meaning.
+   */
+  countLabel: (n: number) => `Starting in ${n}`,
+  /**
+   * The way out of a running timer, and the only button on that screen. Worded
+   * as a decision the user made rather than as an escape — someone stopping
+   * because it started to feel wrong is doing the right thing, and a button
+   * marked "skip" would tell them they had bailed on it.
+   */
+  stop: "That's enough",
+  /**
+   * Under it. The fourth principle, in the open, at the one moment it applies —
+   * see the note above on why this one is not left behind the tap.
+   */
+  stopHint: "Stop early if it stops feeling okay.",
+
+  /**
+   * The settle screen. Every run lands here, whether the clock ran out or the
+   * user stopped it, because "end on something settled" is itself one of the
+   * instructions — the sources are unanimous that a somatic exercise should
+   * finish on the calm rather than on whatever it stirred up.
+   *
+   * The body is written so that "nothing" is a real answer and not a wrong one.
+   * A closing question that only accepts an improvement is a question that
+   * teaches people to lie to it, and this app has already told the user once
+   * that something not working is not something they got wrong.
+   */
+  settleTitle: "Stop there.",
+  settleBody:
+    "Sit still for a few seconds and notice what is different — your breathing, your shoulders, your hands. If nothing is different, that is a real answer too.",
+  settleDone: "That's it",
+  settleLonger: "A bit longer",
 } as const;
 
 export const PARK_WORRY = {

@@ -27,10 +27,17 @@
  * difference from that screen. `/close` sits behind it and its back button has
  * to know whether a check-in ran — see `routeIntoClose`.
  *
- * ## Four of the five options aren't built
+ * ## Three of the five options aren't built
  *
  * They are on the list anyway, and tapping one lands on `NotYet`, which says
  * so. See the note there for why they aren't drawn as locked cards.
+ *
+ * The two that are built are not the same shape as each other. The 5-4-3-2-1 is
+ * one exercise and gets the two-phase intro/sequence pair below; the somatic
+ * step is six of them and carries its own picker, tutorial and clock. That is
+ * the shape the remaining three will want too — soundscapes and progressive
+ * muscle relaxation are both a choice followed by a timed thing — so the
+ * grounding pair is the odd one out rather than the pattern to copy.
  *
  * ## What isn't here
  *
@@ -41,7 +48,7 @@
  * screen making the same choice-for-the-user mistake in the other direction.
  */
 
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
@@ -53,6 +60,8 @@ import { Spacing } from '@/constants/theme';
 import { GroundingIntro } from '@/session/aftercare/grounding-intro';
 import { GroundingSequence } from '@/session/aftercare/grounding-sequence';
 import { NotYet } from '@/session/aftercare/not-yet';
+import { SomaticFlowView } from '@/session/somatic/somatic-flow';
+import { useSomaticFlow } from '@/session/somatic/use-somatic-flow';
 import { OptionCard } from '@/session/ui/option-card';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
@@ -72,6 +81,23 @@ export default function OneMoreScreen() {
    */
   const [started, setStarted] = useState(false);
 
+  const toList = useCallback(() => {
+    setStarted(false);
+    chooseOneMore(null);
+  }, [chooseOneMore]);
+
+  /**
+   * The somatic step has four beats of its own and its own idea of what back
+   * means from each — a movement list, a tutorial, a clock, and the beat after
+   * it. Called here rather than inside the component that draws them because
+   * the back button is drawn by `SessionScreen` below, and it has to know which
+   * of the four is showing. See the note at the top of `use-somatic-flow.ts`.
+   *
+   * `toList` is what it falls out to: backing off the movement list lands on
+   * the five, not on the rating two screens up.
+   */
+  const somatic = useSomaticFlow(toList);
+
   if (!active) return null;
 
   /**
@@ -82,11 +108,6 @@ export default function OneMoreScreen() {
    */
   const chosen = oneMore === null ? null : (findOneMore(oneMore) ?? null);
 
-  const toList = () => {
-    setStarted(false);
-    chooseOneMore(null);
-  };
-
   const choose = (id: OneMoreId) => {
     setStarted(false);
     chooseOneMore(id);
@@ -94,12 +115,18 @@ export default function OneMoreScreen() {
 
   const close = () => router.replace('/close');
 
+  /**
+   * With something picked, back means back to the list rather than out of the
+   * screen: the list is genuinely the previous thing the user saw, and a button
+   * that skips past it to the rating would strand anyone who tapped the wrong
+   * card. Somatic is the one option with enough behind it to have its own
+   * answer, and it makes the same argument one level down.
+   */
+  const back =
+    chosen === null ? toRating : chosen.id === 'somatic' ? somatic.back : toList;
+
   return (
-    // With something picked, back means back to the list rather than out of the
-    // screen: the list is genuinely the previous thing the user saw, and a
-    // button that skips past it to the rating would strand anyone who tapped
-    // the wrong card.
-    <SessionScreen onBack={chosen ? toList : toRating}>
+    <SessionScreen onBack={back}>
       {chosen === null ? (
         <ScrollView
           contentContainerStyle={styles.content}
@@ -138,6 +165,14 @@ export default function OneMoreScreen() {
         ) : (
           <GroundingIntro onStart={() => setStarted(true)} />
         )
+      ) : chosen.id === 'somatic' ? (
+        // Six movements behind this one, each with a tutorial and a clock, so
+        // it draws its own phases rather than a single exercise. It ends on the
+        // door like the other three will: the beat after the movement is part
+        // of the movement and is inside there, so there is nothing left for a
+        // check-in to ask. `routeIntoClose` already sends `/close`'s back
+        // button here for anything that isn't the 5-4-3-2-1.
+        <SomaticFlowView flow={somatic} onDone={close} />
       ) : (
         <NotYet title={chosen.title} onBack={toList} onDone={close} />
       )}

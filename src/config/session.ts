@@ -274,6 +274,66 @@ export const GROUNDING_FADE = {
 } as const;
 
 /**
+ * The somatic movements.
+ *
+ * How long each one runs is not here — it is a property of the movement and
+ * lives on it, in `@/content/somatic`. What is here is everything the six share,
+ * which is the shape of the run rather than its length.
+ *
+ * ## The lead-in, which is in two halves
+ *
+ * The gap between "Begin" and the clock starting is the one thing here that is
+ * load-bearing rather than tuning. Two of the six ask the user to stand up and
+ * one asks them to cross their arms, and a clock that starts on the tap spends
+ * its first seconds being watched by somebody who is still getting into
+ * position. Same argument as `BREATHING.leadInMs` — the breath holds the circle
+ * still until the screen has finished arriving — with a body instead of a
+ * transition.
+ *
+ * `setMs` is that: "Get yourself set." on screen and nothing counting.
+ *
+ * `countMs` and `countFrom` are the 3-2-1 after it, and they exist because the
+ * hold on its own answered the wrong half of the question. It said *that* there
+ * was a moment to get ready in; it never said when that moment ran out, so the
+ * movement began at whatever instant the line happened to vanish. A count is
+ * the only part of this the user can act on — it is the difference between
+ * being told to get set and being told when to go.
+ *
+ * One second a digit, because that is the speed a person counts at out loud and
+ * anything else reads as a stall or a stumble.
+ *
+ * ## `extendMs`
+ *
+ * What "a bit longer" adds, from the settle screen. Deliberately shorter than
+ * any of the movements themselves: someone who has done the thing and wants
+ * more of it wants another go, not a second full serving, and the offer can be
+ * taken as many times as they like.
+ */
+export const SOMATIC = {
+  setMs: 2_500,
+  countMs: 1_000,
+  countFrom: 3,
+  extendMs: 45_000,
+  /**
+   * How often the clock redraws. A second, because the clock reads in seconds —
+   * anything faster is renders nobody can see, on a screen whose whole request
+   * is that the user is looking at their own body rather than at it.
+   */
+  tickMs: 1_000,
+} as const;
+
+/**
+ * The whole gap between "Begin" and the clock starting: the hold, then the
+ * count.
+ *
+ * Derived rather than written down a third time, the same way `BREATH_CYCLE_MS`
+ * is. Two things run against this number — the countdown's own deadline and the
+ * delay on the progress track — and a constant that drifted from the halves
+ * above would put the track out of step with the clock it is measuring.
+ */
+export const SOMATIC_LEAD_IN_MS = SOMATIC.setMs + SOMATIC.countFrom * SOMATIC.countMs;
+
+/**
  * The puzzle.
  *
  * NOTE ON DOSE: the trials this mechanic comes from (visuospatial task after

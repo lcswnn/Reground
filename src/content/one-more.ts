@@ -58,8 +58,13 @@ export const ONE_MORE_OPTIONS: readonly OneMoreOption[] = [
   },
   {
     id: 'somatic',
+    // The only entry on this list that opens onto another list — six movements,
+    // in `@/content/somatic`. The blurb names two of them rather than the
+    // family, because "somatic" is a word most people have not met and a card
+    // that only says it is a card that says nothing. The screen behind it
+    // explains what they have in common; this has to earn the tap first.
     title: 'Somatic movements',
-    blurb: 'Shake out your arms, roll your shoulders, unclench your jaw.',
+    blurb: 'Shake it out, unclench your jaw, look slowly around the room.',
   },
   {
     id: 'soundscape',
