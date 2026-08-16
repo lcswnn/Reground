@@ -334,6 +334,34 @@ export const SOMATIC = {
 export const SOMATIC_LEAD_IN_MS = SOMATIC.setMs + SOMATIC.countFrom * SOMATIC.countMs;
 
 /**
+ * The soundscapes.
+ *
+ * No duration here, and there cannot be one: a soundscape runs for the length
+ * of its file. The player reads that off the loaded audio and paces itself from
+ * it — see `content/soundscape.ts` for why the file is the clock rather than
+ * this being.
+ *
+ * `fadeMs` is both ends, and it is done in the app rather than baked into the
+ * mp3 for one reason: the user can stop early. A fade exported into the file
+ * only covers the ending that happens on schedule, and the other ending — the
+ * one somebody chose — would be a hard cut in the middle of a bed of rain,
+ * which is the single most startling thing this app could do to the person
+ * using it. Doing both in the app means both endings sound the same.
+ *
+ * Two seconds because ambience has no transient to hide behind; anything much
+ * shorter reads as the sound being switched off rather than as it receding.
+ *
+ * `statusMs` is how often the player reports where it is. It drives the
+ * progress line and, more importantly, the moment the tail fade starts — at the
+ * 500ms default the fade could begin up to half a second late, which at the end
+ * of a file means it is still going when the audio stops.
+ */
+export const SOUNDSCAPE = {
+  fadeMs: 2_000,
+  statusMs: 200,
+} as const;
+
+/**
  * The puzzle.
  *
  * NOTE ON DOSE: the trials this mechanic comes from (visuospatial task after

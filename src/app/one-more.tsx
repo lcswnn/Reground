@@ -27,17 +27,27 @@
  * difference from that screen. `/close` sits behind it and its back button has
  * to know whether a check-in ran — see `routeIntoClose`.
  *
- * ## Three of the five options aren't built
+ * ## What is built, and the one option that depends on the build
  *
- * They are on the list anyway, and tapping one lands on `NotYet`, which says
- * so. See the note there for why they aren't drawn as locked cards.
+ * Three of the five run: the 5-4-3-2-1, the somatic movements, and the
+ * soundscapes. The other two land on `NotYet`, which says so — see the note
+ * there for why they aren't drawn as locked cards.
  *
- * The two that are built are not the same shape as each other. The 5-4-3-2-1 is
- * one exercise and gets the two-phase intro/sequence pair below; the somatic
- * step is six of them and carries its own picker, tutorial and clock. That is
- * the shape the remaining three will want too — soundscapes and progressive
- * muscle relaxation are both a choice followed by a timed thing — so the
- * grounding pair is the odd one out rather than the pattern to copy.
+ * Soundscapes are the odd one, because whether they work is not a question
+ * about this code. They need mp3s in `assets/soundscapes/`, and until at least
+ * one is there the option falls back to `NotYet` alongside the two that were
+ * never written — hence `soundscapesReady`. That check is the only place in the
+ * app where a feature's availability is a fact about the repository rather than
+ * about the session.
+ *
+ * The three are not the same shape as each other, and the shapes are worth
+ * reading in the order they were built. The 5-4-3-2-1 is one exercise and gets
+ * the two-phase intro/sequence pair below. The somatic step is six of them and
+ * carries a picker, a tutorial and a clock. The soundscapes are five of them
+ * and carry a picker and nothing else — no tutorial, because there is nothing
+ * to learn, and no closing beat, because the sound fading out is the closing
+ * beat. Progressive muscle relaxation, when it lands, wants the somatic shape;
+ * the grounding pair is the one that generalises to nothing.
  *
  * ## What isn't here
  *
@@ -62,6 +72,8 @@ import { GroundingSequence } from '@/session/aftercare/grounding-sequence';
 import { NotYet } from '@/session/aftercare/not-yet';
 import { SomaticFlowView } from '@/session/somatic/somatic-flow';
 import { useSomaticFlow } from '@/session/somatic/use-somatic-flow';
+import { hasSoundscapes } from '@/session/soundscape/audio';
+import { SoundscapeFlowView, useSoundscapeFlow } from '@/session/soundscape/soundscape-flow';
 import { OptionCard } from '@/session/ui/option-card';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
@@ -98,6 +110,21 @@ export default function OneMoreScreen() {
    */
   const somatic = useSomaticFlow(toList);
 
+  /**
+   * The soundscapes, which have two beats rather than somatic's four but need
+   * the same thing from the frame: a back button that returns to their own list
+   * before it returns to the five.
+   */
+  const soundscape = useSoundscapeFlow(toList);
+
+  /**
+   * Whether any audio actually shipped in this build. Nothing else in the app
+   * can tell — the files live in `assets/soundscapes/` and the offer is only
+   * real once at least one of them is there, so with none the option falls back
+   * to `NotYet` alongside the two that were never built.
+   */
+  const soundscapesReady = hasSoundscapes();
+
   if (!active) return null;
 
   /**
@@ -123,7 +150,13 @@ export default function OneMoreScreen() {
    * answer, and it makes the same argument one level down.
    */
   const back =
-    chosen === null ? toRating : chosen.id === 'somatic' ? somatic.back : toList;
+    chosen === null
+      ? toRating
+      : chosen.id === 'somatic'
+        ? somatic.back
+        : chosen.id === 'soundscape' && soundscapesReady
+          ? soundscape.back
+          : toList;
 
   return (
     <SessionScreen onBack={back}>
@@ -173,6 +206,12 @@ export default function OneMoreScreen() {
         // check-in to ask. `routeIntoClose` already sends `/close`'s back
         // button here for anything that isn't the 5-4-3-2-1.
         <SomaticFlowView flow={somatic} onDone={close} />
+      ) : chosen.id === 'soundscape' && soundscapesReady ? (
+        // Two beats rather than somatic's four: a list, then one of them
+        // playing. It ends on the door for a different reason from the others
+        // — the sound fading out is the ending, and a screen after it asking
+        // how that went would be talking over it.
+        <SoundscapeFlowView flow={soundscape} onDone={close} />
       ) : (
         <NotYet title={chosen.title} onBack={toList} onDone={close} />
       )}

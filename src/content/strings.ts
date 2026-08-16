@@ -460,7 +460,8 @@ export const ONE_MORE = {
 } as const;
 
 /**
- * Three of the five options have nothing behind them yet.
+ * The options with nothing behind them yet — two outright, and soundscapes
+ * whenever the build has no audio files in it.
  *
  * They are still on the list and still tappable, and this is the screen that
  * makes that honest. It says the app hasn't built it — not that the user picked
@@ -660,6 +661,63 @@ export const SOMATIC_COPY = {
     "Sit still for a few seconds and notice what is different — your breathing, your shoulders, your hands. If nothing is different, that is a real answer too.",
   settleDone: "That's it",
   settleLonger: "A bit longer",
+} as const;
+
+/**
+ * The soundscapes — the picker, and the screen the sound plays on.
+ *
+ * The shortest of the three built exercises, because it is the only one with
+ * nothing to explain. The breath has a technique behind it, the somatic
+ * movements have a body to instruct; this is a list of sounds and a way to stop
+ * one. Copy that told the user how to listen would be copy for its own sake.
+ *
+ * The one thing worth saying up front is that it ends on its own — see `lead`.
+ */
+export const SOUNDSCAPE_COPY = {
+  title: "Soundscapes.",
+  /**
+   * Says the shape of the thing rather than the benefit. That it plays once and
+   * finishes by itself is the fact the user needs, because it is what makes
+   * this the one exercise here they do not have to do anything to complete —
+   * and because the alternative reading, that they have picked something which
+   * will run until they stop it, is exactly the wrong thing to hand somebody at
+   * the end of a session about anxiety.
+   */
+  lead: "Something to listen to. It plays once and finishes on its own.",
+  /**
+   * Under the list, quiet. Not an instruction — most people will be holding a
+   * phone, and a soundscape through a phone speaker is still a soundscape.
+   */
+  hint: "Headphones if you have them.",
+
+  /**
+   * On the playing screen, under the name. There is nothing to do and that is
+   * worth saying once, because a screen with a single button on it otherwise
+   * looks like a screen waiting for you to press it.
+   */
+  playing: "Nothing to do. Put the phone down if you like.",
+  /**
+   * The way out, and the only button. Same word the somatic timer uses and
+   * deliberately so: the two are the same promise — this ends when you say, and
+   * choosing to end it is not quitting.
+   */
+  stop: "That's enough",
+
+  /**
+   * Shown while the file is still opening. Almost nobody sees it — the audio is
+   * bundled rather than fetched, so there is no network in the way — so it is
+   * written for the one person on an old phone rather than as a normal state of
+   * the screen.
+   */
+  loading: "Starting…",
+  /**
+   * Shown when the audio could not be opened at all. It has to say what
+   * happened without asking the user to do anything about it: they are three
+   * taps from the end of a session and are not going to debug a codec.
+   */
+  failed: "This one won't play. Pick another, or call it here.",
+  back: "Pick a different one",
+  done: "Finish up",
 } as const;
 
 export const PARK_WORRY = {
