@@ -29,25 +29,29 @@
  *
  * ## What is built, and the one option that depends on the build
  *
- * Three of the five run: the 5-4-3-2-1, the somatic movements, and the
- * soundscapes. The other two land on `NotYet`, which says so — see the note
- * there for why they aren't drawn as locked cards.
+ * Four of the five run: the 5-4-3-2-1, the somatic movements, the soundscapes,
+ * and the paced breathing patterns. Progressive muscle relaxation lands on
+ * `NotYet`, which says so — see the note there for why it isn't drawn as a
+ * locked card.
  *
  * Soundscapes are the odd one, because whether they work is not a question
  * about this code. They need mp3s in `assets/soundscapes/`, and until at least
- * one is there the option falls back to `NotYet` alongside the two that were
+ * one is there the option falls back to `NotYet` alongside the one that was
  * never written — hence `soundscapesReady`. That check is the only place in the
  * app where a feature's availability is a fact about the repository rather than
  * about the session.
  *
- * The three are not the same shape as each other, and the shapes are worth
+ * The four are not the same shape as each other, and the shapes are worth
  * reading in the order they were built. The 5-4-3-2-1 is one exercise and gets
  * the two-phase intro/sequence pair below. The somatic step is six of them and
  * carries a picker, a tutorial and a clock. The soundscapes are five of them
  * and carry a picker and nothing else — no tutorial, because there is nothing
  * to learn, and no closing beat, because the sound fading out is the closing
- * beat. Progressive muscle relaxation, when it lands, wants the somatic shape;
- * the grounding pair is the one that generalises to nothing.
+ * beat. The breathing patterns are four of them in the somatic shape — picker,
+ * intro, the thing running, and a beat afterwards — because that shape is what
+ * an exercise with something to explain and something to finish needs. It is
+ * also the shape progressive muscle relaxation wants when it lands; the
+ * grounding pair is the one that generalises to nothing.
  *
  * ## What isn't here
  *
@@ -70,6 +74,8 @@ import { Spacing } from '@/constants/theme';
 import { GroundingIntro } from '@/session/aftercare/grounding-intro';
 import { GroundingSequence } from '@/session/aftercare/grounding-sequence';
 import { NotYet } from '@/session/aftercare/not-yet';
+import { BreathFlowView } from '@/session/breathwork/breath-flow';
+import { useBreathFlow } from '@/session/breathwork/use-breath-flow';
 import { SomaticFlowView } from '@/session/somatic/somatic-flow';
 import { useSomaticFlow } from '@/session/somatic/use-somatic-flow';
 import { hasSoundscapes } from '@/session/soundscape/audio';
@@ -118,6 +124,13 @@ export default function OneMoreScreen() {
   const soundscape = useSoundscapeFlow(toList);
 
   /**
+   * The breathing patterns, which have somatic's four beats and want the same
+   * thing from the frame: a back button that returns to their own list before
+   * it returns to the five.
+   */
+  const breath = useBreathFlow(toList);
+
+  /**
    * Whether any audio actually shipped in this build. Nothing else in the app
    * can tell — the files live in `assets/soundscapes/` and the offer is only
    * real once at least one of them is there, so with none the option falls back
@@ -146,17 +159,23 @@ export default function OneMoreScreen() {
    * With something picked, back means back to the list rather than out of the
    * screen: the list is genuinely the previous thing the user saw, and a button
    * that skips past it to the rating would strand anyone who tapped the wrong
-   * card. Somatic is the one option with enough behind it to have its own
-   * answer, and it makes the same argument one level down.
+   * card. The three options with a list of their own behind them answer this
+   * themselves, making the same argument one level down.
+   *
+   * Written as a function rather than the chain of ternaries this used to be.
+   * With three exercises delegating and one of them conditional on the build,
+   * the chain had four levels of nesting and the reader had to hold all of them
+   * to work out what a plain option does.
    */
-  const back =
-    chosen === null
-      ? toRating
-      : chosen.id === 'somatic'
-        ? somatic.back
-        : chosen.id === 'soundscape' && soundscapesReady
-          ? soundscape.back
-          : toList;
+  const backFor = () => {
+    if (chosen === null) return toRating;
+    if (chosen.id === 'somatic') return somatic.back;
+    if (chosen.id === 'breathing') return breath.back;
+    if (chosen.id === 'soundscape' && soundscapesReady) return soundscape.back;
+    return toList;
+  };
+
+  const back = backFor();
 
   return (
     <SessionScreen onBack={back}>
@@ -206,6 +225,13 @@ export default function OneMoreScreen() {
         // check-in to ask. `routeIntoClose` already sends `/close`'s back
         // button here for anything that isn't the 5-4-3-2-1.
         <SomaticFlowView flow={somatic} onDone={close} />
+      ) : chosen.id === 'breathing' ? (
+        // Four patterns behind this one, each with an intro and a circle to
+        // follow, so it draws its own phases in the same four beats somatic
+        // does. It ends on the door rather than on a check-in: the beat after
+        // the pattern — stop counting, see where the breath settles — is inside
+        // there, so there is nothing left for another screen to ask.
+        <BreathFlowView flow={breath} onDone={close} />
       ) : chosen.id === 'soundscape' && soundscapesReady ? (
         // Two beats rather than somatic's four: a list, then one of them
         // playing. It ends on the door for a different reason from the others

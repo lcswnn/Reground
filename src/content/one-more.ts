@@ -15,10 +15,10 @@
  *
  * Plain data with no components in it, in the same shape and for the same
  * reasons as `games/catalog.ts`. The mapping from an id to something that runs
- * lives in `app/one-more.tsx`, and today only `grounding` has anything behind
- * it — every other id lands on the not-built-yet screen there. That is a fact
- * about the app, not about the option, which is why it isn't a field here: an
- * option is what it is whether or not it has been built.
+ * lives in `app/one-more.tsx`, and today `pmr` is the only one with nothing
+ * behind it — it lands on the not-built-yet screen there. That is a fact about
+ * the app, not about the option, which is why it isn't a field here: an option
+ * is what it is whether or not it has been built.
  *
  * Order is the order on screen. The 5-4-3-2-1 is first because it is the one
  * with a name a person may already know and the one that works from a chair,
@@ -53,6 +53,9 @@ export const ONE_MORE_OPTIONS: readonly OneMoreOption[] = [
     id: 'breathing',
     // Not "more breathing". The session opened with a physiological sigh, and
     // the offer here is a different pattern, not a second helping of that one.
+    // Four of them, in `@/content/breathwork` — the blurb names what they have
+    // in common rather than listing them, because their names are counts and a
+    // card reading "4-6, 5-5, 4-4-4-4, 4-7-8" is a card nobody can act on.
     title: 'Breathing, another way',
     blurb: 'Slower patterns than the sigh earlier. Even counts, long exhales.',
   },

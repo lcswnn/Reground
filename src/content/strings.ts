@@ -460,8 +460,8 @@ export const ONE_MORE = {
 } as const;
 
 /**
- * The options with nothing behind them yet — two outright, and soundscapes
- * whenever the build has no audio files in it.
+ * The options with nothing behind them yet — progressive muscle relaxation, and
+ * soundscapes whenever the build has no audio files in it.
  *
  * They are still on the list and still tappable, and this is the screen that
  * makes that honest. It says the app hasn't built it — not that the user picked
@@ -661,6 +661,115 @@ export const SOMATIC_COPY = {
     "Sit still for a few seconds and notice what is different — your breathing, your shoulders, your hands. If nothing is different, that is a real answer too.",
   settleDone: "That's it",
   settleLonger: "A bit longer",
+} as const;
+
+/**
+ * The paced breathing patterns — the screen chrome, the rules that apply to all
+ * four, and the beats a pattern runs through.
+ *
+ * The patterns themselves name and explain themselves in `@/content/breathwork`,
+ * the same way the somatic movements and the game catalog hold their own. What
+ * is here is everything that is true of the step rather than of a pattern.
+ *
+ * ## Why the cautions exist, and why one of them is not behind the tap
+ *
+ * Breathing is the one exercise in this app where doing it enthusiastically
+ * makes it work less well, and the trials say so directly: the 2025 comparison
+ * found that people paced at six breaths a minute drifted into breathing too
+ * big and ended up mildly over-breathing. An anxious person told to breathe
+ * will take a huge breath. So "slow, not big" is the first rule, in the open on
+ * every intro screen rather than only behind the disclosure.
+ *
+ * The rest sit behind the tap on the same argument `SOMATIC_COPY.principles`
+ * makes: someone who wants to get on with it should see four options, not a
+ * preamble. The exception is the stopping rule, which is repeated on the
+ * running screen — see `stopHint`. A rule about when to stop is worth nothing
+ * folded away at the moment it applies.
+ */
+export const BREATHWORK_COPY = {
+  title: "Breathing, another way.",
+  /**
+   * Says what separates these from the sigh at the start, because that is the
+   * question anyone arriving here is actually asking — they have already done a
+   * minute of breathing in this session and are being offered another one.
+   */
+  lead: "Slower patterns, held for a minute or two. Different from the sigh at the start: here the pace is the thing. Pick one.",
+
+  /** The tap that opens `cautions`. Phrased as what the reader gets. */
+  cautionsLabel: "How to do these so they work",
+  /**
+   * In the order they bite. Over-breathing first because it is the one that is
+   * disobeyed immediately and the one with a trial behind it; the stopping rule
+   * last because it matters most and last is where it will be read.
+   */
+  cautions: [
+    "Slow, not big. The rate is what does the work — a lungful on every breath will leave you dizzy and no calmer.",
+    "The counts are a pace, not a target. If you run out of air before the circle turns, take less in rather than trying harder.",
+    "The holds are the optional part. Drop them and just breathe the in-and-out if they are unpleasant — the patterns without holds did better in the trials anyway.",
+    "Lightheaded, tingling, or a heart that speeds up instead of settling means stop. Breathe normally and let it pass. That is the pattern not suiting you today, not something you got wrong.",
+  ],
+  /**
+   * Under the four. The honest size of the effect, and the one population this
+   * screen should not assume it is helping. Same job `SOMATIC_COPY.principlesLimit`
+   * does, and written under `CALIBRATION_COPY`'s rule — a claim only works here
+   * if the user could go and check it and find it holds.
+   */
+  cautionsLimit:
+    "The effect here is real and it is modest: a few points on a scale, measured right after doing it. If you get panic attacks, deliberate breathing sometimes sets one off rather than heading it off — if that is you, the movements or the 5-4-3-2-1 are the safer picks.",
+
+  /** Above the steps on the intro screen. */
+  howHeading: "How",
+  /** Above `notice`. Not "tip" — it is the exercise, not a bonus. */
+  noticeHeading: "What to notice",
+  /**
+   * Above `evidence`. Phrased as a limit rather than a boast, because half of
+   * what these lines say is where the technique is weaker than its reputation.
+   */
+  evidenceHeading: "What's actually known",
+  /** Under the Begin button, quiet. Nothing starts on arrival. */
+  introHint: "Nothing starts until you tap begin.",
+  begin: "Begin",
+  /** Ghost, on both the intro and the settle screen. */
+  another: "Pick a different one",
+
+  /**
+   * The four cues, shown one at a time in the middle of the circle's swing.
+   *
+   * Both holds get the same word. They are different instructions in the sense
+   * that one is on a full chest and one on an empty one, but the circle has
+   * already said which — it is sitting at the top or at the bottom — and a cue
+   * reading "Hold, empty" is a sentence to parse at the one moment there is
+   * least room for one.
+   */
+  in: "In",
+  hold: "Hold",
+  out: "Out",
+
+  /**
+   * The way out of a running pattern, and the only button on that screen. Same
+   * words the somatic timer and the soundscape player use, deliberately: the
+   * three are the same promise, and stopping is not quitting.
+   */
+  stop: "That's enough",
+  /** Under it. The fourth caution, in the open, at the one moment it applies. */
+  stopHint: "Stop if it stops feeling okay. Breathing normally is always the right answer.",
+
+  /**
+   * The settle screen. Every run lands here, whether it finished or was stopped.
+   *
+   * The instruction is to give the breath back rather than to keep holding the
+   * pattern, which is the specific thing people get wrong about these: a paced
+   * breath is a thing you do for a minute, not a way you are now supposed to
+   * breathe. Written so that "nothing changed" is a real answer, for the reason
+   * `SOMATIC_COPY.settleBody` is — `CHECK_IN.didNotResponse` already told this
+   * user out loud that a thing not working is not something they got wrong, and
+   * this screen does not get to imply otherwise two taps later.
+   */
+  settleTitle: "Let it go back to normal.",
+  settleBody:
+    "Stop counting and let your breathing do whatever it wants for a few seconds. See where it settles on its own. If it settles exactly where it started, that is a real answer too.",
+  settleDone: "That's it",
+  settleAgain: "Another round of that",
 } as const;
 
 /**

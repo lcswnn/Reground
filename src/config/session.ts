@@ -274,6 +274,30 @@ export const GROUNDING_FADE = {
 } as const;
 
 /**
+ * The paced breathing patterns offered at the end — the second breathing step,
+ * not the sigh that opens the session.
+ *
+ * Almost nothing is here, and that is the point: a pattern's timings *are* the
+ * pattern, so they live on it in `@/content/breathwork` rather than in the
+ * config. "4 in, 6 out" is a name the user is shown, and a config file that
+ * could quietly retune it to 4-and-7 would be a file that can make the app lie.
+ * Compare `BREATHING` above, where the sigh's phases are tuning precisely
+ * because the user is never told a number.
+ *
+ * What is left is the one duration that belongs to the screen rather than to
+ * any pattern.
+ *
+ * `leadInMs` is the same hold, for the same reason, as `BREATHING.leadInMs`:
+ * the screen arrives on a fade, and a circle that starts growing on mount is
+ * already part way into the first inhale by the time it is fully visible. It
+ * matters more here than there, because here the first inhale is a counted four
+ * seconds that the user has just been promised.
+ */
+export const BREATHWORK = {
+  leadInMs: 1_400,
+} as const;
+
+/**
  * The somatic movements.
  *
  * How long each one runs is not here — it is a property of the movement and
