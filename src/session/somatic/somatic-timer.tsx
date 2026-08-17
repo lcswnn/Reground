@@ -304,9 +304,9 @@ const styles = StyleSheet.create({
   },
   clock: {
     textAlign: 'center',
-    // Fredoka's digits are not fixed-width, and without this the clock visibly
-    // breathes as the numbers change under it — which on a screen asking for
-    // stillness is the one thing it cannot do.
+    // Literata's digits are not fixed-width, and without this the clock
+    // visibly breathes as the numbers change under it — which on a screen
+    // asking for stillness is the one thing it cannot do.
     fontVariant: ['tabular-nums'],
   },
   // Tall enough for the `hero` digits, which are the tallest thing that lands

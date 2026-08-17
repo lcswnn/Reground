@@ -1,20 +1,22 @@
 // Imported per weight rather than from the package root. The root re-exports
 // every cut in the family, and Metro follows all of them into the bundle —
 // megabytes of fonts for the two the app actually asks for.
-import { Fredoka_400Regular } from '@expo-google-fonts/fredoka/400Regular';
-import { Fredoka_600SemiBold } from '@expo-google-fonts/fredoka/600SemiBold';
+import { Literata_400Regular } from '@expo-google-fonts/literata/400Regular';
+import { Literata_600SemiBold } from '@expo-google-fonts/literata/600SemiBold';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
+import { View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { SPLASH } from '@/config/session';
 import { splashHoldsForMs } from '@/lib/splash';
 import { SessionFlowProvider } from '@/session/session-context';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
+import { ScreenFilm } from '@/session/ui/screen-film';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -85,11 +87,11 @@ function RootNavigator() {
   // Loaded at runtime rather than through the expo-font config plugin, which
   // would need a native rebuild to pick up.
   //
-  // Two cuts of Fredoka, which ships five — see the note on `Fonts` in
-  // `constants/theme.ts` for why both are registered as their own families.
+  // Two cuts of Literata, which ships far more — see the note on `Fonts` in
+  // `constants/theme.ts` for why each is registered as its own family.
   const [fontsLoaded, fontError] = useFonts({
-    Fredoka_400Regular,
-    Fredoka_600SemiBold,
+    Literata_400Regular,
+    Literata_600SemiBold,
   });
 
   // A font that fails to decode shouldn't hold the app hostage — fall through
@@ -99,7 +101,7 @@ function RootNavigator() {
   /**
    * Two conditions, and the splash waits for both: the fonts have to be ready,
    * or the first screen renders in the system face and then reflows into
-   * Fredoka — and the splash has to have been up for `SPLASH.minimumMs`.
+   * Literata — and the splash has to have been up for `SPLASH.minimumMs`.
    *
    * The wait is measured from launch rather than from here, so the two overlap
    * instead of stacking. Fonts that take a second to decode spend that second
@@ -137,28 +139,36 @@ function RootNavigator() {
   return (
     <ThemeProvider value={navigationTheme}>
       <StatusBar style={isDark ? 'light' : 'dark'} />
-      {/*
-        No native header, and the swipe-back gesture stays off. Every screen
-        navigates with `router.replace`, so there is never a stack to walk
-        backwards into by accident — which is the point: stepping back into the
-        reactivation cue, or into the thing that upset you, should take a
-        deliberate tap and nothing less.
+      <View style={{ flex: 1 }}>
+        {/*
+          No native header, and the swipe-back gesture stays off. Every screen
+          navigates with `router.replace`, so there is never a stack to walk
+          backwards into by accident — which is the point: stepping back into
+          the reactivation cue, or into the thing that upset you, should take a
+          deliberate tap and nothing less.
 
-        That tap is the back button `SessionScreen` draws top-left. It is a
-        route change like any other rather than a stack pop, and `previousRoute`
-        in `session/routing.ts` is the single place that says where each screen
-        goes and which two have nowhere to go at all.
+          That tap is the back button `SessionScreen` draws top-left. It is a
+          route change like any other rather than a stack pop, and
+          `previousRoute` in `session/routing.ts` is the single place that
+          says where each screen goes and which two have nowhere to go at all.
 
-        `fade` rather than a push, because nothing here is a level deeper than
-        the last screen. It is the next moment of one continuous thing.
-      */}
-      <Stack
-        screenOptions={{
-          headerShown: false,
-          gestureEnabled: false,
-          animation: 'fade',
-        }}
-      />
+          `fade` rather than a push, because nothing here is a level deeper
+          than the last screen. It is the next moment of one continuous thing.
+        */}
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            gestureEnabled: false,
+            animation: 'fade',
+          }}
+        />
+        {/*
+          Drawn once here rather than inside `SessionScreen`, so it sits above
+          the fade transition as a fixed layer instead of crossfading with
+          each screen — a film on the glass, not a property of what's under it.
+        */}
+        <ScreenFilm />
+      </View>
     </ThemeProvider>
   );
 }

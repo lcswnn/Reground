@@ -50,9 +50,17 @@ export interface Category {
 
 export const CATEGORIES: readonly Category[] = [
   {
+    id: "personal-other",
+    label: "Personal",
+    detail: "General and unwanted anxiety from a known or unknown cause.",
+    group: "witnessed",
+    games: "calm",
+  },
+  {
     id: "world",
-    label: "News about current events.",
-    detail: "Wars, Climate Change, Economy, Politics, etc.",
+    label: "Doomscrolling",
+    detail:
+      "Anxiety from the news and current events fed to you on social media.",
     group: "world",
     games: "calm",
   },
@@ -60,16 +68,8 @@ export const CATEGORIES: readonly Category[] = [
     id: "witnessed",
     label: "Something I saw",
     detail:
-      "An image or video on social media that you can't seem to get out of your mind.",
+      "An image or video that's stuck in your mind that you saw involuntarily.",
     group: "witnessed",
     games: "visuospatial",
-  },
-  {
-    id: "personal-other",
-    label: "Personal/Other",
-    detail:
-      "An experience or memory that keeps coming back, or an unknown cause.",
-    group: "witnessed",
-    games: "calm",
   },
 ];

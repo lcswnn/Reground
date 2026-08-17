@@ -6,6 +6,7 @@ import {
   type PressableProps,
 } from 'react-native';
 
+import { softGlow } from '@/components/themed-text';
 import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -68,7 +69,7 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={foreground} />
       ) : (
-        <Text style={[styles.label, { color: foreground }]}>{title}</Text>
+        <Text style={[styles.label, { color: foreground }, softGlow(foreground)]}>{title}</Text>
       )}
     </Pressable>
   );

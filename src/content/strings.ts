@@ -22,7 +22,7 @@
  * breath" is read at the speed of any other sentence; this one can't be.
  */
 export const WELCOME = {
-  line: "Time to reground.",
+  line: "Let's take a breath together.",
 } as const;
 
 /**
@@ -314,7 +314,8 @@ export const MIRROR_COMPLETE = {
    * so nobody goes looking for a stroke — and drawing a nine-cell shape one tap
    * at a time is the fiddly version of a game meant to be the gentlest here.
    */
-  prompt: "Fill the empty half so it mirrors the other one. Tap the squares, or drag across them.",
+  prompt:
+    "Fill the empty half so it mirrors the other one. Tap the squares, or drag across them.",
   /** Shown when the reflection is right. There is no message for "not yet". */
   done: "That's it.",
   cellLabel: (row: number, column: number) => `Row ${row}, column ${column}`,
@@ -753,7 +754,8 @@ export const BREATHWORK_COPY = {
    */
   stop: "That's enough",
   /** Under it. The fourth caution, in the open, at the one moment it applies. */
-  stopHint: "Stop if it stops feeling okay. Breathing normally is always the right answer.",
+  stopHint:
+    "Stop if it stops feeling okay. Breathing normally is always the right answer.",
 
   /**
    * The settle screen. Every run lands here, whether it finished or was stopped.

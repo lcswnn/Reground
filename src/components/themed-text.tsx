@@ -1,36 +1,73 @@
-import { Platform, StyleSheet, Text, type TextProps } from 'react-native';
+import { Platform, StyleSheet, Text, type TextProps } from "react-native";
 
-import { Fonts, ThemeColor } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Fonts, ThemeColor } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { withAlpha } from "@/lib/color";
+
+// The four display-tier types get a soft glow the same hue as their own text
+// — ink haloing on paper in light mode, paper haloing on ink in dark — so a
+// heading reads as sitting just above the page rather than printed flat on
+// it. Nothing else gets one: at body size the same radius would just read as
+// blur, not glow.
+const GLOWS_SOFTLY = new Set<ThemedTextType>([
+  "hero",
+  "title",
+  "subtitle",
+  "sectionTitle",
+]);
+
+const GLOW_ALPHA = 0.13;
+const GLOW_RADIUS = 5;
+
+/**
+ * The glow itself, exported so anything that draws its own label outside
+ * `ThemedText` — `Button`, `OptionCard` — can match it exactly rather than
+ * carrying a second copy of `GLOW_ALPHA`/`GLOW_RADIUS` that drifts the next
+ * time these are tuned.
+ */
+export function softGlow(color: string) {
+  return {
+    textShadowColor: withAlpha(color, GLOW_ALPHA),
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: GLOW_RADIUS,
+  };
+}
 
 export type ThemedTextType =
-  | 'default'
-  | 'defaultSemiBold'
-  | 'hero'
-  | 'title'
-  | 'subtitle'
-  | 'sectionTitle'
-  | 'eyebrow'
-  | 'small'
-  | 'smallBold'
-  | 'link'
-  | 'linkPrimary'
-  | 'code';
+  | "default"
+  | "defaultSemiBold"
+  | "hero"
+  | "title"
+  | "subtitle"
+  | "sectionTitle"
+  | "eyebrow"
+  | "small"
+  | "smallBold"
+  | "link"
+  | "linkPrimary"
+  | "code";
 
 export type ThemedTextProps = TextProps & {
   type?: ThemedTextType;
   themeColor?: ThemeColor;
 };
 
-export function ThemedText({ style, type = 'default', themeColor, ...rest }: ThemedTextProps) {
+export function ThemedText({
+  style,
+  type = "default",
+  themeColor,
+  ...rest
+}: ThemedTextProps) {
   const theme = useTheme();
+  const color =
+    type === "linkPrimary" ? theme.brandStrong : theme[themeColor ?? "text"];
 
   return (
     <Text
       style={[
-        { color: theme[themeColor ?? 'text'] },
+        { color },
         styles[type],
-        type === 'linkPrimary' && { color: theme.brandStrong },
+        GLOWS_SOFTLY.has(type) && softGlow(color),
         style,
       ]}
       {...rest}
@@ -39,27 +76,27 @@ export function ThemedText({ style, type = 'default', themeColor, ...rest }: The
 }
 
 // `fontWeight` is absent throughout: naming a weight rather than the family
-// drops the text back to the system font on iOS. Fredoka ships a real 600, so
+// drops the text back to the system font on iOS. Literata ships a real 600, so
 // `defaultSemiBold` resolves to it via `Fonts.semibold`, and the remaining
 // tiers are separated by size, colour and caps — see the note on `Fonts` in
 // `constants/theme.ts`.
 //
 // Every size sits ~10% above what the same tier ran at in Nunito. That bump was
 // bought for Playpen Sans, a handwriting face whose irregular letterforms
-// needed the room; Fredoka is even and wide and does not, so the sizes here are
-// now larger than the face strictly asks for. They were left alone when it
-// changed — a type scale is its own decision and wants judging on a device, not
-// alongside a family swap. The line heights did *not* grow with the sizes: the
-// extra point size fills the leading, and holding them steady keeps the
-// generous ~1.5 rhythm that makes the screen feel unhurried, which is the whole
-// point of the app.
+// needed the room; neither Fredoka nor Literata does, so the sizes here are
+// now larger than the face strictly asks for. They were left alone through
+// both swaps — a type scale is its own decision and wants judging on a device,
+// not alongside a family change. The line heights did *not* grow with the
+// sizes: the extra point size fills the leading, and holding them steady
+// keeps the generous ~1.5 rhythm that makes the screen feel unhurried, which
+// is the whole point of the app.
 const styles = StyleSheet.create({
   // Body moves with the small tier rather than staying put: `small` matching it
   // would make the two types indistinguishable and quietly flatten every screen
   // that pairs them.
   default: {
     fontFamily: Fonts.body,
-    fontSize: 19,
+    fontSize: 17,
     lineHeight: 28,
   },
   defaultSemiBold: {
@@ -74,17 +111,17 @@ const styles = StyleSheet.create({
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 33,
+    fontSize: 27,
     lineHeight: 41,
   },
   subtitle: {
     fontFamily: Fonts.display,
-    fontSize: 25,
+    fontSize: 22,
     lineHeight: 33,
   },
   sectionTitle: {
     fontFamily: Fonts.display,
-    fontSize: 22,
+    fontSize: 20,
     lineHeight: 30,
   },
   // The one tier that stays close to where it was, and the one place emphasis
@@ -96,7 +133,7 @@ const styles = StyleSheet.create({
     fontFamily: Fonts.semibold,
     fontSize: 14,
     lineHeight: 18,
-    textTransform: 'uppercase',
+    textTransform: "uppercase",
     letterSpacing: 1.4,
   },
   small: {
@@ -121,7 +158,8 @@ const styles = StyleSheet.create({
   },
   code: {
     fontFamily: Fonts.mono,
-    fontWeight: Platform.select({ android: '700' as const }) ?? ('500' as const),
+    fontWeight:
+      Platform.select({ android: "700" as const }) ?? ("500" as const),
     fontSize: 14,
   },
 });

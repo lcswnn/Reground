@@ -20,7 +20,7 @@
 
 import { Pressable, StyleSheet } from 'react-native';
 
-import { ThemedText } from '@/components/themed-text';
+import { softGlow, ThemedText } from '@/components/themed-text';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -46,7 +46,14 @@ export function OptionCard({ label, detail, onPress, compact = false }: OptionCa
         { backgroundColor: theme.backgroundElement, borderColor: theme.border },
         pressed && { backgroundColor: theme.backgroundSelected },
       ]}>
-      <ThemedText type={compact ? 'defaultSemiBold' : 'subtitle'}>{label}</ThemedText>
+      {/* `subtitle` glows on its own — see `GLOWS_SOFTLY` in `themed-text.tsx`
+          — but `defaultSemiBold` doesn't, so the compact size needs the glow
+          named explicitly to still read as a button rather than a caption. */}
+      <ThemedText
+        type={compact ? 'defaultSemiBold' : 'subtitle'}
+        style={compact ? softGlow(theme.text) : undefined}>
+        {label}
+      </ThemedText>
       <ThemedText type={compact ? 'small' : 'default'} themeColor="textMuted">
         {detail}
       </ThemedText>

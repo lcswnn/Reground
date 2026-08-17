@@ -49,7 +49,7 @@ export const Colors = {
     textOnPositive: "#F3F0E7",
 
     /** Supplied paper. The page. */
-    background: "#F3F0E7",
+    background: "#F4F4F0",
     /** Ink at 5% — pills, inset rows, anything pressed into the page. */
     backgroundElement: "#EBE8DF",
     /** Ink at 9%, one step further in, for the pressed state of the above. */
@@ -160,22 +160,23 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * strings everywhere else, so a missing load shows up as system fallback text
  * rather than a crash.
  *
- * Fredoka throughout: a rounded geometric sans, soft-cornered and even, which
- * is a quieter way of getting to the same place Playpen Sans was reaching for.
- * The handwriting face made the app read as something jotted down; this one
- * reads as something drawn with a felt tip — friendly, but it holds still. That
- * matters most on the two screens made of numbers, where an irregular face is
- * doing the eye no favours.
+ * Literata throughout: a text serif drawn for Google Play Books, which is to
+ * say it was built for exactly this — long, unhurried reading on a screen
+ * rather than a display face pressed into service for body copy. Landing here
+ * as part of leaning the whole app toward an e-reader's page rather than an
+ * app's; see `Colors` above for the paper-and-ink half of that and
+ * `ScreenFilm` for the matte half.
  *
- * ## Two weights
+ * ## Two cuts
  *
- * Fredoka ships five (300–700) and two are loaded, so `semibold` is a real
- * semibold rather than an alias. That carries emphasis on button labels and the
+ * Literata ships eight weights (200–900) plus italics, and two are loaded:
+ * `400Regular` and `600SemiBold`, so `semibold` is a real semibold rather
+ * than an alias. That carries emphasis on button labels and the
  * `defaultSemiBold` tier, which have nothing else to carry it with.
  *
  * `fontWeight` does not appear anywhere: naming a weight rather than the file
  * drops iOS back to the system font. The weight is selected by loading
- * `Fredoka_600SemiBold` as its own family and asking for it by name, which is
+ * `Literata_600SemiBold` as its own family and asking for it by name, which is
  * why both cuts are registered in the root layout.
  *
  * `display` uses the 600 as well — a heading wants the extra weight more than
@@ -184,23 +185,23 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * ## The type scale is inherited and is worth a second look
  *
  * Every size in `themed-text.tsx` sits ~10% above where it ran before Playpen
- * Sans, and that bump was bought specifically to give irregular hand-drawn
- * letterforms room to be read. Fredoka's are regular and wide, so the argument
- * for the bump is gone even though the numbers are still there. Nothing was
- * changed with the face — sizes are their own decision and worth making on a
- * device — but if the app now reads a touch large, that is where it comes from.
+ * Sans, bought at the time to give that handwriting face's irregular
+ * letterforms room to be read. Neither Fredoka nor Literata needs the room,
+ * but the sizes were left alone through both swaps — a type scale is its own
+ * decision and worth making on a device, not folded into a family change. If
+ * the app reads a touch large, that inherited bump is where it comes from.
  */
-export const FredokaRegular = "Fredoka_400Regular";
-export const FredokaSemiBold = "Fredoka_600SemiBold";
+export const LiterataRegular = "Literata_400Regular";
+export const LiterataSemiBold = "Literata_600SemiBold";
 
 export const Fonts = Platform.select({
   ios: {
     /** Headings. The 600 cut — see above. */
-    display: FredokaSemiBold,
+    display: LiterataSemiBold,
     /** Emphasis inside body copy, and the smaller headings. */
-    semibold: FredokaSemiBold,
+    semibold: LiterataSemiBold,
     /** Everything that isn't a heading. */
-    body: FredokaRegular,
+    body: LiterataRegular,
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
     /** iOS `UIFontDescriptorSystemDesignSerif` */
@@ -209,15 +210,15 @@ export const Fonts = Platform.select({
     rounded: "ui-rounded",
     /**
      * iOS `UIFontDescriptorSystemDesignMonospaced`. Stays a system face:
-     * Fredoka has no monospaced cut, and the one thing `code` has to do is line
-     * digits up.
+     * Literata has no monospaced cut, and the one thing `code` has to do is
+     * line digits up.
      */
     mono: "ui-monospace",
   },
   default: {
-    display: FredokaSemiBold,
-    semibold: FredokaSemiBold,
-    body: FredokaRegular,
+    display: LiterataSemiBold,
+    semibold: LiterataSemiBold,
+    body: LiterataRegular,
     sans: "normal",
     serif: "serif",
     rounded: "normal",
@@ -227,9 +228,9 @@ export const Fonts = Platform.select({
     // All three on the regular cut, as they were before the face changed. The
     // stack falls through to `--font-display` in `global.css`, which names the
     // family for a browser that already has it.
-    display: `${FredokaRegular}, var(--font-display)`,
-    semibold: `${FredokaRegular}, var(--font-display)`,
-    body: `${FredokaRegular}, var(--font-display)`,
+    display: `${LiterataRegular}, var(--font-display)`,
+    semibold: `${LiterataRegular}, var(--font-display)`,
+    body: `${LiterataRegular}, var(--font-display)`,
     sans: "var(--font-display)",
     serif: "var(--font-serif)",
     rounded: "var(--font-rounded)",
