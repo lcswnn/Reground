@@ -66,10 +66,20 @@ const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 export const DEPTH = {
   /** The pill buttons — the one real target on most screens. */
   button: 0.96,
-  /** Full-width cards: answers, games, the mood scale, the worry options. */
+  /** Full-width cards: answers, games, the worry options. */
   card: 0.98,
   /** Small text controls: back, appearance, the disclosure line, skip. */
   text: 0.93,
+  /**
+   * The 0–10 scale, and the deepest press in the app by some way.
+   *
+   * Eleven small squares in a row is the one control here that is genuinely
+   * nice to use, and the only place a press is worth making a bit of a show of.
+   * It is also the one screen asking for a number from someone who does not
+   * especially want to give one, so a target that visibly enjoys being pressed
+   * is doing something for the answer rate as well as for the feel.
+   */
+  chip: 0.88,
 } as const;
 
 export type PressDepth = keyof typeof DEPTH;

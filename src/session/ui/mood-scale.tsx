@@ -37,11 +37,13 @@ export function MoodScale({ value, onChange, lowLabel, highLabel }: MoodScalePro
         {VALUES.map((option) => {
           const selected = option === value;
           return (
-            // Default `button` depth rather than `card`: these are eleven small
-            // targets and each one is its own button, so they press like one.
+            // The deepest press in the app — see `chip` in `DEPTH`. These are
+            // small enough to take it, there are eleven of them, and this is
+            // the screen where a control that is fun to press is worth having.
             <PressableScale
               key={option}
               accessibilityRole="radio"
+              depth="chip"
               accessibilityState={{ selected }}
               accessibilityLabel={`${option} out of ${MOOD_SCALE.max}`}
               onPress={() => onChange(option)}

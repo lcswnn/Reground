@@ -30,7 +30,8 @@ export default function BreatheScreen() {
   const theme = useTheme();
 
   // To the cue rather than straight to the picker: it decides for itself
-  // whether to show anything, so the high-distress skip lives in one place.
+  // whether to show anything, so both skips — too distressed to ask, and no
+  // image to ask about — live in one place. See `reachesReactivation`.
   const advance = useCallback(() => router.replace('/reactivate'), [router]);
 
   if (!active) return null;

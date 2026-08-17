@@ -60,7 +60,7 @@ export const CATEGORIES: readonly Category[] = [
     id: "world",
     label: "Doomscrolling",
     detail:
-      "Anxiety from the news and current events fed to you on social media.",
+      "Negative news from social media and news apps feeding into your anxiety.",
     group: "world",
     games: "calm",
   },

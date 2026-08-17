@@ -1,12 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { HIGH_DISTRESS_MOOD, MEANINGFUL_MOOD_DROP, PUZZLE } from '@/config/session';
+import { CATEGORIES } from '@/content/categories';
 import {
   moodOutcome,
   needsTopic,
   previousRoute,
   puzzleDurationMs,
+  reachesReactivation,
   showsCalibration,
+  showsReactivation,
   skipsReactivation,
   type BackContext,
   type SessionRoute,
@@ -21,6 +24,58 @@ describe('skipsReactivation', () => {
   it('shows it below the threshold', () => {
     expect(skipsReactivation(HIGH_DISTRESS_MOOD - 1)).toBe(false);
     expect(skipsReactivation(0)).toBe(false);
+  });
+});
+
+describe('showsReactivation', () => {
+  it('asks for the image only on the shelf that competes with one', () => {
+    expect(showsReactivation('visuospatial')).toBe(true);
+    expect(showsReactivation('calm')).toBe(false);
+  });
+
+  /**
+   * The rule stated the way the product states it: "Something I saw" is the
+   * only answer that describes a picture, so it is the only one asked to bring
+   * one back. Written against the catalogue rather than against the ids so that
+   * a category added with the calm shelf cannot quietly acquire the cue.
+   */
+  it('is asked of "Something I saw" and of nobody else', () => {
+    const asked = CATEGORIES.filter((category) => showsReactivation(category.games));
+
+    expect(asked.map((category) => category.id)).toEqual(['witnessed']);
+  });
+
+  it('leaves the worry and the feed out of it', () => {
+    const byId = (id: string) => CATEGORIES.find((category) => category.id === id)!;
+
+    expect(showsReactivation(byId('personal-other').games)).toBe(false);
+    expect(showsReactivation(byId('world').games)).toBe(false);
+  });
+});
+
+describe('reachesReactivation', () => {
+  it('stops at the cue only with an image and a rating below the threshold', () => {
+    expect(
+      reachesReactivation({ gameKind: 'visuospatial', moodBefore: HIGH_DISTRESS_MOOD - 1 }),
+    ).toBe(true);
+  });
+
+  it('skips it at high distress even with an image', () => {
+    expect(
+      reachesReactivation({ gameKind: 'visuospatial', moodBefore: HIGH_DISTRESS_MOOD }),
+    ).toBe(false);
+  });
+
+  it('skips it without an image however low the rating', () => {
+    expect(reachesReactivation({ gameKind: 'calm', moodBefore: 0 })).toBe(false);
+  });
+
+  // A session missing either one has lost its state to a reload. The cue screen
+  // sends those to the door; what matters here is that it does not offer them
+  // a screen the flow never gave them.
+  it('treats a session with nothing in it as no', () => {
+    expect(reachesReactivation({ gameKind: null, moodBefore: 3 })).toBe(false);
+    expect(reachesReactivation({ gameKind: 'visuospatial', moodBefore: null })).toBe(false);
   });
 });
 
@@ -53,9 +108,13 @@ describe('group routing', () => {
 });
 
 describe('previousRoute', () => {
+  // The default is a session that *does* stop at the cue — an image and a
+  // rating below the threshold — so that the tests below which say it is
+  // skipped are saying something.
   const context = (over: Partial<BackContext> = {}): BackContext => ({
     group: 'world',
     hasTopic: true,
+    gameKind: 'visuospatial',
     moodBefore: 5,
     oneMore: null,
     ...over,
@@ -99,15 +158,24 @@ describe('previousRoute', () => {
   });
 
   /**
-   * The cue screen forwards itself at high distress, so a back button pointing
-   * at it would land the user there for one frame and then push them straight
-   * back — a control that visibly does nothing.
+   * The cue screen forwards itself whenever it was not going to be asked, so a
+   * back button pointing at it would land the user there for one frame and then
+   * push them straight back — a control that visibly does nothing.
    */
   it('skips the reactivation cue on the way back when it was skipped forward', () => {
     expect(previousRoute('/games', context({ moodBefore: HIGH_DISTRESS_MOOD }))).toBe(
       '/breathe-intro',
     );
     expect(previousRoute('/games', context({ moodBefore: HIGH_DISTRESS_MOOD - 1 }))).toBe(
+      '/reactivate',
+    );
+  });
+
+  // The same bounce, from the other rule: a session with no image never saw the
+  // cue, so there is nothing behind the picker but the breath.
+  it('skips it on the way back for the sessions that have no image', () => {
+    expect(previousRoute('/games', context({ gameKind: 'calm' }))).toBe('/breathe-intro');
+    expect(previousRoute('/games', context({ gameKind: 'visuospatial' }))).toBe(
       '/reactivate',
     );
   });

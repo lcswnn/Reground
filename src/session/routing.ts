@@ -2,9 +2,11 @@
  * Every branch in the session, as pure functions.
  *
  * Kept out of the screens so the rules can be read in one place and tested
- * without a renderer. Each one is driven by the category *group* or by a mood
- * number — never by a specific category, so adding a category can't silently
- * change the flow.
+ * without a renderer. Each one is driven by the category *group*, by the game
+ * shelf, or by a mood number — never by a specific category id, so adding a
+ * category can't silently change the flow. A new category picks its branch by
+ * declaring a group and a shelf, and both of those are choices with reasons
+ * attached rather than a name to match on.
  */
 
 import type { CategoryGroup } from '@/content/categories';
@@ -36,6 +38,50 @@ export function needsTopic(group: CategoryGroup): boolean {
  */
 export function skipsReactivation(moodBefore: number): boolean {
   return moodBefore >= HIGH_DISTRESS_MOOD;
+}
+
+/**
+ * The cue asks for an image, so it is only asked of the session that has one.
+ *
+ * "Something I saw" is the only answer that describes a picture. "Personal" is a
+ * worry and "Doomscrolling" is a feed — telling either of them to bring the
+ * thing back to mind is asking them to picture something they never said they
+ * were picturing, and the screen that asks is the one moment in the session
+ * that deliberately hurts. It has to be earning something to be worth it.
+ *
+ * What it earns is the game: the cue and the visuospatial shelf are one
+ * mechanism, the reminder being what the puzzle competes with. So this keys on
+ * the shelf and not on the group — the same reason `puzzleDurationMs` does, and
+ * the same fact `categories.ts` writes `games` down per category for. Group is
+ * no use here anyway: "Personal" and "Something I saw" share one.
+ *
+ * That makes `games: 'visuospatial'` the single place a category declares it is
+ * about a picture. A category given that shelf gets the cue with it.
+ */
+export function showsReactivation(kind: GameKind): boolean {
+  return kind === 'visuospatial';
+}
+
+/**
+ * Whether a session stops at the cue at all: both rules above, and the two
+ * places that ask are the cue screen itself and the back button behind it.
+ *
+ * They have to agree. If the screen forwards itself and the back button still
+ * points at it, the user gets bounced off it — see `previousRoute`.
+ *
+ * Nulls are "no": a session with no category or no rating has not been through
+ * the screens that set them, and the only way to arrive here in that state is a
+ * reload, which the cue screen answers by sending the user back to the door.
+ */
+export function reachesReactivation(context: {
+  gameKind: GameKind | null;
+  moodBefore: number | null;
+}): boolean {
+  if (context.gameKind === null || context.moodBefore === null) return false;
+
+  return (
+    showsReactivation(context.gameKind) && !skipsReactivation(context.moodBefore)
+  );
 }
 
 /**
@@ -102,6 +148,11 @@ export interface BackContext {
   group: CategoryGroup | null;
   /** GROUP A answered the follow-up, so there is a second screen behind them. */
   hasTopic: boolean;
+  /**
+   * Which shelf the session is on, which is also whether it has an image — and
+   * so whether the reactivation cue is behind `/games`. See `showsReactivation`.
+   */
+  gameKind: GameKind | null;
   moodBefore: number | null;
   /**
    * Which last thing was picked, or null for nobody-picked-anything. The only
@@ -124,9 +175,12 @@ export interface BackContext {
  *    a minute on its own clock; sending someone back into the middle of it is a
  *    forward action wearing a back button. The intro is the step's front door
  *    and waits for a tap.
- *  - `/games` goes back to `/breathe-intro` rather than `/reactivate` when the
- *    cue was auto-skipped for high distress — `/reactivate` would bounce them
- *    straight forward again, which is a back button that does nothing.
+ *  - `/games` goes back to `/breathe-intro` rather than `/reactivate` whenever
+ *    the cue was skipped on the way here — either because the session has no
+ *    image to bring back, or because the rating was too high to ask. Pointing
+ *    at `/reactivate` in those cases would bounce the user straight forward
+ *    again, which is a back button that does nothing. `reachesReactivation` is
+ *    the one answer both this and the cue screen read.
  *
  * And one screen that stopped having a target for the same reason: `/category`
  * used to return to the door, which was a line and a button. The door now moves
@@ -158,9 +212,7 @@ export function previousRoute(
     case '/reactivate':
       return '/breathe-intro';
     case '/games':
-      return context.moodBefore !== null && skipsReactivation(context.moodBefore)
-        ? '/breathe-intro'
-        : '/reactivate';
+      return reachesReactivation(context) ? '/reactivate' : '/breathe-intro';
     case '/game':
       return '/games';
     case '/calibration':

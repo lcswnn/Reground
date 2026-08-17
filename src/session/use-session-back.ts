@@ -18,11 +18,12 @@ import { useSessionFlow } from '@/session/session-context';
 
 export function useSessionBack(route: SessionRoute): (() => void) | undefined {
   const router = useRouter();
-  const { categoryGroup, topic, moodBefore, oneMore } = useSessionFlow();
+  const { categoryGroup, gameKind, topic, moodBefore, oneMore } = useSessionFlow();
 
   const target = previousRoute(route, {
     group: categoryGroup,
     hasTopic: topic !== null,
+    gameKind,
     moodBefore,
     oneMore,
   });
