@@ -5,10 +5,11 @@
  * Android build without the vibrate permission, these reject, and an unhandled
  * rejection mid-breath is a worse outcome than a missing tick.
  *
- * Five events use haptics in this app and no others: the top of each inhale,
- * the start of each exhale, placing a puzzle piece, and each end of a somatic
- * movement — the 3-2-1 into it and the clock running out of it. All five are
- * moments where something actually changed.
+ * Six events use haptics in this app and no others: the top of each inhale, the
+ * start of each exhale, placing a puzzle piece, each end of a somatic movement
+ * — the 3-2-1 into it and the clock running out of it — and each tense or
+ * release in progressive muscle relaxation. All six are moments where something
+ * actually changed.
  */
 
 import * as Haptics from 'expo-haptics';
@@ -66,4 +67,23 @@ export function tickCountdown() {
  */
 export function tickSomaticEnd() {
   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Soft).catch(() => {});
+}
+
+/**
+ * Each beat of a muscle relaxation routine — every "tense now" and every "let
+ * go now".
+ *
+ * The second haptic here that exists because the user is not expected to be
+ * looking at the screen, and the one with the strongest case for it. Every
+ * routine's own instructions tell people to sit back and let their eyes close,
+ * so for most of a run the screen is not being read at all — and unlike the
+ * somatic clock, where the only thing being missed is the ending, here a missed
+ * boundary means holding a squeeze through the release that was supposed to
+ * follow it. The contrast between the two is the exercise.
+ *
+ * `Light`, like the breath cues rather than like `tickSomaticEnd`: these are
+ * beats to move on, not events landing, and there is one every few seconds.
+ */
+export function tickRelax() {
+  void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
 }

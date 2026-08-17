@@ -29,29 +29,27 @@
  *
  * ## What is built, and the one option that depends on the build
  *
- * Four of the five run: the 5-4-3-2-1, the somatic movements, the soundscapes,
- * and the paced breathing patterns. Progressive muscle relaxation lands on
- * `NotYet`, which says so — see the note there for why it isn't drawn as a
- * locked card.
+ * All five run. `NotYet` is still reachable, but only through soundscapes and
+ * only in a build with no audio in it — see below.
  *
  * Soundscapes are the odd one, because whether they work is not a question
  * about this code. They need mp3s in `assets/soundscapes/`, and until at least
- * one is there the option falls back to `NotYet` alongside the one that was
- * never written — hence `soundscapesReady`. That check is the only place in the
- * app where a feature's availability is a fact about the repository rather than
- * about the session.
+ * one is there the option falls back to `NotYet` — hence `soundscapesReady`.
+ * That check is the only place in the app where a feature's availability is a
+ * fact about the repository rather than about the session, and it is now the
+ * only way to reach that screen at all.
  *
- * The four are not the same shape as each other, and the shapes are worth
+ * The five are not the same shape as each other, and the shapes are worth
  * reading in the order they were built. The 5-4-3-2-1 is one exercise and gets
  * the two-phase intro/sequence pair below. The somatic step is six of them and
  * carries a picker, a tutorial and a clock. The soundscapes are five of them
  * and carry a picker and nothing else — no tutorial, because there is nothing
  * to learn, and no closing beat, because the sound fading out is the closing
- * beat. The breathing patterns are four of them in the somatic shape — picker,
- * intro, the thing running, and a beat afterwards — because that shape is what
- * an exercise with something to explain and something to finish needs. It is
- * also the shape progressive muscle relaxation wants when it lands; the
- * grounding pair is the one that generalises to nothing.
+ * beat. The breathing patterns and the relaxation routines are four each in the
+ * somatic shape — picker, intro, the thing running, and a beat afterwards —
+ * because that shape is what an exercise with something to explain and
+ * something to finish needs. Three of the five converged on it; the grounding
+ * pair is the one that generalises to nothing.
  *
  * ## What isn't here
  *
@@ -76,6 +74,8 @@ import { GroundingSequence } from '@/session/aftercare/grounding-sequence';
 import { NotYet } from '@/session/aftercare/not-yet';
 import { BreathFlowView } from '@/session/breathwork/breath-flow';
 import { useBreathFlow } from '@/session/breathwork/use-breath-flow';
+import { PmrFlowView } from '@/session/pmr/pmr-flow';
+import { usePmrFlow } from '@/session/pmr/use-pmr-flow';
 import { SomaticFlowView } from '@/session/somatic/somatic-flow';
 import { useSomaticFlow } from '@/session/somatic/use-somatic-flow';
 import { hasSoundscapes } from '@/session/soundscape/audio';
@@ -131,6 +131,15 @@ export default function OneMoreScreen() {
   const breath = useBreathFlow(toList);
 
   /**
+   * The relaxation routines, which are the fourth thing on this screen to want
+   * its own four beats and its own back button. Four hooks called
+   * unconditionally at the top of a screen that only ever runs one of them is
+   * the cost of the frame owning the back button — each is a `useState` and
+   * some callbacks, and none of them starts anything until a card is tapped.
+   */
+  const pmr = usePmrFlow(toList);
+
+  /**
    * Whether any audio actually shipped in this build. Nothing else in the app
    * can tell — the files live in `assets/soundscapes/` and the offer is only
    * real once at least one of them is there, so with none the option falls back
@@ -171,6 +180,7 @@ export default function OneMoreScreen() {
     if (chosen === null) return toRating;
     if (chosen.id === 'somatic') return somatic.back;
     if (chosen.id === 'breathing') return breath.back;
+    if (chosen.id === 'pmr') return pmr.back;
     if (chosen.id === 'soundscape' && soundscapesReady) return soundscape.back;
     return toList;
   };
@@ -232,6 +242,14 @@ export default function OneMoreScreen() {
         // the pattern — stop counting, see where the breath settles — is inside
         // there, so there is nothing left for another screen to ask.
         <BreathFlowView flow={breath} onDone={close} />
+      ) : chosen.id === 'pmr' ? (
+        // Four routines behind this one — the same technique at four lengths,
+        // in the order it is normally taught. Same four beats as somatic and
+        // the breathing, and it ends on the door for the strongest version of
+        // the same reason: the beat after the routine is where the user finds
+        // out whether anything let go, which is the whole of what the technique
+        // is teaching. Nothing is left for a check-in to ask.
+        <PmrFlowView flow={pmr} onDone={close} />
       ) : chosen.id === 'soundscape' && soundscapesReady ? (
         // Two beats rather than somatic's four: a list, then one of them
         // playing. It ends on the door for a different reason from the others

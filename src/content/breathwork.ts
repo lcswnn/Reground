@@ -60,6 +60,8 @@
  * ones after them.
  */
 
+import { describeLength } from '@/content/duration';
+
 export type BreathPatternId = 'long-exhale' | 'even' | 'box' | 'four-seven-eight';
 
 /**
@@ -246,38 +248,13 @@ export function patternRate(pattern: BreathPattern): number {
 }
 
 /**
- * How long a run takes, said the way a person says it.
- *
- * Rounded to the nearest half minute and hedged with "about", because none of
- * these land on a whole one — nine rounds of ten seconds is a minute and a
- * half, six rounds of sixteen is ninety-six seconds, and reading "1 minute 36
- * seconds" back to somebody is a stopwatch talking.
- *
- * Derived rather than written into the copy, for the reason `describeDuration`
- * gives in `somatic.ts` and `BREATHE_INTRO.shape` gives for the sigh: being
- * promised a minute and given two is a small lie this app cannot afford.
- */
-const LENGTHS: Readonly<Record<string, string>> = {
-  '0.5': 'about half a minute',
-  '1': 'about a minute',
-  '1.5': 'about a minute and a half',
-  '2': 'about two minutes',
-  '2.5': 'about two and a half minutes',
-  '3': 'about three minutes',
-};
-
-export function describeLength(ms: number): string {
-  // Floored at one half-minute: a run this app would round to zero is a run it
-  // should not be offering, and "about 0 minutes" is the worst way to find out.
-  const halves = Math.max(1, Math.round(ms / 30_000));
-  const minutes = halves / 2;
-  return LENGTHS[String(minutes)] ?? `about ${Math.round(minutes)} minutes`;
-}
-
-/**
  * The commitment, stated before the user makes it: how many rounds, and how
  * long that is. Both halves matter — the count is what they will be doing and
  * the length is what they are agreeing to.
+ *
+ * The phrasing is `describeLength`, which lives in `duration.ts` because the
+ * PMR catalog needed the same hedge. See the note there on why it is not
+ * `somatic.ts`'s exact `describeDuration`.
  */
 export function describeRun(pattern: BreathPattern): string {
   return `${pattern.rounds} rounds, ${describeLength(patternRunMs(pattern))}`;

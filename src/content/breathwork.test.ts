@@ -3,13 +3,13 @@ import { describe, expect, it } from 'vitest';
 import { BREATHWORK } from '@/config/session';
 import {
   BREATH_PATTERNS,
-  describeLength,
   describeRun,
   findPattern,
   patternCycleMs,
   patternRate,
   patternRunMs,
 } from '@/content/breathwork';
+import { describeLength } from '@/content/duration';
 import { BREATHWORK_COPY } from '@/content/strings';
 
 describe('the breathing catalog', () => {

@@ -15,10 +15,10 @@
  *
  * Plain data with no components in it, in the same shape and for the same
  * reasons as `games/catalog.ts`. The mapping from an id to something that runs
- * lives in `app/one-more.tsx`, and today `pmr` is the only one with nothing
- * behind it — it lands on the not-built-yet screen there. That is a fact about
- * the app, not about the option, which is why it isn't a field here: an option
- * is what it is whether or not it has been built.
+ * lives in `app/one-more.tsx`, and all five now have something behind them —
+ * the not-built-yet screen there is only reachable through soundscapes, and
+ * only in a build with no audio files in it. Which of these are built has never
+ * been a field here: an option is what it is whether or not it has been built.
  *
  * Order is the order on screen. The 5-4-3-2-1 is first because it is the one
  * with a name a person may already know and the one that works from a chair,
@@ -78,6 +78,12 @@ export const ONE_MORE_OPTIONS: readonly OneMoreOption[] = [
     id: 'pmr',
     // Spelled out rather than left as "PMR". The initials are what it is
     // called by people who already know what it is.
+    //
+    // Four routines behind it, in `@/content/pmr`, and unlike the other two
+    // lists in this step they differ by length rather than by kind — so the
+    // blurb describes the technique and lets the screen behind it explain that
+    // the four are a ladder. A card that said "four lengths" would be a card
+    // about the menu rather than about the exercise.
     title: 'Progressive muscle relaxation',
     blurb: 'Tense one muscle group, hold it, let go. Work up the body.',
   },

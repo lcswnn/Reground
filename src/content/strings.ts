@@ -460,17 +460,18 @@ export const ONE_MORE = {
 } as const;
 
 /**
- * The options with nothing behind them yet — progressive muscle relaxation, and
- * soundscapes whenever the build has no audio files in it.
+ * The one option that can still have nothing behind it: soundscapes, in a build
+ * with no audio files in it. Every other exercise on the list is now written.
  *
- * They are still on the list and still tappable, and this is the screen that
- * makes that honest. It says the app hasn't built it — not that the user picked
+ * It is still on the list and still tappable, and this is the screen that makes
+ * that honest. It says the app hasn't built it — not that the user picked
  * wrong, and not that something went wrong — and it puts the way back to the
  * list next to the way out, because a dead end at the end of a session about
  * anxiety is a poor last impression.
  *
- * Delete an entry from here as each exercise lands, and this screen stops being
- * reachable at all when the last one does.
+ * Not deletable, unlike when this note said "delete an entry as each exercise
+ * lands". The remaining case is not a missing exercise, it is a missing asset,
+ * and `hasSoundscapes` can be false in a real build at any point in the future.
  */
 export const NOT_YET = {
   eyebrow: "Not built yet",
@@ -827,6 +828,121 @@ export const SOUNDSCAPE_COPY = {
   failed: "This one won't play. Pick another, or call it here.",
   back: "Pick a different one",
   done: "Finish up",
+} as const;
+
+/**
+ * Progressive muscle relaxation — the screen chrome, the rules that apply to
+ * all four routines, and the beats a routine runs through.
+ *
+ * The routines name and explain themselves in `@/content/pmr`. What is here is
+ * everything true of the step rather than of a routine.
+ *
+ * ## The lead says the list is a ladder
+ *
+ * It has to. The other two pickers in this step offer options that differ by
+ * what the room allows or by what a body will put up with, and either way the
+ * user picks one and is done. These four are the same technique at four
+ * lengths, in the order they are learned, and somebody who taps the shortest
+ * one because it is the shortest has taken the last rung of a ladder without
+ * the ladder. Saying so costs a line and is the difference between a menu and
+ * an explanation.
+ *
+ * ## Why the fourth caution is the one that had to be written carefully
+ *
+ * Deliberate relaxation makes a minority of people *more* anxious, not less. It
+ * is well enough documented to have a name — relaxation-induced anxiety — and
+ * in the study that named it, it happened to roughly a third of chronically
+ * tense people doing progressive relaxation. That number is high enough that
+ * somebody using this app will hit it, and the worst outcome is that they read
+ * it as evidence they are beyond help. So the caution says it is common, says
+ * it has a name, and says what to do. It is repeated on the running screen —
+ * see `stopHint` — because a rule about stopping is worth nothing folded away
+ * behind a tap at the moment it applies.
+ */
+export const PMR_COPY = {
+  title: "Progressive muscle relaxation.",
+  /**
+   * Two jobs in two sentences: what the technique is for someone who has never
+   * met it, and why there are four of them. The second half is the one that
+   * cannot be cut — see the note above.
+   */
+  lead: "Tighten a part of you, then let it go, and notice the difference. The four below are the same technique at four lengths, in the order it is normally learned — the long ones teach you what letting go feels like, the short ones are what you use once you know.",
+
+  /** The tap that opens `cautions`. Phrased as what the reader gets. */
+  cautionsLabel: "How to do these so they work",
+  /**
+   * In the order they bite. The tension level first because it is disobeyed
+   * immediately and is what turns this into cramp; the stopping rule last
+   * because it matters most and last is where it will be read.
+   */
+  cautions: [
+    "Three-quarters, never as hard as you can. Firm enough to feel where the muscle is, and nowhere near hard enough to hurt.",
+    "Skip anything injured, sore, or recently operated on. The routine works fine without it — a part you leave out is not a part you failed.",
+    "Keep breathing while you tense. Holding your breath through a squeeze is what makes people lightheaded, and it is not part of this.",
+    "If letting go makes you more anxious rather than less, stop. That happens to a lot of people — about a third, in one study of chronically tense adults — it has a name, and it is not something you got wrong.",
+  ],
+  /**
+   * Under the four. The dose gap, stated plainly: the trials that produced the
+   * numbers in each routine's `evidence` ran twenty minutes with a person in
+   * the room, and this is two from a phone. Same job `SOMATIC_COPY.principlesLimit`
+   * does, under `CALIBRATION_COPY`'s rule about checkable claims.
+   */
+  cautionsLimit:
+    "The research behind this mostly used twenty to twenty-five minute sessions with someone teaching it, often weekly for a couple of months. These are two-minute versions of that, done alone. Same technique, a fraction of the dose, and worth knowing if it does less than you were hoping.",
+
+  /** Above the steps on the intro screen. */
+  howHeading: "How",
+  /** Above `notice`. Not "tip" — it is the exercise, not a bonus. */
+  noticeHeading: "What to notice",
+  /** Above `evidence`. Phrased as a limit rather than a boast. */
+  evidenceHeading: "What's actually known",
+  /** Above the list of body parts on the intro screen. */
+  orderHeading: "In this order",
+  /** Under the Begin button, quiet. Nothing starts on arrival. */
+  introHint: "Nothing starts until you tap begin.",
+  begin: "Begin",
+  /** Ghost, on both the intro and the settle screen. */
+  another: "Pick a different one",
+
+  /**
+   * Shown in place of an instruction during `PMR.leadInMs`, while the user gets
+   * settled. Longer than the somatic equivalent because it is asking for more:
+   * the somatic hold is time to stand up, this is time to sit back and stop.
+   */
+  leadIn: "Sit back. Let your eyes close if you like.",
+
+  /**
+   * The two cues, and they are verbs rather than labels. "Tension" and
+   * "Release" are what the manuals call the phases; "Tense" and "Let go" are
+   * what you say to somebody who is doing it with their eyes shut.
+   */
+  tense: "Tense",
+  release: "Let go",
+
+  /**
+   * The way out of a running routine. Same words the somatic timer, the
+   * soundscape player and the breath pacer use — the four are the same promise.
+   */
+  stop: "That's enough",
+  /** Under it. The fourth caution, in the open, where it applies. */
+  stopHint: "Stop if it stops feeling okay. Nothing here has to be finished.",
+
+  /**
+   * The settle screen. Every run lands here, finished or stopped.
+   *
+   * The body asks for the one thing the technique is actually for, which is not
+   * the relaxation — it is noticing the difference. Somebody who can tell a
+   * loose shoulder from a tight one has got the transferable part, and they can
+   * have got it from a run that did not feel especially calm. Written so that
+   * "no different" is a real answer, for the reason `SOMATIC_COPY.settleBody`
+   * is: `CHECK_IN.didNotResponse` already told this user out loud that a thing
+   * not working is not something they got wrong.
+   */
+  settleTitle: "Stay there a moment.",
+  settleBody:
+    "Don't move yet. See which parts of you are heavier than they were, and which ones went straight back to holding on. Knowing which one is yours is most of what this is for — and if nothing feels different, that is a real answer too.",
+  settleDone: "That's it",
+  settleAgain: "Run it again",
 } as const;
 
 export const PARK_WORRY = {

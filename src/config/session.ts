@@ -358,6 +358,31 @@ export const SOMATIC = {
 export const SOMATIC_LEAD_IN_MS = SOMATIC.setMs + SOMATIC.countFrom * SOMATIC.countMs;
 
 /**
+ * Progressive muscle relaxation.
+ *
+ * How long a tense or a release lasts is not here, for the reason the breathing
+ * patterns keep their own counts: those two numbers come from the clinical
+ * protocol — five to seven seconds of tension, and a release several times
+ * longer — and they are a property of the technique rather than of this app.
+ * They live on the routines in `@/content/pmr`.
+ *
+ * What is here is the gap before the first instruction, and it is the longest
+ * lead-in in the app by some way. The others are covering a screen transition
+ * or giving somebody time to stand up. This one is asking a person to sit back,
+ * put their arms somewhere, and possibly close their eyes, and the first thing
+ * that happens afterwards is an instruction to squeeze — arriving at that while
+ * still shuffling in a chair is the whole exercise's opening beat wasted.
+ *
+ * No count-in like the somatic one. A 3-2-1 is a start signal for a movement
+ * that has to begin on a particular instant; the first tense here does not, and
+ * three digits counting at somebody who has just shut their eyes is a reason to
+ * open them again.
+ */
+export const PMR = {
+  leadInMs: 4_000,
+} as const;
+
+/**
  * The soundscapes.
  *
  * No duration here, and there cannot be one: a soundscape runs for the length
