@@ -1,7 +1,10 @@
 /**
  * When the splash goes away, for the two places that need to agree about it.
  *
- * `app/_layout.tsx` decides when to hide it, and schedules that off
+ * "The splash" is two things wearing the same face. The native one comes off as
+ * soon as the fonts settle, onto `session/ui/launch-veil.tsx` — a React copy of
+ * it, which exists so that the grain has something it can be drawn over. The
+ * veil is what actually serves the hold, and it schedules its fade off
  * `splashHoldsForMs`. `app/index.tsx` needs its own answer, because its line
  * fades up rather than being there from the first frame: started any earlier,
  * that fade would run to completion behind an opaque splash and the line would
@@ -38,14 +41,15 @@ export const LAUNCHED_AT = Date.now();
 /**
  * How long the splash still has to run before it starts fading, from now.
  *
- * `_layout.tsx` uses it to schedule `hideAsync`. `index.tsx` goes through
- * `splashClearsInMs` instead, which is this plus the fade.
+ * `launch-veil.tsx` uses it to schedule its own fade out. `index.tsx` goes
+ * through `splashClearsInMs` instead, which is this plus that fade.
  *
  * Only correct when called as the first screen mounts, which is the only place
  * either caller reaches it from. The reason is `_layout.tsx`: it renders nothing
- * at all until the fonts have settled and only then starts the hide timer, so
- * "now" at first mount is the same instant that timer is set. Called later, this
- * would keep counting down a wait that had already been started.
+ * at all until the fonts have settled, and the veil and the first screen both
+ * arrive in that same commit — so "now" at first mount is the instant the wait
+ * begins. Called later, this would keep counting down a wait that had already
+ * been started.
  *
  * On a cold start where the fonts took longer than the minimum this is zero,
  * which is right — the splash is already on its way out at that moment, and the
@@ -58,10 +62,10 @@ export function splashHoldsForMs(): number {
 /**
  * How long until there is nothing left of the splash on screen, from now.
  *
- * The hold, plus the fade it then runs. `SPLASH.hideMs` is the same number
- * handed to `SplashScreen.setOptions` in `_layout.tsx`, which is why it is
- * written down in `config/session.ts` rather than passed to that call as a
- * literal — this is the second thing that has to agree with it.
+ * The hold, plus the fade the veil then runs. `SPLASH.hideMs` is the length of
+ * both that fade and the native splash's own fade onto the veil much earlier,
+ * which is why it is written down in `config/session.ts` rather than passed to
+ * either call as a literal — three things have to agree with it.
  *
  * The welcome line is scheduled off this, so it starts on a clear screen. Same
  * caveat as `splashHoldsForMs`: only correct when called as the first screen

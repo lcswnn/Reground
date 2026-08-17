@@ -14,25 +14,29 @@
  * one character in the app's own face beats a second font file.
  */
 
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { BACK } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 
 export function BackButton({ onPress }: { onPress: () => void }) {
   return (
     <View style={styles.row}>
-      <Pressable
+      {/* `text` depth — the deepest of the three. It is a few muted words, and
+          the travel that reads as a press on a pill is invisible on these. */}
+      <PressableScale
         accessibilityRole="button"
         accessibilityLabel={BACK.label}
         onPress={onPress}
+        depth="text"
         hitSlop={Spacing.three}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
         <ThemedText type="small" themeColor="textMuted">
           {BACK.arrow} {BACK.label}
         </ThemedText>
-      </Pressable>
+      </PressableScale>
     </View>
   );
 }
@@ -52,7 +56,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
   },
+  // Shallower than the 0.6 it was: the press is a movement now, and muted text
+  // at 60% on a paper background is close to gone.
   pressed: {
-    opacity: 0.6,
+    opacity: 0.75,
   },
 });

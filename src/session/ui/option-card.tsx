@@ -18,9 +18,10 @@
  * below the fold there costs a flick rather than a decision.
  */
 
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 
 import { softGlow, ThemedText } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -36,10 +37,14 @@ export function OptionCard({ label, detail, onPress, compact = false }: OptionCa
   const theme = useTheme();
 
   return (
-    <Pressable
+    // `card` depth — the shallowest. These run the full width of the column,
+    // and a full-width surface travelling as far as a pill does reads as the
+    // page moving rather than the card.
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${label}. ${detail}`}
       onPress={onPress}
+      depth="card"
       style={({ pressed }) => [
         styles.card,
         compact && styles.cardCompact,
@@ -57,7 +62,7 @@ export function OptionCard({ label, detail, onPress, compact = false }: OptionCa
       <ThemedText type={compact ? 'small' : 'default'} themeColor="textMuted">
         {detail}
       </ThemedText>
-    </Pressable>
+    </PressableScale>
   );
 }
 

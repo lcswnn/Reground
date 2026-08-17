@@ -1,12 +1,7 @@
-import {
-  ActivityIndicator,
-  Pressable,
-  StyleSheet,
-  Text,
-  type PressableProps,
-} from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, type PressableProps } from 'react-native';
 
 import { softGlow } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { Fonts, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
@@ -53,7 +48,7 @@ export function Button({
           : theme.text;
 
   return (
-    <Pressable
+    <PressableScale
       accessibilityRole="button"
       accessibilityState={{ disabled: !!isDisabled, busy: loading }}
       disabled={isDisabled}
@@ -71,7 +66,7 @@ export function Button({
       ) : (
         <Text style={[styles.label, { color: foreground }, softGlow(foreground)]}>{title}</Text>
       )}
-    </Pressable>
+    </PressableScale>
   );
 }
 
@@ -114,8 +109,12 @@ const styles = StyleSheet.create({
     fontSize: 19,
   },
   pressed: {
-    opacity: 0.75,
-    transform: [{ scale: 0.985 }],
+    // Just a shade off, now that the press is a movement. This used to be 0.75
+    // and a static 0.985 scale, which was the whole of the feedback — a button
+    // that dimmed and sat still. `PressableScale` does the travel; the dim is
+    // left in at a fraction of its old depth as the highlight going out of the
+    // fill, and it must stay subtle or it reads as the button disabling itself.
+    opacity: 0.92,
   },
   disabled: {
     opacity: 0.45,

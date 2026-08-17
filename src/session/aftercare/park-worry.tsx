@@ -10,10 +10,11 @@
  */
 
 import { useState } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { PARK_WORRY } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -31,11 +32,14 @@ export function ParkWorry({ onDone }: { onDone: () => void }) {
         {PARK_WORRY.options.map((option) => {
           const selected = option === choice;
           return (
-            <Pressable
+            // These had no press feedback at all — the fill only changed once
+            // the choice had landed, so the tap itself was silent.
+            <PressableScale
               key={option}
               accessibilityRole="radio"
               accessibilityState={{ selected }}
               onPress={() => setChoice(option)}
+              depth="card"
               style={[
                 styles.option,
                 {
@@ -46,7 +50,7 @@ export function ParkWorry({ onDone }: { onDone: () => void }) {
               <ThemedText style={{ color: selected ? theme.textOnBrand : theme.text }}>
                 {option}
               </ThemedText>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>

@@ -17,7 +17,7 @@
  */
 
 import { useState, type ReactNode } from 'react';
-import { Pressable, StyleSheet } from 'react-native';
+import { StyleSheet } from 'react-native';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -29,6 +29,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { DISCLOSURE } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 
@@ -74,11 +75,12 @@ export function Disclosure({ label, children }: DisclosureProps) {
 
   return (
     <Animated.View layout={DISCLOSURE_LAYOUT}>
-      <Pressable
+      <PressableScale
         accessibilityRole="button"
         accessibilityState={{ expanded: open }}
         accessibilityLabel={label}
         onPress={toggle}
+        depth="text"
         hitSlop={Spacing.three}
         style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}>
         <Animated.View style={chevronStyle}>
@@ -89,7 +91,7 @@ export function Disclosure({ label, children }: DisclosureProps) {
         <ThemedText type="small" themeColor="textMuted">
           {label}
         </ThemedText>
-      </Pressable>
+      </PressableScale>
 
       {open ? (
         <Animated.View
@@ -113,8 +115,10 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingVertical: Spacing.one,
   },
+  // Shallower than the 0.6 it was, matching the other small text controls now
+  // that the press itself moves.
   pressed: {
-    opacity: 0.6,
+    opacity: 0.75,
   },
   body: {
     paddingTop: Spacing.three,

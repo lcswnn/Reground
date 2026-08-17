@@ -8,9 +8,10 @@
  * Wraps onto two rows on a phone rather than shrinking the targets below 44pt.
  */
 
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { Radius, Spacing } from '@/constants/theme';
 import { MOOD_SCALE } from '@/config/session';
 import { useTheme } from '@/hooks/use-theme';
@@ -36,7 +37,9 @@ export function MoodScale({ value, onChange, lowLabel, highLabel }: MoodScalePro
         {VALUES.map((option) => {
           const selected = option === value;
           return (
-            <Pressable
+            // Default `button` depth rather than `card`: these are eleven small
+            // targets and each one is its own button, so they press like one.
+            <PressableScale
               key={option}
               accessibilityRole="radio"
               accessibilityState={{ selected }}
@@ -55,7 +58,7 @@ export function MoodScale({ value, onChange, lowLabel, highLabel }: MoodScalePro
                 style={{ color: selected ? theme.textOnBrand : theme.text }}>
                 {option}
               </ThemedText>
-            </Pressable>
+            </PressableScale>
           );
         })}
       </View>

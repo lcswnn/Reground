@@ -23,9 +23,10 @@
  */
 
 import { Fragment } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { APPEARANCE } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { useThemePreference, type ThemePreference } from '@/lib/theme-preference';
@@ -50,10 +51,11 @@ export function ThemeToggle() {
               </ThemedText>
             ) : null}
 
-            <Pressable
+            <PressableScale
               accessibilityRole="button"
               accessibilityState={{ selected: active }}
               accessibilityLabel={APPEARANCE.label(mode)}
+              depth="text"
               hitSlop={Spacing.two}
               onPress={() => {
                 if (active) return;
@@ -68,7 +70,7 @@ export function ThemeToggle() {
               <ThemedText type="small" themeColor={active ? 'text' : 'textMuted'}>
                 {APPEARANCE[mode]}
               </ThemedText>
-            </Pressable>
+            </PressableScale>
           </Fragment>
         );
       })}
@@ -92,7 +94,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.one,
     paddingVertical: Spacing.one,
   },
+  // Shallower than the 0.6 it was, matching the back button opposite it — the
+  // press moves now, and these two have to keep feeling like the same control.
   pressed: {
-    opacity: 0.6,
+    opacity: 0.75,
   },
 });

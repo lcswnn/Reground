@@ -8,9 +8,10 @@
  * the tier — neither is left to the badge and the section heading alone.
  */
 
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { GAME_PICKER } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -61,17 +62,21 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
   }
 
   return (
-    <Pressable
+    // The card is a picker, not a game — it is the same card as `OptionCard`
+    // wearing a different label, and it takes the same press. Nothing inside a
+    // game does; see `PressableScale`.
+    <PressableScale
       accessibilityRole="button"
       accessibilityLabel={`${title}. ${blurb}`}
       onPress={onPress}
+      depth="card"
       style={({ pressed }) => [
         styles.card,
         { backgroundColor: theme.backgroundElement, borderColor: theme.border },
         pressed && { backgroundColor: theme.backgroundSelected },
       ]}>
       {body}
-    </Pressable>
+    </PressableScale>
   );
 }
 

@@ -13,15 +13,18 @@ import { View } from 'react-native';
 
 import { Colors } from '@/constants/theme';
 import { SPLASH } from '@/config/session';
-import { splashHoldsForMs } from '@/lib/splash';
 import { SessionFlowProvider } from '@/session/session-context';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
+import { LaunchVeil } from '@/session/ui/launch-veil';
 import { ScreenFilm } from '@/session/ui/screen-film';
 
 SplashScreen.preventAutoHideAsync();
 
-// Without this the splash is swapped out on a single frame, which reads as a
-// jump cut.
+// The native splash now gives way to a copy of itself rather than to the app —
+// see `LaunchVeil` — so this is no longer the moment the app arrives. It stays a
+// fade rather than a cut all the same: the veil is a React view and may be a
+// frame behind the commit that hides this, and a fade covers that where a swap
+// on a single frame would show it.
 SplashScreen.setOptions({ fade: true, duration: SPLASH.hideMs });
 
 /**
@@ -99,26 +102,27 @@ function RootNavigator() {
   const fontsSettled = fontsLoaded || !!fontError;
 
   /**
-   * Two conditions, and the splash waits for both: the fonts have to be ready,
-   * or the first screen renders in the system face and then reflows into
-   * Literata — and the splash has to have been up for `SPLASH.minimumMs`.
+   * The native splash is let go the instant the fonts are ready, and not a
+   * moment of `SPLASH.minimumMs` is spent under it.
    *
-   * The wait is measured from launch rather than from here, so the two overlap
-   * instead of stacking. Fonts that take a second to decode spend that second
-   * inside the minimum, and by the time they land there is nothing left to
-   * wait for.
+   * That minimum has not gone anywhere — it is served by `LaunchVeil`, which
+   * this same commit puts on screen holding the same picture, and which waits
+   * out `splashHoldsForMs` and fades on its own clock. The point of the handoff
+   * is the grain: it can only be drawn over a React view, so the app takes the
+   * launch back as early as it has something to take it back with.
    *
-   * `index.tsx` schedules its line off this wait plus the fade below, so the
-   * line starts once the splash has finished clearing rather than over the top
-   * of it. It depends on this effect being where the wait begins — see
-   * `splashClearsInMs`.
+   * The fonts are still what gates it, for the same reason as ever — nothing
+   * renders until they settle, so the first screen never reflows out of the
+   * system face into Literata, and the veil the native splash gives way to is
+   * already in the tree when it goes.
+   *
+   * `index.tsx` schedules its line off the far end of all this, and none of
+   * those numbers moved — see `splashClearsInMs`.
    */
   useEffect(() => {
     if (!fontsSettled) return;
 
-    const timer = setTimeout(() => void SplashScreen.hideAsync(), splashHoldsForMs());
-
-    return () => clearTimeout(timer);
+    void SplashScreen.hideAsync();
   }, [fontsSettled]);
 
   if (!fontsSettled) return null;
@@ -163,9 +167,20 @@ function RootNavigator() {
           }}
         />
         {/*
+          The splash, continued in React so that the film below can be drawn
+          over it. It takes the launch over from the native splash on the frame
+          it mounts and holds the rest of it alone — see `LaunchVeil`. Above the
+          `Stack`, because it is covering the app; below `ScreenFilm`, because
+          it is one of the things being covered.
+        */}
+        <LaunchVeil />
+        {/*
           Drawn once here rather than inside `SessionScreen`, so it sits above
           the fade transition as a fixed layer instead of crossfading with
           each screen — a film on the glass, not a property of what's under it.
+          Over the veil as well, which is the whole reason the veil exists: the
+          launch was the one part of the app the film could not reach, and it
+          looked like a different material for it.
         */}
         <ScreenFilm />
       </View>

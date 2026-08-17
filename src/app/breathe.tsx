@@ -10,10 +10,11 @@
  */
 
 import { useCallback } from 'react';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { BREATHING_COPY } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -39,9 +40,13 @@ export default function BreatheScreen() {
       <View style={styles.root}>
         <BreathingGuide onDone={advance} />
 
-        <Pressable
+        {/* `text` depth, not `button` — it wears a pill's outline but it is a
+            small muted one, and it takes the travel the other quiet controls
+            take rather than the one the real buttons take. */}
+        <PressableScale
           accessibilityRole="button"
           onPress={advance}
+          depth="text"
           style={({ pressed }) => [
             styles.skip,
             { borderColor: theme.border },
@@ -51,7 +56,7 @@ export default function BreatheScreen() {
           <ThemedText type="small" themeColor="textMuted">
             {BREATHING_COPY.skip}
           </ThemedText>
-        </Pressable>
+        </PressableScale>
       </View>
     </SessionScreen>
   );
