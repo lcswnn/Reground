@@ -168,6 +168,13 @@ export function bounceOff(
  * followable and fast enough that it reaches the far side of the field if
  * aimed there.
  *
+ * That second half is what moved it from 0.42 to 0.48: at the old speed the
+ * outermost pegs of the top row were beyond the ball at any aim it was allowed,
+ * so the widest shot on the board was a shot at nothing. A seventh more speed
+ * puts them a comfortable margin inside it on the smallest board this runs on,
+ * and the ball still crosses the field slowly enough to be watched — which is
+ * the whole of what this game asks anybody to do.
+ *
  * Both live here rather than in the component because two things now have to
  * agree about them: the ball, which is integrated frame by frame, and the guide
  * the player aims with, which is the same flight solved in closed form. A guide
@@ -175,7 +182,7 @@ export function bounceOff(
  * not go where it is pointed.
  */
 export const GRAVITY = 1100;
-export const LAUNCH_RATIO = 0.42;
+export const LAUNCH_RATIO = 0.48;
 
 /** How fast a ball leaves the launcher on a board this tall. */
 export function launchSpeed(height: number): number {
