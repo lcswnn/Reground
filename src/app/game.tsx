@@ -127,11 +127,11 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'space-between',
-    gap: Spacing.three,
+    gap: Spacing.four,
   },
   heading: {
     alignSelf: 'stretch',
-    gap: Spacing.one,
+    gap: Spacing.two,
   },
   footer: {
     alignSelf: 'stretch',

@@ -62,7 +62,7 @@ export function BreathIntro({ pattern, onBegin, onAnother }: BreathIntroProps) {
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{BREATHWORK_COPY.howHeading}</ThemedText>
+          <ThemedText type="subtitle">{BREATHWORK_COPY.howHeading}</ThemedText>
           {pattern.steps.map((step) => (
             <ThemedText key={step} type="small" themeColor="textSecondary">
               {step}
@@ -71,7 +71,7 @@ export function BreathIntro({ pattern, onBegin, onAnother }: BreathIntroProps) {
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{BREATHWORK_COPY.noticeHeading}</ThemedText>
+          <ThemedText type="subtitle">{BREATHWORK_COPY.noticeHeading}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {pattern.notice}
           </ThemedText>
@@ -80,7 +80,7 @@ export function BreathIntro({ pattern, onBegin, onAnother }: BreathIntroProps) {
         {/* Muted rather than secondary, and last of the three: it is the part
             worth having and the part nobody has to read to do the exercise. */}
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{BREATHWORK_COPY.evidenceHeading}</ThemedText>
+          <ThemedText type="subtitle">{BREATHWORK_COPY.evidenceHeading}</ThemedText>
           <ThemedText type="small" themeColor="textMuted">
             {pattern.evidence}
           </ThemedText>
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.four,
-    paddingBottom: Spacing.four,
+    paddingBottom: Spacing.five,
   },
   heading: {
     gap: Spacing.two,
@@ -114,7 +114,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: Spacing.three,
-    marginTop: Spacing.two,
   },
   hint: {
     textAlign: 'center',

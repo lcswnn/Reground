@@ -69,7 +69,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   actions: {
-    gap: Spacing.two,
-    marginTop: Spacing.three,
+    gap: Spacing.three,
   },
 });

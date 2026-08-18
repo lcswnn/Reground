@@ -281,6 +281,23 @@ export const Fonts = Platform.select({
   },
 });
 
+/**
+ * The spacing ramp, and — below — the one job each step has. A scale is only
+ * consistent if the same relationship gets the same step everywhere, so the
+ * roles are written down here rather than decided again on each screen:
+ *
+ * - `half`, `one` — inside a single element: the padding in a badge, the gap
+ *   between a number and the step it labels.
+ * - `two` — between lines of one block: a heading and the line under it, and
+ *   between two buttons sharing a row.
+ * - `three` — between the items of a list, and inside an actions block (a
+ *   button, the hint under it, the way out under that).
+ * - `four` — between the blocks of a screen. The default screen gap: if a
+ *   screen's outermost `gap` is anything else, it wants a reason.
+ * - `five` — the run-out under a scrolling screen's content.
+ * - `six` — the one long pause, between the reading and the doing. Used on the
+ *   handful of screens that ask for something and then wait.
+ */
 export const Spacing = {
   half: 2,
   one: 4,
@@ -297,6 +314,15 @@ export const Radius = {
   lg: 22,
   xl: 30,
   pill: 999,
+  /**
+   * What anything you can press is rounded by, from the primary buttons down to
+   * the numbers on the mood scale. Squarer than the pill these used to be: a
+   * fully rounded end reads as a tag or a status more than as a control, and at
+   * this size the corner is still soft enough that nothing looks like a box cut
+   * out of the page. Cards keep `md` — a pressable surface is allowed to be a
+   * touch rounder than the button sitting on it.
+   */
+  button: 14,
 } as const;
 
 /**
@@ -308,16 +334,47 @@ export const BottomTabInset = Spacing.two;
 export const MaxContentWidth = 800;
 
 /**
- * The two controls in the chrome row — `BackButton` top-left and `ThemeToggle`
- * top-right — are drawn to match each other deliberately, so the one thing that
- * would break the match if it drifted lives here rather than in either file.
+ * The type scale. Four sizes, one for each thing text is ever doing here, plus
+ * the numeral.
  *
- * They run a couple of points above the `small` tier they otherwise use. That
- * tier is body copy in fifty-odd other places and cannot move on their account,
- * but these two are not copy: they are the only tappable words on most screens,
- * they sit muted in the corners where the eye is not looking, and at the `small`
- * size they read as a caption someone has to hunt for rather than as a control.
- * The extra size is what makes them findable without giving them chrome, which
- * is the thing both files are at pains not to do.
+ * Every size in the app comes from this object — `ThemedText`'s tiers, the
+ * button label, the chrome in the corners. The rule is that a tier is chosen by
+ * what the text *is*, never by how a particular screen wants it to look: the
+ * moment one screen sets its own size because its line felt small there, the
+ * scale stops being a scale and the app stops looking like one app. There were
+ * five such one-offs before this existed — 19 on the opening line, 20 on the
+ * closing suggestion, 17 in the chrome, 14 and 13 in a chart card — and no two
+ * of them agreed with each other.
+ *
+ * The sizes step up the scale (13 · 17 · 20 · 25) by enough that two tiers next
+ * to each other read as two different things rather than as one thing that
+ * wobbled. Body sits nearer the header above it than the caption below it, on
+ * purpose: prose is what most of these screens are, and the caption tier is the
+ * one that should have to be leaned in for. The numeral sits a further two
+ * steps up — it is a clock, not a heading, and it is the only text on its
+ * screen.
+ *
+ * Leading splits the scale in half, and this is the one real rule in it. The
+ * display sizes are set tight — a heading that wraps is one phrase broken by
+ * the width of a phone, and it has to read as a single object. The reading
+ * sizes stay loose, at about 1.6, because that generosity is the whole feel of
+ * the app everywhere someone is actually reading rather than being addressed.
  */
-export const ChromeLabelSize = 17;
+export const Type = {
+  /** The screen's title. One per screen, and the first thing read on it. */
+  title: { fontSize: 25, lineHeight: 32 },
+  /**
+   * The secondary header: a section's heading, a card's name, and the lead line
+   * on the screens whose first line is a sentence rather than a title.
+   */
+  heading: { fontSize: 20, lineHeight: 26 },
+  /** Body copy — anything written to be read as prose, and the button labels. */
+  body: { fontSize: 17, lineHeight: 28 },
+  /**
+   * Captions, hints, the eyebrow, and the two stage directions that open and
+   * close the app. Everything said quietly beside something else.
+   */
+  caption: { fontSize: 13, lineHeight: 21 },
+  /** The clock and the countdown. Not a text tier — the one big numeral. */
+  numeral: { fontSize: 40, lineHeight: 46 },
+} as const;

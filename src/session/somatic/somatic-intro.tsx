@@ -61,12 +61,12 @@ export function SomaticIntro({ movement, onBegin, onAnother }: SomaticIntroProps
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{SOMATIC_COPY.howHeading}</ThemedText>
+          <ThemedText type="subtitle">{SOMATIC_COPY.howHeading}</ThemedText>
           <SomaticSteps steps={movement.steps} />
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{SOMATIC_COPY.noticeHeading}</ThemedText>
+          <ThemedText type="subtitle">{SOMATIC_COPY.noticeHeading}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {movement.notice}
           </ThemedText>
@@ -90,7 +90,7 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.four,
-    paddingBottom: Spacing.four,
+    paddingBottom: Spacing.five,
   },
   heading: {
     gap: Spacing.two,
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: Spacing.three,
-    marginTop: Spacing.two,
   },
   hint: {
     textAlign: 'center',

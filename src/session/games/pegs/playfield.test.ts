@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { bounceOff, layField, type Peg } from '@/session/games/pegs/playfield';
+import {
+  bounceOff,
+  guidePoint,
+  GRAVITY,
+  launchSpeed,
+  layField,
+  type Peg,
+} from '@/session/games/pegs/playfield';
 
 /** Dice that walk a fixed list and repeat it. */
 function dice(values: number[]): () => number {
@@ -136,5 +143,82 @@ describe('a ball meeting a peg', () => {
     expect(Number.isFinite(hit.x)).toBe(true);
     expect(Number.isFinite(hit.y)).toBe(true);
     expect(hit.vy).toBeLessThan(0);
+  });
+});
+
+/**
+ * The ball's flight as `peg-drop.tsx` actually runs it: semi-implicit Euler,
+ * one substep at a time, from the launcher and along the aim. A copy of the
+ * frame loop's free-flight arithmetic with the collisions left out — which is
+ * the only part of it the guide claims to predict.
+ */
+function fly(aim: number, speed: number, steps: number, step: number) {
+  let x = 0;
+  let y = 0;
+  let vx = Math.sin(aim) * speed;
+  let vy = Math.cos(aim) * speed;
+
+  for (let i = 0; i < steps; i += 1) {
+    vy += GRAVITY * step;
+    x += vx * step;
+    y += vy * step;
+  }
+
+  return { x, y };
+}
+
+describe('the aim guide', () => {
+  /**
+   * The whole point of the thing: a dot on the guide is where the ball will be,
+   * not where it would be if nothing pulled it down. The guide used to be a
+   * straight line rotated to the aim, and the ball left it immediately.
+   */
+  it('lands on the flight the ball actually takes', () => {
+    const speed = launchSpeed(520);
+    const step = 1 / 240;
+
+    for (const aim of [-1.15, -0.6, 0, 0.35, 1.15]) {
+      // Whole steps, so the two are compared at the same instant rather than a
+      // fraction of a frame apart — the distance is read off the flight rather
+      // than picked, which is what `guidePoint` is parameterised by anyway.
+      for (const steps of [8, 30, 70]) {
+        const flown = fly(aim, speed, steps, step);
+        const dot = guidePoint(aim, speed, speed * steps * step);
+
+        // Across is exact: gravity has nothing to add to it.
+        expect(dot.x).toBeCloseTo(flown.x, 6);
+        // Down carries the integrator's own drift — stepping gravity before the
+        // position drops the ball half a step further each time — and a point
+        // of it is a quarter of a dot.
+        expect(Math.abs(dot.y - flown.y)).toBeLessThan(1);
+      }
+    }
+  });
+
+  it('leaves along the aim and falls away from it', () => {
+    const speed = launchSpeed(500);
+
+    // The first dot sits within a whisker of the straight line — the fall has
+    // had no time to happen yet — and the far one is well under it.
+    const near = guidePoint(0.5, speed, 11);
+    const far = guidePoint(0.5, speed, 96);
+
+    expect(near.y - Math.cos(0.5) * 11).toBeLessThan(1);
+    expect(far.y - Math.cos(0.5) * 96).toBeGreaterThan(10);
+    // Across the board it is exactly where the aim points, at every distance:
+    // gravity has no sideways component to add.
+    expect(far.x).toBeCloseTo(Math.sin(0.5) * 96, 6);
+  });
+
+  it('aims right for a positive angle and left for a negative one', () => {
+    const speed = launchSpeed(500);
+
+    expect(guidePoint(0.4, speed, 60).x).toBeGreaterThan(0);
+    expect(guidePoint(-0.4, speed, 60).x).toBeLessThan(0);
+    expect(guidePoint(0, speed, 60).x).toBe(0);
+  });
+
+  it('collapses onto the launcher before the board has been measured', () => {
+    expect(guidePoint(0.4, launchSpeed(0), 60)).toEqual({ x: 0, y: 0 });
   });
 });

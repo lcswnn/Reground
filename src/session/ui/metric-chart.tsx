@@ -25,7 +25,7 @@ import {
 } from '@/api/humanity';
 import { ThemedText } from '@/components/themed-text';
 import { CALIBRATION_COPY } from '@/content/strings';
-import { Fonts, Radius, Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { Sparkline } from '@/session/ui/sparkline';
 
@@ -61,7 +61,7 @@ export function MetricChart({ metric }: { metric: HumanityMetric }) {
         </ThemedText>
 
         <View style={[styles.deltaPill, { backgroundColor: accentSoft }]}>
-          <ThemedText type="small" style={[styles.deltaText, { color: accent }]} numberOfLines={1}>
+          <ThemedText type="smallBold" style={{ color: accent }} numberOfLines={1}>
             {metric.delta}
           </ThemedText>
         </View>
@@ -75,7 +75,7 @@ export function MetricChart({ metric }: { metric: HumanityMetric }) {
           it was measured or modelled. The second half is the part that keeps
           this honest — most of these series are published a year or more in
           arrears, and the headline is a nowcast for today. */}
-      <ThemedText type="small" themeColor="textMuted" style={styles.provenance} numberOfLines={2}>
+      <ThemedText type="small" themeColor="textMuted" numberOfLines={2}>
         {from ? `${from}–${observed} · ` : ''}
         {metric.isProjected
           ? CALIBRATION_COPY.projected(observed)
@@ -116,14 +116,6 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     // Keeps a long delta string from squeezing the label to nothing.
     maxWidth: '48%',
-  },
-  deltaText: {
-    fontFamily: Fonts.semibold,
-    fontSize: 14,
-  },
-  provenance: {
-    fontSize: 13,
-    lineHeight: 20,
   },
   sourceLink: {
     alignSelf: 'flex-end',

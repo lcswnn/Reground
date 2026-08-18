@@ -91,6 +91,6 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   options: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
 });

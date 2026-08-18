@@ -94,7 +94,7 @@ const styles = StyleSheet.create({
     minWidth: 46,
     height: 46,
     paddingHorizontal: Spacing.two,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.button,
     borderWidth: StyleSheet.hairlineWidth * 2,
     alignItems: 'center',
     justifyContent: 'center',

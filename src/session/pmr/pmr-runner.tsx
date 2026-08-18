@@ -306,7 +306,7 @@ const styles = StyleSheet.create({
   },
   actions: {
     alignSelf: 'stretch',
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   hint: {
     textAlign: 'center',

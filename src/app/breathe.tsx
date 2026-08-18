@@ -70,7 +70,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.six,
   },
-  // The same outline the ghost buttons wear — pill, hairline, `theme.border` —
+  // The same outline the ghost buttons wear — the button corner, hairline,
+  // `theme.border` —
   // at this screen's scale rather than theirs. Bare text read as a caption; the
   // edge is what says it can be pressed. It stays small and muted on purpose:
   // the point of the outline is to be findable when looked for, not to pull the
@@ -80,7 +81,7 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.four,
     borderWidth: 1,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.button,
   },
   skipPressed: {
     opacity: 0.75,

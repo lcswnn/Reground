@@ -157,3 +157,61 @@ export function bounceOff(
     vy: vy - along * ny * (1 + restitution),
   };
 }
+
+/**
+ * Downward acceleration, in points per second squared, and the launch speed as
+ * a multiple of `sqrt(gravity × board height)`.
+ *
+ * The speed is expressed against the board rather than fixed so a drop takes
+ * about as long on a small phone as on a tablet — the same trick, and the same
+ * reason, as `APEX_RATIO` in the paddle game. Slow enough that the ball is
+ * followable and fast enough that it reaches the far side of the field if
+ * aimed there.
+ *
+ * Both live here rather than in the component because two things now have to
+ * agree about them: the ball, which is integrated frame by frame, and the guide
+ * the player aims with, which is the same flight solved in closed form. A guide
+ * drawn from one gravity and a ball falling under another is a game that does
+ * not go where it is pointed.
+ */
+export const GRAVITY = 1100;
+export const LAUNCH_RATIO = 0.42;
+
+/** How fast a ball leaves the launcher on a board this tall. */
+export function launchSpeed(height: number): number {
+  'worklet';
+  return Math.sqrt(GRAVITY * height) * LAUNCH_RATIO;
+}
+
+/**
+ * Where the ball will be by the time it has travelled `distance` along the
+ * direction it was aimed — relative to the launcher, in points.
+ *
+ * This is what the dotted guide is drawn from, and the reason it curves. The
+ * ball leaves along the aim and then falls, so a straight line of dots is only
+ * honest for the first few of them: by the end of one the ball was most of a
+ * peg's width below the line, which reads as the game ignoring the aim. Same
+ * flight, solved for time instead of stepped: `t = distance / speed` along the
+ * aim, and gravity does what it does over that time.
+ *
+ * `aim` is the angle off straight down, positive to the right — the same
+ * convention the launch reads it in, so the first dot and the ball's first
+ * frame come out of the same two numbers.
+ *
+ * A speed of zero (an unmeasured board) puts every dot on the launcher, which
+ * is drawn under the ball and so shows nothing at all.
+ */
+export function guidePoint(
+  aim: number,
+  speed: number,
+  distance: number,
+): { x: number; y: number } {
+  'worklet';
+  if (speed <= 0) return { x: 0, y: 0 };
+
+  const t = distance / speed;
+  return {
+    x: Math.sin(aim) * distance,
+    y: Math.cos(aim) * distance + 0.5 * GRAVITY * t * t,
+  };
+}

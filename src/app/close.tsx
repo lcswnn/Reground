@@ -46,14 +46,15 @@ export default function CloseScreen() {
         <ThemedText type="subtitle" themeColor="textSecondary">
           {CLOSE.body}
         </ThemedText>
-        {/* Muted, so it stays a suggestion rather than a fourth instruction —
-            but set larger than body copy, because it is the one line on this
-            screen the user is meant to leave with. The label is the only bold
-            thing here; a plain `Text` inherits the size and colour around it,
-            which a nested `ThemedText` would reset to the body tier. */}
+        {/* Muted, so it stays a suggestion rather than a fourth instruction.
+            Body copy, like everything else written to be read — it used to be
+            set two points over the body tier on the grounds that it is the line
+            the user leaves with, which is what the muting and the bold label
+            already say. The label is the only bold thing here; a plain `Text`
+            inherits the size and colour around it, which a nested `ThemedText`
+            would reset. */}
         <ThemedText
           themeColor="textMuted"
-          style={styles.idea}
           accessibilityLabel={CLOSE.idea(idea)}>
           <Text style={styles.ideaLabel}>{CLOSE.ideaLabel}</Text> {idea}.
         </ThemedText>
@@ -67,21 +68,18 @@ export default function CloseScreen() {
 }
 
 const styles = StyleSheet.create({
+  // A heading stack — the title, the line under it and the parting
+  // suggestion are one block of reading, so they take the gap the app gives
+  // the lines of a block. The pause before the button does the separating.
   root: {
-    gap: Spacing.three,
-  },
-  // One step above the body tier's 17/28. Not a named tier because the body
-  // face has nothing between `default` and the display headings, and this line
-  // wants the reading face, not a heading. Came down 2pt with the rest of the
-  // scale; the line height stayed, same as it did everywhere else.
-  idea: {
-    fontSize: 20,
-    lineHeight: 31,
+    gap: Spacing.two,
   },
   ideaLabel: {
     fontFamily: Fonts.semibold,
   },
+  // The long pause, the same one `/breathe-intro` and `/reactivate` put
+  // between what a screen says and what it asks.
   action: {
-    marginTop: Spacing.five,
+    marginTop: Spacing.six,
   },
 });

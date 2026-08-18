@@ -548,7 +548,7 @@ const styles = StyleSheet.create({
     minWidth: CONTROL_HEIGHT,
     height: CONTROL_HEIGHT,
     paddingHorizontal: Spacing.two,
-    borderRadius: Radius.md,
+    borderRadius: Radius.button,
     borderWidth: StyleSheet.hairlineWidth * 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   control: {
     width: CONTROL_HEIGHT,
     height: CONTROL_HEIGHT,
-    borderRadius: Radius.md,
+    borderRadius: Radius.button,
     borderWidth: StyleSheet.hairlineWidth * 2,
     alignItems: 'center',
     justifyContent: 'center',

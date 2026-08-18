@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.four,
-    paddingBottom: Spacing.four,
+    paddingBottom: Spacing.five,
   },
   heading: {
     gap: Spacing.two,

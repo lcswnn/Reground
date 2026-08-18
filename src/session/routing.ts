@@ -143,6 +143,79 @@ export type SessionRoute =
   | '/close'
   | '/closed';
 
+/**
+ * The four parts of a session, in the order they happen — and what the dots at
+ * the top of every screen are counting.
+ *
+ * The session is longer than four screens, so this is not a screen counter: it
+ * is the answer to 'how much of this is left', which is a different and much
+ * shorter list. The opening questions belong to the breath they lead into, the
+ * cue and the calibration belong to the game they wrap, and the second rating
+ * belongs there too — none of them is a part of the session in the sense a user
+ * would count. Nobody arrives at `/topic` thinking they are two steps in.
+ *
+ * `done` is the fourth: it is filled on the closing screen and nowhere else, so
+ * the last dot means the thing it looks like it means.
+ */
+export const SESSION_STAGES = ['breath', 'game', 'oneMore', 'done'] as const;
+
+export type SessionStage = (typeof SESSION_STAGES)[number];
+
+/**
+ * Which part each screen belongs to, or `null` for the screens outside the
+ * count: the door, which starts nothing, and the dead end, which is past the
+ * end of it — a progress indicator on a screen whose whole point is that the
+ * session is over and the state is already cleared would be one more thing to
+ * read on the one screen with nothing to read.
+ *
+ * A `Record` rather than a `switch` so that it is exhaustive in both
+ * directions: a route added to `SessionRoute` without a part here is a type
+ * error, and the object is also the runtime lookup `stageOfPath` needs.
+ */
+const STAGE_BY_ROUTE: Record<SessionRoute, SessionStage | null> = {
+  '/': null,
+  // The three opening questions are the run-up to the breath, not parts of
+  // their own — see the note above.
+  '/category': 'breath',
+  '/topic': 'breath',
+  '/mood': 'breath',
+  '/breathe-intro': 'breath',
+  '/breathe': 'breath',
+  // The cue exists to make the game land on the right memory, and the two
+  // screens after the game are still about it: what the numbers actually say,
+  // and where the rating ended up.
+  '/reactivate': 'game',
+  '/games': 'game',
+  '/game': 'game',
+  '/calibration': 'game',
+  '/mood-after': 'game',
+  // The check-in belongs to whatever was picked off the list, which is the
+  // only reason it is ever reached.
+  '/one-more': 'oneMore',
+  '/check-in': 'oneMore',
+  '/close': 'done',
+  '/closed': null,
+};
+
+/** Which part a screen is in. */
+export function stageOf(route: SessionRoute): SessionStage | null {
+  return STAGE_BY_ROUTE[route];
+}
+
+/**
+ * The same answer for a path off the router, which is a string and may be a
+ * route this flow has never heard of. Anything unrecognised counts as outside
+ * the session and draws no dots.
+ */
+export function stageOfPath(path: string): SessionStage | null {
+  return STAGE_BY_ROUTE[path as SessionRoute] ?? null;
+}
+
+/** How far along a part is: 0 for the first, 3 for the last. */
+export function stageIndex(stage: SessionStage): number {
+  return SESSION_STAGES.indexOf(stage);
+}
+
 /** The slice of session state the back button's target depends on. */
 export interface BackContext {
   group: CategoryGroup | null;

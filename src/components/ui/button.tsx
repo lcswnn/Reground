@@ -2,7 +2,7 @@ import { ActivityIndicator, StyleSheet, Text, type PressableProps } from 'react-
 
 import { softGlow } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { Fonts, Radius, Spacing } from '@/constants/theme';
+import { Fonts, Radius, Spacing, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type Variant = 'primary' | 'secondary' | 'positive' | 'ghost';
@@ -72,7 +72,7 @@ export function Button({
 
 const styles = StyleSheet.create({
   base: {
-    // Sized to the label, not to the page. A pill that runs the full width of
+    // Sized to the label, not to the page. A button that runs the full width of
     // the screen stops reading as a thing you press and starts reading as a
     // banner — the width is the affordance, so it has to end somewhere short of
     // the margins. `minWidth` keeps a two-letter label from becoming a lozenge;
@@ -82,7 +82,7 @@ const styles = StyleSheet.create({
     minWidth: 200,
     maxWidth: '100%',
     alignSelf: 'center',
-    borderRadius: Radius.pill,
+    borderRadius: Radius.button,
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: Spacing.two,
@@ -102,11 +102,11 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
   label: {
-    // Semibold, now that a semibold face is actually loaded: a button label is
-    // the one place in the app that should read as heavier than the copy around
-    // it, and the serif this replaced had no weight between regular and bold.
+    // The body tier in the semibold cut — the same size as the copy the button
+    // sits under, which is what a label is: a sentence you can press. Weight is
+    // what separates it, not size, now that a semibold face is actually loaded.
     fontFamily: Fonts.semibold,
-    fontSize: 17,
+    fontSize: Type.body.fontSize,
   },
   pressed: {
     // Just a shade off, now that the press is a movement. This used to be 0.75

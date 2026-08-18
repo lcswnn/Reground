@@ -225,7 +225,7 @@ const styles = StyleSheet.create({
   },
   choice: {
     minHeight: 56,
-    borderRadius: Radius.md,
+    borderRadius: Radius.button,
     borderWidth: StyleSheet.hairlineWidth * 2,
     alignItems: 'center',
     justifyContent: 'center',

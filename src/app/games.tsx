@@ -117,8 +117,8 @@ export default function GamesScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: Spacing.five,
-    paddingBottom: Spacing.four,
+    gap: Spacing.four,
+    paddingBottom: Spacing.five,
   },
   list: {
     gap: Spacing.three,
@@ -131,6 +131,6 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
   },
   paidHeading: {
-    gap: Spacing.one,
+    gap: Spacing.two,
   },
 });

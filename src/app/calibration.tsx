@@ -194,17 +194,16 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   content: {
-    gap: Spacing.five,
+    gap: Spacing.four,
     paddingBottom: Spacing.five,
   },
   section: {
     gap: Spacing.two,
   },
-  // Wider than the gap inside a section: the charts are a block of their own
+  // Wider than the gap inside a section: the charts are a list of their own
   // under the paragraph, not three more lines of it.
   charts: {
     gap: Spacing.three,
-    marginTop: Spacing.one,
   },
   trend: {
     flexDirection: 'row',

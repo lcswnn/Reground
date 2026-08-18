@@ -54,7 +54,7 @@ export function PmrIntro({ routine, onBegin, onAnother }: PmrIntroProps) {
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{PMR_COPY.howHeading}</ThemedText>
+          <ThemedText type="subtitle">{PMR_COPY.howHeading}</ThemedText>
           {routine.steps.map((step) => (
             <ThemedText key={step} type="small" themeColor="textSecondary">
               {step}
@@ -63,7 +63,7 @@ export function PmrIntro({ routine, onBegin, onAnother }: PmrIntroProps) {
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{PMR_COPY.orderHeading}</ThemedText>
+          <ThemedText type="subtitle">{PMR_COPY.orderHeading}</ThemedText>
           {/* One line rather than a bulleted list. It is a running order, not
               instructions — the instructions arrive one at a time on the screen
               after this — and four to seven short phrases read faster as a
@@ -74,14 +74,14 @@ export function PmrIntro({ routine, onBegin, onAnother }: PmrIntroProps) {
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{PMR_COPY.noticeHeading}</ThemedText>
+          <ThemedText type="subtitle">{PMR_COPY.noticeHeading}</ThemedText>
           <ThemedText type="small" themeColor="textSecondary">
             {routine.notice}
           </ThemedText>
         </View>
 
         <View style={styles.section}>
-          <ThemedText type="sectionTitle">{PMR_COPY.evidenceHeading}</ThemedText>
+          <ThemedText type="subtitle">{PMR_COPY.evidenceHeading}</ThemedText>
           <ThemedText type="small" themeColor="textMuted">
             {routine.evidence}
           </ThemedText>
@@ -105,7 +105,7 @@ const styles = StyleSheet.create({
   },
   content: {
     gap: Spacing.four,
-    paddingBottom: Spacing.four,
+    paddingBottom: Spacing.five,
   },
   heading: {
     gap: Spacing.two,
@@ -115,7 +115,6 @@ const styles = StyleSheet.create({
   },
   actions: {
     gap: Spacing.three,
-    marginTop: Spacing.two,
   },
   hint: {
     textAlign: 'center',

@@ -60,7 +60,7 @@ export default function EntryScreen() {
 
 const styles = StyleSheet.create({
   root: {
-    gap: Spacing.five,
+    gap: Spacing.four,
   },
   options: {
     gap: Spacing.three,

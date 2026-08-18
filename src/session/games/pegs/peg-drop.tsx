@@ -47,6 +47,7 @@ import Animated, {
   useFrameCallback,
   useSharedValue,
   withTiming,
+  type SharedValue,
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
@@ -55,26 +56,20 @@ import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { mix, withAlpha } from '@/lib/color';
 import { tickDissolve, tickPlacement } from '@/session/ui/haptics';
-import { bounceOff, layField, type Peg } from '@/session/games/pegs/playfield';
+import {
+  bounceOff,
+  guidePoint,
+  GRAVITY,
+  launchSpeed,
+  layField,
+  type Peg,
+} from '@/session/games/pegs/playfield';
 
 /** The ball, and the pegs, in points. Fixed rather than scaled: see `bounce-game`. */
 const BALL_RADIUS = 8;
 const PEG_RADIUS = 9;
 /** Centres closer than this are touching. The one number the physics collides on. */
 const CONTACT = BALL_RADIUS + PEG_RADIUS;
-
-/** Downward acceleration, in points per second squared. */
-const GRAVITY = 1100;
-
-/**
- * Launch speed, as a multiple of `sqrt(gravity × board height)`.
- *
- * Expressed against the board rather than fixed so a drop takes about as long on
- * a small phone as on a tablet — the same trick, and the same reason, as
- * `APEX_RATIO` in the paddle game. Slow enough that the ball is followable and
- * fast enough that it reaches the far side of the field if aimed there.
- */
-const LAUNCH_RATIO = 0.42;
 
 /** How much of its speed a ball keeps, across the surface it hit. */
 const PEG_BOUNCE = 0.88;
@@ -111,19 +106,35 @@ const GUIDE_DOT_RADIUS = 2;
  */
 const MAX_AIM = 1.15;
 
-/** The dotted line out of the launcher, and how far apart the dots sit. */
+/**
+ * The dotted arc out of the launcher: how many dots, and how far apart they sit
+ * *along the aim* — which is not how far apart they sit on screen, because the
+ * flight they mark is falling as it goes. See `guidePoint`.
+ */
 const GUIDE_DOTS = 6;
 const GUIDE_STEP = 17;
 /**
- * How far the first dot's centre sits from the launcher's, so the line starts
+ * The clearance between the ball and the first dot of its guide.
+ *
+ * Even all the way round, because the guide leaves along the aim and the gap is
+ * measured along it — swing the aim and the line pivots around the ball at a
+ * constant distance from it rather than scuffing one side.
+ */
+const GUIDE_GAP = 3;
+
+/**
+ * How far the first dot's centre sits from the ball's, so the line starts
  * against the ball rather than a gap away from it.
  *
- * The socket's radius plus the dot's, which puts their edges exactly touching.
- * Started at a whole `GUIDE_STEP` out and the line read as a separate thing
- * floating below the launcher — a direction the board was indicating, rather
- * than the way the ball in the socket was pointed.
+ * The *ball's* radius, the dot's, and the clearance between them. It used to be
+ * measured off the socket, which is a point smaller — so the line began inside
+ * the ball resting on it, and the ball it was drawn for was not the one it
+ * appeared to be attached to. Started at a whole `GUIDE_STEP` out before that,
+ * and the line read as a separate thing floating below the launcher: a
+ * direction the board was indicating, rather than the way the ball in the
+ * socket was pointed.
  */
-const GUIDE_START = SOCKET_RADIUS + GUIDE_DOT_RADIUS;
+const GUIDE_START = BALL_RADIUS + GUIDE_DOT_RADIUS + GUIDE_GAP;
 
 /** How long a peg takes to go once it has been hit. */
 const OUT_MS = 260;
@@ -261,6 +272,23 @@ export function PegDrop() {
     boardW.value = width;
     boardH.value = height;
     setBox({ width, height });
+
+    /**
+     * The ball, in the socket, ready to be aimed.
+     *
+     * The resting ball is the real one rather than a drawing of one: it sits at
+     * the launcher between shots and leaves from exactly where it was sitting.
+     * It used to be hidden until it was live, which left the socket standing in
+     * for it — a circle a point smaller, drawn off a different anchor — with the
+     * guide attached to *that*. The line and the ball agreed about the aim and
+     * disagreed about where it started from.
+     *
+     * Set here as well as after each shot because this is also where the ball
+     * goes on a rotation: the launcher moves with the middle of the board, so
+     * the ball resting on it has to move too.
+     */
+    ballX.value = width / 2;
+    ballY.value = LAUNCH_Y;
   };
 
   /** Where the finger is, as an angle off straight down from the launcher. */
@@ -289,7 +317,7 @@ export function PegDrop() {
     // a whole new field — is in the set this reads.
     pegStanding.value = pegs.map((peg) => !outIds.current.has(peg.id));
 
-    const speed = Math.sqrt(GRAVITY * height) * LAUNCH_RATIO;
+    const speed = launchSpeed(height);
     ballX.value = width / 2;
     ballY.value = LAUNCH_Y;
     vx.value = Math.sin(aim.value) * speed;
@@ -369,6 +397,12 @@ export function PegDrop() {
       // watching it fall clear is what makes the drop read as finished.
       if (y - BALL_RADIUS > height) {
         flying.value = false;
+        // Straight back into the socket, on the same thread that was just
+        // flying it — `spent` only schedules the state change, and a ball that
+        // waited for that to land would be drawn at the bottom of the board for
+        // a frame or two after it had already gone.
+        ballX.value = width / 2;
+        ballY.value = LAUNCH_Y;
         runOnJS(spent)();
         break;
       }
@@ -386,22 +420,6 @@ export function PegDrop() {
       { translateX: ballX.value - BALL_RADIUS },
       { translateY: ballY.value - BALL_RADIUS },
     ],
-  }));
-
-  /**
-   * Negated, and it is not a fudge: `aim` and this rotation measure the same
-   * angle in opposite directions.
-   *
-   * `aim` is the angle off straight down toward the right, which is what the
-   * launch reads it as — `vx` is its sine and `vy` its cosine. A rotation on
-   * screen is clockwise-positive over a y-axis that points down, so it takes the
-   * dot at `(0, d)` below the launcher to `(-d·sin, d·cos)`: same angle, mirrored
-   * horizontally. Rotating by `aim` directly pointed the guide exactly as far to
-   * the left as the ball was about to travel to the right.
-   */
-  const guideStyle = useAnimatedStyle(() => ({
-    opacity: 0.25 + aiming.value * 0.55,
-    transform: [{ rotate: `${-aim.value}rad` }],
   }));
 
   const fieldStyle = useAnimatedStyle(() => ({ opacity: fieldShown.value }));
@@ -444,42 +462,120 @@ export function PegDrop() {
           ))}
         </Animated.View>
 
-        {/* The launcher: a socket at the top of the board with the aim swinging
-            out of it. Drawn under the ball so a ball leaving passes over it. */}
+        {/* The socket the ball sits in, and the aim swinging out of it. Both
+            are placed straight onto the board — no launcher box in between.
+            The dots used to be absolute children of a zero-size view centred at
+            `50%`, which is the board's padding box rather than the middle the
+            ball is launched from, and which centres its children by a rule of
+            its own; the line came out a couple of points right of the ball. A
+            dot is now positioned by the same arithmetic the ball is, in the
+            same coordinate space, so being off-centre is not a thing either of
+            them can be without the other. */}
         <View
           pointerEvents="none"
-          style={[styles.launcher, { left: '50%', top: LAUNCH_Y }]}>
-          <Animated.View style={guideStyle}>
-            {Array.from({ length: GUIDE_DOTS }, (_, index) => (
-              <View
-                key={index}
-                style={[
-                  styles.guideDot,
-                  {
-                    top: GUIDE_START + GUIDE_STEP * index,
-                    backgroundColor: theme.brand,
-                    // Fading out along its length, so it reads as a direction
-                    // rather than as a promise about where the ball ends up.
-                    opacity: 1 - index / GUIDE_DOTS,
-                  },
-                ]}
-              />
-            ))}
-          </Animated.View>
+          style={[
+            styles.socket,
+            {
+              backgroundColor: theme.brand,
+              left: box.width / 2 - SOCKET_RADIUS,
+              // Along with the ball: neither has anywhere to be until the board
+              // has said how wide it is.
+              opacity: box.width > 0 ? 1 : 0,
+            },
+          ]}
+        />
 
-          <View style={[styles.socket, { backgroundColor: theme.brand }]} />
-        </View>
+        {Array.from({ length: GUIDE_DOTS }, (_, index) => (
+          <GuideDot
+            key={index}
+            index={index}
+            aim={aim}
+            aiming={aiming}
+            boardW={boardW}
+            boardH={boardH}
+            color={theme.brand}
+          />
+        ))}
 
+        {/* Drawn last, so it sits over the socket it is resting in and over the
+            first dot of the guide leaving it. */}
         <Animated.View
           pointerEvents="none"
           style={[
             styles.ball,
             ballStyle,
-            { backgroundColor: theme.brand, opacity: status === 'live' ? 1 : 0 },
+            // Hidden only until the board has been measured: `ballX` has no
+            // sensible value before that, and the corner is where it would be.
+            { backgroundColor: theme.brand, opacity: box.width > 0 ? 1 : 0 },
           ]}
         />
       </View>
     </View>
+  );
+}
+
+/**
+ * One dot of the aim guide, sitting where the ball will actually be.
+ *
+ * Its own component because each dot reads the aim and the board's height every
+ * frame the finger moves, and a hook per dot is what lets that happen on the UI
+ * thread — `GUIDE_DOTS` is a constant, so the number of hooks never changes.
+ *
+ * The dot is placed by `guidePoint`, the closed-form version of the same flight
+ * the frame loop steps through. That is the whole of the fix it exists for: the
+ * guide was a straight line of dots rotated to the aim, so it showed the
+ * direction the ball *left* in and said nothing about the fall — by the far end
+ * of it the ball was half a peg's width underneath, and a ball that comes out
+ * from under the line you aimed with is a game that does not go where it is
+ * pointed. The dots curve now, and the ball runs down them.
+ *
+ * It is still honest about being a prediction: the arc is drawn as far as the
+ * dots go and no further, and the first peg the ball touches ends it. What it
+ * no longer does is disagree with the physics before anything has been hit.
+ */
+function GuideDot({
+  index,
+  aim,
+  aiming,
+  boardW,
+  boardH,
+  color,
+}: {
+  index: number;
+  aim: SharedValue<number>;
+  aiming: SharedValue<number>;
+  boardW: SharedValue<number>;
+  boardH: SharedValue<number>;
+  color: string;
+}) {
+  const style = useAnimatedStyle(() => {
+    const point = guidePoint(
+      aim.value,
+      launchSpeed(boardH.value),
+      GUIDE_START + GUIDE_STEP * index,
+    );
+
+    return {
+      // Letter for letter what `ballStyle` does with `ballX`/`ballY`: the
+      // launcher's middle, plus where the flight has got to, less the radius of
+      // the thing being drawn. Both are absolute children of the board, so a
+      // dot at aim zero lands on exactly the column the ball leaves along.
+      transform: [
+        { translateX: boardW.value / 2 + point.x - GUIDE_DOT_RADIUS },
+        { translateY: LAUNCH_Y + point.y - GUIDE_DOT_RADIUS },
+      ],
+      // Fading out along its length, and again as the finger comes off: the far
+      // end of the arc is the part a peg is most likely to make wrong, and it
+      // should look the least certain rather than the most.
+      opacity: (1 - index / GUIDE_DOTS) * (0.25 + aiming.value * 0.55),
+    };
+  });
+
+  return (
+    <Animated.View
+      pointerEvents="none"
+      style={[styles.guideDot, style, { backgroundColor: color }]}
+    />
   );
 }
 
@@ -553,26 +649,25 @@ const styles = StyleSheet.create({
     borderRadius: PEG_RADIUS,
     borderWidth: 2,
   },
-  launcher: {
-    position: 'absolute',
-    width: 0,
-    height: 0,
-    alignItems: 'center',
-  },
+  // Pinned to the board's own origin and moved entirely by transform, exactly
+  // as `ball` is. Nothing about a dot's position depends on a container.
   guideDot: {
     position: 'absolute',
+    top: 0,
+    left: 0,
     width: GUIDE_DOT_RADIUS * 2,
     height: GUIDE_DOT_RADIUS * 2,
     borderRadius: GUIDE_DOT_RADIUS,
-    left: -GUIDE_DOT_RADIUS,
   },
+  // `left` is set where it is drawn, from the measured width; the ball covers
+  // this while it is resting, so what it is really for is showing the cradle
+  // the ball left from while it is away.
   socket: {
     position: 'absolute',
+    top: LAUNCH_Y - SOCKET_RADIUS,
     width: SOCKET_RADIUS * 2,
     height: SOCKET_RADIUS * 2,
     borderRadius: SOCKET_RADIUS,
-    left: -SOCKET_RADIUS,
-    top: -SOCKET_RADIUS,
   },
   ball: {
     position: 'absolute',

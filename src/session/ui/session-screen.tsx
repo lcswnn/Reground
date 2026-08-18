@@ -2,13 +2,18 @@
  * The frame every session screen sits in: safe area, one gutter, and a column
  * that doesn't run wider than a comfortable measure on a tablet.
  *
- * No progress dots, and no header beyond one thin row of chrome: a back button
- * top-left on the screens that have somewhere to go back to — see
- * `previousRoute` for which do and where each one lands — and the appearance
- * switch top-right on all of them without exception. Both are drawn here rather
- * than by each screen so that they are in exactly the same place on every one,
- * which for the switch is the whole point: a control that moves between screens
- * is a control that has to be found again each time.
+ * No header beyond one thin row of chrome: a back button top-left on the
+ * screens that have somewhere to go back to — see `previousRoute` for which do
+ * and where each one lands — the appearance switch top-right on all of them
+ * without exception, and between the two, four dots saying which part of the
+ * session this is. All three are drawn here rather than by each screen so that
+ * they are in exactly the same place on every one, which for the switch is the
+ * whole point: a control that moves between screens is a control that has to be
+ * found again each time.
+ *
+ * The dots are the one thing here that is not chrome — see `progress-dots.tsx`
+ * for why a session this long needs to say how much of it is left, and
+ * `stageOf` in `routing.ts` for which screen counts as which part.
  *
  * The row takes layout space rather than floating over the content: the screens
  * that start with a heading at the top of the page (`/games`, `/calibration`)
@@ -20,10 +25,13 @@
 
 import { StyleSheet, View, type ViewProps } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { usePathname } from 'expo-router';
 
 import { MaxContentWidth, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { stageOfPath } from '@/session/routing';
 import { BackButton } from '@/session/ui/back-button';
+import { ProgressDots } from '@/session/ui/progress-dots';
 import { ThemeToggle } from '@/session/ui/theme-toggle';
 
 interface SessionScreenProps extends ViewProps {
@@ -45,6 +53,15 @@ export function SessionScreen({
 }: SessionScreenProps) {
   const theme = useTheme();
   const insets = useSafeAreaInsets();
+  /**
+   * Read off the router rather than passed in by each screen. Which part a
+   * screen belongs to is a fact about the flow, and the flow already knows it —
+   * a `stage` prop would be the same fact written down sixteen more times, in
+   * sixteen places that could each get it wrong. It also means the screens
+   * inside `/one-more` — the breathwork, the PMR, the soundscape, each of which
+   * draws its own frame — inherit the part they are nested in for free.
+   */
+  const stage = stageOfPath(usePathname());
 
   return (
     <View
@@ -65,6 +82,18 @@ export function SessionScreen({
           {onBack ? <BackButton onPress={onBack} /> : null}
           <View style={styles.spacer} />
           <ThemeToggle />
+
+          {/* Centred on the screen rather than laid out between the two
+              controls: the back button is a word wide and the switch is three,
+              so a dot row in the flow would sit off-centre by the difference
+              and move again on the screens with no back button. Absolute keeps
+              it on the middle of the page, which is where a progress indicator
+              has to stay to read as one thing that is not moving. */}
+          {stage ? (
+            <View style={styles.progress} pointerEvents="none">
+              <ProgressDots stage={stage} />
+            </View>
+          ) : null}
         </View>
 
         {/* Its own flex child so that `centered` still centres the screen's
@@ -93,6 +122,19 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  // Pinned to all four edges of the row so the dots sit on the same line as
+  // the two controls rather than at the top of whatever height the row ended
+  // up being. It takes no layout space and no touches — the row's height is
+  // still set by the back button and the switch.
+  progress: {
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   content: {
     flex: 1,

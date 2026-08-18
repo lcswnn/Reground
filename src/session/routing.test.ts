@@ -11,6 +11,10 @@ import {
   showsCalibration,
   showsReactivation,
   skipsReactivation,
+  stageIndex,
+  stageOf,
+  stageOfPath,
+  SESSION_STAGES,
   type BackContext,
   type SessionRoute,
 } from '@/session/routing';
@@ -244,5 +248,69 @@ describe('moodOutcome', () => {
     // Improved and still bad is a real and important combination: 10 -> 8.
     expect(moodOutcome(10, 8)).toEqual({ improved: true, stillHighDistress: true });
     expect(moodOutcome(6, 3)).toEqual({ improved: true, stillHighDistress: false });
+  });
+});
+
+describe('stageOf', () => {
+  it('counts four parts, in the order the session runs them', () => {
+    expect(SESSION_STAGES).toEqual(['breath', 'game', 'oneMore', 'done']);
+  });
+
+  it('puts the opening questions in the part they lead into', () => {
+    expect(stageOf('/category')).toBe('breath');
+    expect(stageOf('/topic')).toBe('breath');
+    expect(stageOf('/mood')).toBe('breath');
+    expect(stageOf('/breathe-intro')).toBe('breath');
+    expect(stageOf('/breathe')).toBe('breath');
+  });
+
+  /**
+   * The cue is what the puzzle competes with and the two screens after it are
+   * still about the same thing — see `showsReactivation` and `showsCalibration`.
+   * A user counting parts counts one here, not five.
+   */
+  it('wraps the cue, the calibration and the second rating into the game', () => {
+    expect(stageOf('/reactivate')).toBe('game');
+    expect(stageOf('/games')).toBe('game');
+    expect(stageOf('/game')).toBe('game');
+    expect(stageOf('/calibration')).toBe('game');
+    expect(stageOf('/mood-after')).toBe('game');
+  });
+
+  it('keeps the check-in with the thing it checks in on', () => {
+    expect(stageOf('/one-more')).toBe('oneMore');
+    expect(stageOf('/check-in')).toBe('oneMore');
+  });
+
+  it('fills the last dot on the closing screen and nowhere before it', () => {
+    expect(stageOf('/close')).toBe('done');
+    expect(stageIndex('done')).toBe(SESSION_STAGES.length - 1);
+  });
+
+  /**
+   * The door starts nothing and the dead end is past the end — both draw no
+   * dots at all, rather than an empty or a full row.
+   */
+  it('leaves the door and the dead end out of the count', () => {
+    expect(stageOf('/')).toBeNull();
+    expect(stageOf('/closed')).toBeNull();
+  });
+});
+
+describe('stageOfPath', () => {
+  it('answers for a path off the router', () => {
+    expect(stageOfPath('/breathe')).toBe('breath');
+    expect(stageOfPath('/close')).toBe('done');
+  });
+
+  it('treats anything it does not recognise as outside the session', () => {
+    expect(stageOfPath('/_sitemap')).toBeNull();
+    expect(stageOfPath('')).toBeNull();
+  });
+});
+
+describe('stageIndex', () => {
+  it('runs from nought in flow order', () => {
+    expect(SESSION_STAGES.map(stageIndex)).toEqual([0, 1, 2, 3]);
   });
 });

@@ -78,7 +78,7 @@ export default function MoodBeforeScreen() {
 
 const styles = StyleSheet.create({
   root: {
-    gap: Spacing.five,
+    gap: Spacing.four,
   },
   heading: {
     gap: Spacing.two,

@@ -133,6 +133,6 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   actions: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
 });

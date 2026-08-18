@@ -69,7 +69,7 @@ export function OptionCard({ label, detail, onPress, compact = false }: OptionCa
 const styles = StyleSheet.create({
   card: {
     padding: Spacing.four,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth * 2,
     gap: Spacing.two,
   },

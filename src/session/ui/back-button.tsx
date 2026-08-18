@@ -19,7 +19,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { BACK } from '@/content/strings';
-import { ChromeLabelSize, Spacing } from '@/constants/theme';
+import { Spacing } from '@/constants/theme';
 
 export function BackButton({ onPress }: { onPress: () => void }) {
   return (
@@ -33,7 +33,12 @@ export function BackButton({ onPress }: { onPress: () => void }) {
         depth="text"
         hitSlop={Spacing.three}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-        <ThemedText type="small" themeColor="textMuted" style={styles.label}>
+        {/* The body tier, not the caption one. These are the only tappable
+            words on most screens and they sit muted in a corner the eye is not
+            looking at; set as a caption they read as a footnote to hunt for.
+            Muted colour is what keeps them quiet — see `theme-toggle.tsx`,
+            which is drawn to match this and reads off the same tier. */}
+        <ThemedText themeColor="textMuted">
           {BACK.arrow} {BACK.label}
         </ThemedText>
       </PressableScale>
@@ -55,11 +60,6 @@ const styles = StyleSheet.create({
     marginLeft: -Spacing.two,
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
-  },
-  // A couple of points above the `small` tier — see `ChromeLabelSize`. The
-  // switch opposite reads off the same token so the two never drift apart.
-  label: {
-    fontSize: ChromeLabelSize,
   },
   // Shallower than the 0.6 it was: the press is a movement now, and muted text
   // at 60% on a paper background is close to gone.

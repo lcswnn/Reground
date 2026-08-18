@@ -344,7 +344,7 @@ const styles = StyleSheet.create({
     transformOrigin: 'left',
   },
   actions: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   hint: {
     textAlign: 'center',

@@ -72,12 +72,12 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
   },
   options: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   option: {
     paddingVertical: Spacing.three,
     paddingHorizontal: Spacing.three,
-    borderRadius: Radius.md,
+    borderRadius: Radius.button,
     borderWidth: StyleSheet.hairlineWidth * 2,
   },
   footer: {

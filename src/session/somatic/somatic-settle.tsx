@@ -78,12 +78,12 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     justifyContent: 'center',
-    gap: Spacing.five,
+    gap: Spacing.four,
   },
   heading: {
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
   actions: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
 });

@@ -1,20 +1,15 @@
-import { Platform, StyleSheet, Text, type TextProps } from "react-native";
+import { StyleSheet, Text, type TextProps } from "react-native";
 
-import { Fonts, ThemeColor } from "@/constants/theme";
+import { Fonts, ThemeColor, Type } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { withAlpha } from "@/lib/color";
 
-// The four display-tier types get a soft glow the same hue as their own text
-// — ink haloing on paper in light mode, paper haloing on ink in dark — so a
-// heading reads as sitting just above the page rather than printed flat on
-// it. Nothing else gets one: at body size the same radius would just read as
-// blur, not glow.
-const GLOWS_SOFTLY = new Set<ThemedTextType>([
-  "hero",
-  "title",
-  "subtitle",
-  "sectionTitle",
-]);
+// The display tiers get a soft glow the same hue as their own text — ink
+// haloing on paper in light mode, paper haloing on ink in dark — so a heading
+// reads as sitting just above the page rather than printed flat on it. Nothing
+// else gets one: at body size the same radius would just read as blur, not
+// glow.
+const GLOWS_SOFTLY = new Set<ThemedTextType>(["hero", "title", "subtitle"]);
 
 const GLOW_ALPHA = 0.13;
 const GLOW_RADIUS = 5;
@@ -33,19 +28,32 @@ export function softGlow(color: string) {
   };
 }
 
+/**
+ * Four roles and one numeral, and every one of them is a size from `Type`.
+ *
+ * `title` for the screen's title, `subtitle` for any secondary header — a
+ * section heading, a card's name, a lead sentence — `default` for prose, and
+ * `small` for anything said quietly beside something else. The rest are those
+ * same four in a different face or with caps on, never a different size:
+ * `defaultSemiBold` and `linkPrimary` are the body size, `smallBold` and
+ * `eyebrow` the caption size. `hero` is the clock.
+ *
+ * `sectionTitle` used to sit between `subtitle` and the body at 18 and was the
+ * only tier doing a job another tier already had a name for — a section heading
+ * *is* a secondary header, and two sizes two points apart read as one size that
+ * failed to hold still. It is gone, and its screens are on `subtitle`. `link`
+ * and `code` went with it, unused.
+ */
 export type ThemedTextType =
   | "default"
   | "defaultSemiBold"
   | "hero"
   | "title"
   | "subtitle"
-  | "sectionTitle"
   | "eyebrow"
   | "small"
   | "smallBold"
-  | "link"
-  | "linkPrimary"
-  | "code";
+  | "linkPrimary";
 
 export type ThemedTextProps = TextProps & {
   type?: ThemedTextType;
@@ -81,100 +89,54 @@ export function ThemedText({
 // tiers are separated by size, colour and caps — see the note on `Fonts` in
 // `constants/theme.ts`.
 //
-// Every size here has now had 2pt taken off it, which is the type scale finally
-// being judged on its own rather than inherited. The sizes it inherited sat
-// ~10% above what the same tier ran at in Nunito — a bump bought for Playpen
-// Sans, a handwriting face whose irregular letterforms needed the room. Neither
-// Fredoka nor Literata does, and the bump rode through both swaps untouched
-// because a type scale wants deciding on a device, not alongside a family
-// change. This is that decision: the serif reads a size larger than the sans
-// did at the same point size, so the tiers land where the sans's did.
-//
-// ## The leading is split down the middle, on purpose
-//
-// The four display tiers are set tight and the reading tiers stay loose, which
-// is the one real rule in this file. A heading that wraps is a single phrase
-// broken by the width of the phone, not two thoughts, and it has to read as one
-// object — so `title` runs 25 on 30 and the tiers around it hold the same
-// ~1.2, tightening as the type gets bigger the way display type wants to.
-// They used to run at ~1.65, which is body leading wearing a heading's clothes:
-// every two-line question on `/check-in`, `/mood`, `/topic` and `/close` fell
-// apart into two separate lines with a corridor between them.
-//
-// The reading tiers did not move and should not. `default` is 15 on 28 — looser
-// than the ~1.5 it was drawn for, since the sizes came down 2pt and the line
-// heights stayed — and that generosity is the point of the app everywhere the
-// user is actually reading rather than being addressed.
+// No number is written down here. Every size and leading comes from `Type` in
+// `constants/theme.ts`, which is where the scale is decided and explained; this
+// file only says which face each role wears. A tier that wants a size of its
+// own is a tier that has not worked out what it is.
 const styles = StyleSheet.create({
-  // Body moves with the small tier rather than staying put: `small` matching it
-  // would make the two types indistinguishable and quietly flatten every screen
-  // that pairs them.
   default: {
     fontFamily: Fonts.body,
-    fontSize: 15,
-    lineHeight: 28,
+    ...Type.body,
   },
   defaultSemiBold: {
     fontFamily: Fonts.semibold,
-    fontSize: 17,
-    lineHeight: 28,
+    ...Type.body,
   },
   hero: {
     fontFamily: Fonts.display,
-    fontSize: 40,
-    lineHeight: 44,
+    ...Type.numeral,
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 25,
-    lineHeight: 30,
+    ...Type.title,
   },
   subtitle: {
     fontFamily: Fonts.display,
-    fontSize: 20,
-    lineHeight: 25,
+    ...Type.heading,
   },
-  sectionTitle: {
-    fontFamily: Fonts.display,
-    fontSize: 18,
-    lineHeight: 23,
-  },
-  // The one tier that stays close to where it was, and the one place emphasis
-  // survives the loss of a bold: with a single weight in the family, caps plus
-  // tracking is what an eyebrow has left to be an eyebrow with. The tracking
-  // runs looser than the sans needed — a hand-drawn face has irregular
-  // sidebearings, and the extra space is what keeps caps from clotting.
+  // The caption size in caps, and the one place emphasis survives the loss of a
+  // bold: with a single weight in the family, caps plus tracking is what an
+  // eyebrow has left to be an eyebrow with. The tracking runs loose because
+  // caps set at a caption size clot together without it.
   eyebrow: {
     fontFamily: Fonts.semibold,
-    fontSize: 12,
-    lineHeight: 18,
+    ...Type.caption,
     textTransform: "uppercase",
     letterSpacing: 1.4,
   },
   small: {
     fontFamily: Fonts.body,
-    fontSize: 15,
-    lineHeight: 24,
+    ...Type.caption,
   },
   smallBold: {
     fontFamily: Fonts.semibold,
-    fontSize: 15,
-    lineHeight: 24,
+    ...Type.caption,
   },
-  link: {
-    fontFamily: Fonts.body,
-    lineHeight: 28,
-    fontSize: 16,
-  },
+  // The body tier in the semibold cut; the brand colour is applied above rather
+  // than here, because it is the one tier whose colour is not the caller's to
+  // choose.
   linkPrimary: {
     fontFamily: Fonts.semibold,
-    lineHeight: 28,
-    fontSize: 16,
-  },
-  code: {
-    fontFamily: Fonts.mono,
-    fontWeight:
-      Platform.select({ android: "700" as const }) ?? ("500" as const),
-    fontSize: 12,
+    ...Type.body,
   },
 });

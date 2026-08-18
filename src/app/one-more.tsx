@@ -265,8 +265,8 @@ export default function OneMoreScreen() {
 
 const styles = StyleSheet.create({
   content: {
-    gap: Spacing.five,
-    paddingBottom: Spacing.four,
+    gap: Spacing.four,
+    paddingBottom: Spacing.five,
   },
   heading: {
     gap: Spacing.two,

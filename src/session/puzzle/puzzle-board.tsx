@@ -395,7 +395,7 @@ const styles = StyleSheet.create({
   control: {
     width: 56,
     height: CONTROL_HEIGHT,
-    borderRadius: Radius.md,
+    borderRadius: Radius.button,
     borderWidth: StyleSheet.hairlineWidth * 2,
     alignItems: 'center',
     justifyContent: 'center',
@@ -408,7 +408,7 @@ const styles = StyleSheet.create({
   place: {
     flex: 1,
     height: CONTROL_HEIGHT,
-    borderRadius: Radius.pill,
+    borderRadius: Radius.button,
     alignItems: 'center',
     justifyContent: 'center',
   },

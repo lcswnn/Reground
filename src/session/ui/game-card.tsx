@@ -29,7 +29,7 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
   const body = (
     <>
       <View style={styles.heading}>
-        <ThemedText type="sectionTitle" style={styles.title}>
+        <ThemedText type="subtitle" style={styles.title}>
           {title}
         </ThemedText>
         {locked ? (
@@ -83,9 +83,9 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
 const styles = StyleSheet.create({
   card: {
     padding: Spacing.four,
-    borderRadius: Radius.lg,
+    borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth * 2,
-    gap: Spacing.one,
+    gap: Spacing.two,
   },
   // Sits *in* the page rather than on it — the unlocked cards are lifted off
   // the background, so a flat one reads as out of reach without needing to be

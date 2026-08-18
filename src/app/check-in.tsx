@@ -120,6 +120,6 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     borderRadius: Radius.md,
     borderWidth: StyleSheet.hairlineWidth * 2,
-    gap: Spacing.one,
+    gap: Spacing.two,
   },
 });
