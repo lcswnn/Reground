@@ -119,10 +119,10 @@ const styles = StyleSheet.create({
   },
   deltaText: {
     fontFamily: Fonts.semibold,
-    fontSize: 16,
+    fontSize: 14,
   },
   provenance: {
-    fontSize: 15,
+    fontSize: 13,
     lineHeight: 20,
   },
   sourceLink: {

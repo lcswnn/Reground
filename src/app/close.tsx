@@ -70,11 +70,12 @@ const styles = StyleSheet.create({
   root: {
     gap: Spacing.three,
   },
-  // One step above the body tier's 19/28, holding the same ~1.4 rhythm. Not a
-  // named tier because the body face has nothing between `default` and the
-  // display headings, and this line wants the reading face, not a heading.
+  // One step above the body tier's 17/28. Not a named tier because the body
+  // face has nothing between `default` and the display headings, and this line
+  // wants the reading face, not a heading. Came down 2pt with the rest of the
+  // scale; the line height stayed, same as it did everywhere else.
   idea: {
-    fontSize: 22,
+    fontSize: 20,
     lineHeight: 31,
   },
   ideaLabel: {

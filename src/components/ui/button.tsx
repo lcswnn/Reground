@@ -106,7 +106,7 @@ const styles = StyleSheet.create({
     // the one place in the app that should read as heavier than the copy around
     // it, and the serif this replaced had no weight between regular and bold.
     fontFamily: Fonts.semibold,
-    fontSize: 19,
+    fontSize: 17,
   },
   pressed: {
     // Just a shade off, now that the press is a movement. This used to be 0.75

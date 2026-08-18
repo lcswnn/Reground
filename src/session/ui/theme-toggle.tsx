@@ -28,7 +28,7 @@ import { StyleSheet, View } from 'react-native';
 import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { APPEARANCE } from '@/content/strings';
-import { Spacing } from '@/constants/theme';
+import { ChromeLabelSize, Spacing } from '@/constants/theme';
 import { useThemePreference, type ThemePreference } from '@/lib/theme-preference';
 import { tickSelection } from '@/session/ui/haptics';
 
@@ -46,7 +46,7 @@ export function ThemeToggle() {
         return (
           <Fragment key={mode}>
             {index > 0 ? (
-              <ThemedText type="small" themeColor="textMuted">
+              <ThemedText type="small" themeColor="textMuted" style={styles.label}>
                 {APPEARANCE.separator}
               </ThemedText>
             ) : null}
@@ -67,7 +67,10 @@ export function ThemeToggle() {
                   difference between the two, and enough of one: they are a pair
                   of words a thumb's width apart, so the eye is comparing them
                   rather than reading either on its own. */}
-              <ThemedText type="small" themeColor={active ? 'text' : 'textMuted'}>
+              <ThemedText
+                type="small"
+                themeColor={active ? 'text' : 'textMuted'}
+                style={styles.label}>
                 {APPEARANCE[mode]}
               </ThemedText>
             </PressableScale>
@@ -93,6 +96,12 @@ const styles = StyleSheet.create({
   option: {
     paddingHorizontal: Spacing.one,
     paddingVertical: Spacing.one,
+  },
+  // Both words and the separator between them, so the row scales as one thing.
+  // A couple of points above the `small` tier — see `ChromeLabelSize`, which the
+  // back button opposite reads off too.
+  label: {
+    fontSize: ChromeLabelSize,
   },
   // Shallower than the 0.6 it was, matching the back button opposite it — the
   // press moves now, and these two have to keep feeling like the same control.

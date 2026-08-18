@@ -22,7 +22,7 @@
  * breath" is read at the speed of any other sentence; this one can't be.
  */
 export const WELCOME = {
-  line: "Let's take a breath together.",
+  line: "Let's unwind together.",
 } as const;
 
 /**

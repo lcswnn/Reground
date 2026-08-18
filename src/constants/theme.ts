@@ -182,14 +182,16 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * `display` uses the 600 as well — a heading wants the extra weight more than
  * it wants the extra points.
  *
- * ## The type scale is inherited and is worth a second look
+ * ## The type scale is no longer inherited
  *
- * Every size in `themed-text.tsx` sits ~10% above where it ran before Playpen
- * Sans, bought at the time to give that handwriting face's irregular
- * letterforms room to be read. Neither Fredoka nor Literata needs the room,
- * but the sizes were left alone through both swaps — a type scale is its own
- * decision and worth making on a device, not folded into a family change. If
- * the app reads a touch large, that inherited bump is where it comes from.
+ * Every size in `themed-text.tsx` used to sit ~10% above where it ran before
+ * Playpen Sans, bought at the time to give that handwriting face's irregular
+ * letterforms room to be read. Neither Fredoka nor Literata needed the room,
+ * and the bump rode through both swaps untouched because a type scale is its
+ * own decision and worth making on a device rather than folded into a family
+ * change. It has since been made: 2pt came off every tier. The line heights
+ * stayed where they were, so the leading is looser than it was drawn for —
+ * see the note above `styles` in `themed-text.tsx`.
  */
 export const LiterataRegular = "Literata_400Regular";
 export const LiterataSemiBold = "Literata_600SemiBold";
@@ -263,3 +265,18 @@ export const Radius = {
  */
 export const BottomTabInset = Spacing.two;
 export const MaxContentWidth = 800;
+
+/**
+ * The two controls in the chrome row — `BackButton` top-left and `ThemeToggle`
+ * top-right — are drawn to match each other deliberately, so the one thing that
+ * would break the match if it drifted lives here rather than in either file.
+ *
+ * They run a couple of points above the `small` tier they otherwise use. That
+ * tier is body copy in fifty-odd other places and cannot move on their account,
+ * but these two are not copy: they are the only tappable words on most screens,
+ * they sit muted in the corners where the eye is not looking, and at the `small`
+ * size they read as a caption someone has to hunt for rather than as a control.
+ * The extra size is what makes them findable without giving them chrome, which
+ * is the thing both files are at pains not to do.
+ */
+export const ChromeLabelSize = 17;

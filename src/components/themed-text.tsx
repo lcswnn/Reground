@@ -81,48 +81,63 @@ export function ThemedText({
 // tiers are separated by size, colour and caps — see the note on `Fonts` in
 // `constants/theme.ts`.
 //
-// Every size sits ~10% above what the same tier ran at in Nunito. That bump was
-// bought for Playpen Sans, a handwriting face whose irregular letterforms
-// needed the room; neither Fredoka nor Literata does, so the sizes here are
-// now larger than the face strictly asks for. They were left alone through
-// both swaps — a type scale is its own decision and wants judging on a device,
-// not alongside a family change. The line heights did *not* grow with the
-// sizes: the extra point size fills the leading, and holding them steady
-// keeps the generous ~1.5 rhythm that makes the screen feel unhurried, which
-// is the whole point of the app.
+// Every size here has now had 2pt taken off it, which is the type scale finally
+// being judged on its own rather than inherited. The sizes it inherited sat
+// ~10% above what the same tier ran at in Nunito — a bump bought for Playpen
+// Sans, a handwriting face whose irregular letterforms needed the room. Neither
+// Fredoka nor Literata does, and the bump rode through both swaps untouched
+// because a type scale wants deciding on a device, not alongside a family
+// change. This is that decision: the serif reads a size larger than the sans
+// did at the same point size, so the tiers land where the sans's did.
+//
+// ## The leading is split down the middle, on purpose
+//
+// The four display tiers are set tight and the reading tiers stay loose, which
+// is the one real rule in this file. A heading that wraps is a single phrase
+// broken by the width of the phone, not two thoughts, and it has to read as one
+// object — so `title` runs 25 on 30 and the tiers around it hold the same
+// ~1.2, tightening as the type gets bigger the way display type wants to.
+// They used to run at ~1.65, which is body leading wearing a heading's clothes:
+// every two-line question on `/check-in`, `/mood`, `/topic` and `/close` fell
+// apart into two separate lines with a corridor between them.
+//
+// The reading tiers did not move and should not. `default` is 15 on 28 — looser
+// than the ~1.5 it was drawn for, since the sizes came down 2pt and the line
+// heights stayed — and that generosity is the point of the app everywhere the
+// user is actually reading rather than being addressed.
 const styles = StyleSheet.create({
   // Body moves with the small tier rather than staying put: `small` matching it
   // would make the two types indistinguishable and quietly flatten every screen
   // that pairs them.
   default: {
     fontFamily: Fonts.body,
-    fontSize: 17,
+    fontSize: 15,
     lineHeight: 28,
   },
   defaultSemiBold: {
     fontFamily: Fonts.semibold,
-    fontSize: 19,
+    fontSize: 17,
     lineHeight: 28,
   },
   hero: {
     fontFamily: Fonts.display,
-    fontSize: 42,
-    lineHeight: 50,
+    fontSize: 40,
+    lineHeight: 44,
   },
   title: {
     fontFamily: Fonts.display,
-    fontSize: 27,
-    lineHeight: 41,
+    fontSize: 25,
+    lineHeight: 30,
   },
   subtitle: {
     fontFamily: Fonts.display,
-    fontSize: 22,
-    lineHeight: 33,
+    fontSize: 20,
+    lineHeight: 25,
   },
   sectionTitle: {
     fontFamily: Fonts.display,
-    fontSize: 20,
-    lineHeight: 30,
+    fontSize: 18,
+    lineHeight: 23,
   },
   // The one tier that stays close to where it was, and the one place emphasis
   // survives the loss of a bold: with a single weight in the family, caps plus
@@ -131,35 +146,35 @@ const styles = StyleSheet.create({
   // sidebearings, and the extra space is what keeps caps from clotting.
   eyebrow: {
     fontFamily: Fonts.semibold,
-    fontSize: 14,
+    fontSize: 12,
     lineHeight: 18,
     textTransform: "uppercase",
     letterSpacing: 1.4,
   },
   small: {
     fontFamily: Fonts.body,
-    fontSize: 17,
+    fontSize: 15,
     lineHeight: 24,
   },
   smallBold: {
     fontFamily: Fonts.semibold,
-    fontSize: 17,
+    fontSize: 15,
     lineHeight: 24,
   },
   link: {
     fontFamily: Fonts.body,
     lineHeight: 28,
-    fontSize: 18,
+    fontSize: 16,
   },
   linkPrimary: {
     fontFamily: Fonts.semibold,
     lineHeight: 28,
-    fontSize: 18,
+    fontSize: 16,
   },
   code: {
     fontFamily: Fonts.mono,
     fontWeight:
       Platform.select({ android: "700" as const }) ?? ("500" as const),
-    fontSize: 14,
+    fontSize: 12,
   },
 });
