@@ -162,8 +162,8 @@ export const BREATHE_INTRO = {
    * What the breath is, in the two lines it takes to say it.
    *
    * Naming the technique is not the same as explaining it, and this screen was
-   * doing only the first. Someone about to hand a minute to an app is owed the
-   * shape of what they are copying before the circle starts moving — the
+   * doing only the first. Someone about to hand half a minute to an app is owed
+   * the shape of what they are copying before the circle starts moving — the
    * `leadInMs` hold exists because arriving mid-inhale means spending the first
    * cycle working it out, and reading it beforehand removes the rest of that.
    *
@@ -176,10 +176,12 @@ export const BREATHE_INTRO = {
    * The other half of "what to expect": how long, and what to watch.
    *
    * The count comes from `BREATH_CYCLES` rather than being written out, so the
-   * promise can't drift from the timings in `@/config/session`. "About a
-   * minute" is held to `BREATHING.totalMs` by `strings.test.ts` for the same
-   * reason — being told a minute and given two is worse than being told
-   * nothing.
+   * promise can't drift from the timings in `@/config/session`. "About half a
+   * minute" is held to the same numbers by `strings.test.ts` for the same
+   * reason — being told half a minute and given two is worse than being told
+   * nothing. Both halves moved together when the breath came down from six
+   * rounds to three: the count because it is interpolated, the length because
+   * the test stopped passing.
    *
    * This used to end "…and Tully breathes with it", which stopped being true
    * the moment `SHOW_TULLY` went false in `breathing-guide.tsx`: the line
@@ -187,7 +189,7 @@ export const BREATHE_INTRO = {
    * when the flag goes back up — it belongs with it, not without it.
    */
   shape: (rounds: number) =>
-    `${rounds} rounds, about a minute. The circle grows as you breathe in and shrinks as you breathe out.`,
+    `${rounds} rounds, about half a minute. The circle grows as you breathe in and shrinks as you breathe out.`,
   /** Under the button, quiet. The screen waits: nothing starts on arrival. */
   hint: "Tap start to begin.",
   start: "Start",
@@ -379,6 +381,90 @@ export const MERGE_TILES = {
     { name: "left", label: "Slide left" },
     { name: "right", label: "Slide right" },
   ],
+} as const;
+
+/**
+ * Line Up Three — the casual match puzzle on the calm shelf.
+ *
+ * The prompt is one sentence because most people arriving at this board have
+ * played some version of it before, and the ones who have not will have the
+ * rule after one swap. It does not mention points, a target, a level or a
+ * combo: this shelf keeps no score, and a prompt that promised one would be the
+ * score wearing a different hat.
+ *
+ * `stuck` is the line that took the arguing, and it is the same argument
+ * `MERGE_TILES.stuck` had. It shows at the moment every other game of this kind
+ * says "no more moves", and it says what is about to happen rather than what
+ * has gone wrong — no apology, and nothing that reads as a verdict on how the
+ * last few minutes went.
+ *
+ * The kind names are what a screen reader says instead of seeing the shape, so
+ * they are the shapes' plain names and not decorative ones. `cellLabel` puts the
+ * shape first, before the coordinates, because that is the part being compared
+ * with its neighbours.
+ */
+export const MATCH_THREE = {
+  prompt: "Tap two neighbours to swap them. Three in a line clears.",
+  stuck: "Nothing left to line up. The board deals itself out again.",
+  boardLabel: "A grid of shapes. Tap two neighbouring shapes to swap them.",
+  cellHint: "Swaps with the shape you tap next.",
+  empty: "Empty",
+  kinds: {
+    dot: "Circle",
+    ring: "Ring",
+    square: "Square",
+    diamond: "Diamond",
+    bar: "Bar",
+  },
+  cellLabel: (shape: string, row: number, column: number) =>
+    `${shape}, row ${row}, column ${column}`,
+} as const;
+
+/**
+ * Knock the Pegs Out — the ball-and-targets game on the calm shelf.
+ *
+ * The prompt is the two halves of the only gesture there is, in the order they
+ * happen. It says nothing about what the pegs are for, because they are not for
+ * anything: they go when they are hit, and there is no total they add up to.
+ *
+ * There is no line for a ball that hits nothing and no line for a field being
+ * cleared. The first would be the app commiserating about a thing that costs one
+ * tap, and the second would turn a field into something that can be left
+ * unfinished.
+ */
+export const PEG_DROP = {
+  prompt: "Drag to aim, then let go. The ball takes out whatever it touches.",
+  boardLabel:
+    "A field of pegs. Drag to aim the ball at the top of the board, then let go to drop it.",
+  /**
+   * Offered to a screen reader in place of the aim-and-release. Straight down is
+   * a perfectly good shot, so the action is the whole game minus the aiming —
+   * see `onAccessibilityAction` in `peg-drop.tsx`.
+   */
+  actions: [{ name: "drop", label: "Drop the ball" }],
+} as const;
+
+/**
+ * Open the Flowers — the atmospheric one on the calm shelf.
+ *
+ * Every line here is written to promise less than it could. There is no
+ * objective in this game, so the prompt describes what happens rather than what
+ * to do, and stops before saying why. Nothing tells anyone how many flowers are
+ * left, or that a finished field is an achievement, because the moment a field
+ * has a completion in it the person playing has something they can be behind on.
+ *
+ * There is no line for the field being finished at all. It fades and another
+ * one arrives, and that is legible without being narrated — a caption there
+ * would be the app taking a bow for something the player did not set out to do.
+ */
+export const BLOOM_FIELD = {
+  prompt: "Drag anywhere. Whatever the petal passes opens.",
+  boardLabel: "A field of closed flowers. Drag across them and they open.",
+  /**
+   * Offered to a screen reader in place of the drag. `open` is the name the
+   * board matches on — see `onAccessibilityAction` in `bloom-field.tsx`.
+   */
+  actions: [{ name: "open", label: "Open a flower" }],
 } as const;
 
 /**

@@ -68,6 +68,23 @@ describe('the two shelves', () => {
     expect(gamesOfKind('calm').length).toBeGreaterThan(1);
   });
 
+  /**
+   * The shelf reads as two groups — the ones that ask for nothing but attention,
+   * then the ones that ask for a little planning — and the order is the only
+   * place that is said. See the note above `GAMES`. A new game dropped on the
+   * end would break the reading without breaking anything else, which is what
+   * this is for.
+   */
+  it('keeps the calm shelf in its two groups', () => {
+    expect(gamesOfKind('calm').map((game) => game.id)).toEqual([
+      'bounce',
+      'pegs',
+      'bloom',
+      'merge',
+      'match',
+    ]);
+  });
+
   it('keeps the evidence-backed puzzle at the head of the other one', () => {
     expect(gamesOfKind('visuospatial')[0]?.id).toBe('shapes');
   });

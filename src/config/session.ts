@@ -105,21 +105,32 @@ export const WELCOME_BREATH_MS =
  * the thing to preserve if these ever move — lengthening an inhale without
  * moving the exhale makes it a slower breath, not a calmer one.
  *
- * One cycle is 9.7s. `totalMs` is a target rather than a hard stop — the screen
- * runs whole cycles and ends on the nearest one, so a minute here is five
- * cycles and about 50 seconds including the lead-in. Cutting off mid-exhale to
- * hit exactly 60 would be worse than missing it.
+ * One cycle is 8.2s. `totalMs` is a target rather than a hard stop — the screen
+ * runs whole cycles and ends on the nearest one — so it is set to a whole number
+ * of them: three cycles, 24.6s, or 26s with the lead-in. Cutting off mid-exhale
+ * to hit a round number would be worse than missing it.
  *
- * That rounding has a cliff in it, which `firstInhaleMs` documents: shorten a
- * phase far enough and the round count tips up, and the breath gets *longer*.
- * The shortening below crossed exactly that line — four rounds became five, and
- * a session of shorter breaths came out three seconds longer overall rather
- * than eight shorter. That is the right trade and it was a choice: at four
- * rounds these lengths make a 40-second breath, which is under what the intro
- * screen promises.
+ * ## Why three
+ *
+ * It was six, which is the length the technique is usually studied at and about
+ * twice as long as anybody arriving at this screen wants to be held there. The
+ * sigh is the *first* thing in the session and everything after it is longer;
+ * spending a full minute on the doorstep is how somebody decides they do not
+ * have time for the rest. Three rounds is enough for the exhale to lengthen —
+ * which is the part doing the work — and short enough to read as a way in
+ * rather than as an exercise.
+ *
+ * The rounding has a cliff in it, which `firstInhaleMs` documents: move a phase
+ * far enough and the round count tips, and a session of shorter breaths comes
+ * out *longer* overall. Setting `totalMs` to exactly three cycles keeps this as
+ * far from either edge as it can be — see the band quoted below.
+ *
+ * Whatever this becomes, `BREATHE_INTRO.shape` says the count and the length out
+ * loud and `strings.test.ts` holds both against these numbers. A change here
+ * that makes the promise wrong fails there rather than shipping.
  */
 export const BREATHING = {
-  totalMs: 50_000,
+  totalMs: 24_600,
   /**
    * Stillness before the first inhale.
    *
@@ -134,27 +145,27 @@ export const BREATHING = {
   /**
    * The first inhale — full, but taken rather than drawn out.
    *
-   * Was 2.5s, then 1.8s, now 1.5s. 2.5 was a long time to be filling one
+   * Was 2.5s, then 1.8s, now 1.4s. 2.5 was a long time to be filling one
    * lungful and left people arriving at the top-up already wanting to breathe
-   * out; the two steps down since are the same complaint, quieter. The sigh is
-   * two inhales *stacked*, and the first one filling briskly is what leaves room
-   * for the second to be a real top-up rather than a formality.
+   * out; the steps down since are the same complaint, quieter. The sigh is two
+   * inhales *stacked*, and the first one filling briskly is what leaves room for
+   * the second to be a real top-up rather than a formality.
    *
    * ## Two floors, and which one bites has changed
    *
    * `secondInhaleMs` is the obvious one: these two have to stay clearly
    * different lengths, or the shape stops being a long inhale and a snatched one
-   * and becomes a single interrupted inhale. At 1.5s this still runs 2.1× the
+   * and becomes a single interrupted inhale. At 1.4s this still runs 2.3× the
    * top-up — thinner than it was, and the reason the top-up was left alone while
    * this came down.
    *
    * The other is arithmetic, and it is not obvious at all. `BREATH_CYCLES`
    * rounds `totalMs` to whole cycles, so moving a phase moves the cycle until
-   * the rounding tips. At the previous lengths the next tip was ~1,712ms, which
-   * this went straight through — hence five rounds now, not four. From here the
-   * band is wide: anywhere between about **891ms** and **2,911ms** stays at five
-   * rounds, so there is room to keep tuning this without the session length
-   * jumping underneath it.
+   * the rounding tips and the round count changes underneath the copy. With
+   * `totalMs` set to exactly three cycles that band is now very wide: anywhere
+   * between about **230ms** and **3,040ms** here still comes out at three
+   * rounds, so this can be tuned on how the breath feels without watching the
+   * session length.
    */
   firstInhaleMs: 1_400,
   /**
@@ -219,8 +230,8 @@ export const BREATH_CYCLES = Math.max(
  * deflating early would leave the user still breathing out at a Tully who had
  * stopped.
  *
- * `secondInhale` is the tight one: three beats inside 700ms, which is roughly
- * twice the shimmer rate below. That is the fastest anything here moves, and it
+ * `secondInhale` is the tight one: three beats inside 600ms, which is not far
+ * off the shimmer rate below. That is the fastest anything here moves, and it
  * is deliberate — the top-up is a snatched breath, and drawn at first-inhale
  * pace it would read as one long inhale with a stumble in it. If it ever needs
  * to breathe more, `BREATHING.secondInhaleMs` is the number to move, not this
@@ -238,20 +249,20 @@ export const TULLY = {
    */
   shimmerMs: 120,
   poseMs: {
-    // Five beats, still even, now 300 each — 500, then 360, then this, each
-    // time because `firstInhaleMs` came down and these have to re-tile it
-    // exactly or Tully drifts a little further from the circle every cycle.
-    // Five and not four: `brim` is the top of the first inhale and the only
-    // phase it appears in, so dropping a beat here would drop a drawing out of
-    // the app entirely.
-    firstInhale: [300, 300, 300, 300, 300],
-    secondInhale: [235, 235, 230],
+    // Five beats, still even, now 280 each — 500, then 360, then 300, then
+    // this, each time because `firstInhaleMs` came down and these have to
+    // re-tile it exactly or Tully drifts a little further from the circle every
+    // cycle. Five and not four: `brim` is the top of the first inhale and the
+    // only phase it appears in, so dropping a beat here would drop a drawing out
+    // of the app entirely.
+    firstInhale: [280, 280, 280, 280, 280],
+    secondInhale: [200, 200, 200],
     hold: [1_300],
     // Re-tiled for the shorter exhale, keeping the ramp: each beat is a little
     // longer than the one before, so the descent slows as it empties instead of
     // dropping at a constant rate. Sums to `exhaleMs` — the test is what says so.
-    exhale: [645, 685, 710, 725, 730, 745, 760],
-    rest: [1_000],
+    exhale: [515, 550, 565, 580, 590, 595, 605],
+    rest: [900],
   },
 } as const;
 

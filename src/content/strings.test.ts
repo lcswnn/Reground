@@ -5,17 +5,23 @@ import { BREATHE_INTRO, CLOSE, GROUNDING, pickUnwindIdea } from '@/content/strin
 
 /**
  * Also worth a test, for a different reason: this copy makes two checkable
- * promises about a minute the user has not yet agreed to spend. The round count
- * is interpolated so it cannot drift, but the prose claims — "about a minute",
- * and an exhale that "runs about twice as long" — are only true while the
- * numbers in `@/config/session` say so, and `PUZZLE`'s note makes clear those
- * numbers are expected to be retuned.
+ * promises about half a minute the user has not yet agreed to spend. The round
+ * count is interpolated so it cannot drift, but the prose claims — "about half
+ * a minute", and an exhale that "runs about twice as long" — are only true
+ * while the numbers in `@/config/session` say so, and `PUZZLE`'s note makes
+ * clear those numbers are expected to be retuned.
  */
 describe('what the breathing intro promises', () => {
-  it('is describing about a minute', () => {
+  /**
+   * The band is wide on purpose — this is guarding the phrase, not pinning the
+   * timings. Anything from about twenty seconds to about forty is a thing a
+   * person would call half a minute; the moment the run leaves that, the copy
+   * has to change with it rather than the bound being widened.
+   */
+  it('is describing about half a minute', () => {
     const actualMs = BREATH_CYCLES * BREATH_CYCLE_MS + BREATHING.leadInMs;
-    expect(actualMs).toBeGreaterThan(45_000);
-    expect(actualMs).toBeLessThan(90_000);
+    expect(actualMs).toBeGreaterThan(20_000);
+    expect(actualMs).toBeLessThan(40_000);
   });
 
   it('is describing an exhale that runs about twice the inhale', () => {

@@ -30,7 +30,10 @@ export type GameId =
   | 'mirror'
   | 'silhouette'
   | 'bounce'
+  | 'pegs'
+  | 'bloom'
   | 'merge'
+  | 'match'
   | 'maze';
 
 /**
@@ -81,11 +84,19 @@ export interface Game {
  * same idea given its own screen and a group of people it is actually the right
  * answer for.
  *
- * `merge` follows it, and the pair is the point: the ball is for someone who
- * cannot face thinking, the tiles are for someone who would rather have
- * something to think about than sit with what they were thinking about. Two
- * cards is the smallest number that makes the picker a question — it was one
- * for a while, and a question with one answer is a screen you tap through.
+ * That shelf is now five, in two groups, and the split between the groups is
+ * the only thing the order is trying to say. `bounce`, `pegs` and `bloom` ask
+ * for nothing but attention — a ball to follow, a shot to line up, a petal to
+ * drag — and they are for the person who cannot face thinking. `merge` and
+ * `match` ask for a little planning, and they are for the person who would
+ * rather have something to think about than sit with what they were thinking
+ * about.
+ *
+ * Inside each group the order runs from the most game-like to the least, which
+ * for the first three is also how much they can go wrong: the ball can be
+ * dropped, a shot can hit nothing, and a petal cannot miss. Someone scanning
+ * from the top of a group meets the one that behaves most like a game first and
+ * the gentlest one last.
  *
  * The single `premium` entry is not built. It is listed because the picker has
  * to show what a purchase would get you. Nothing can reach it while
@@ -154,12 +165,43 @@ export const GAMES: readonly Game[] = [
     tier: 'included',
   },
   {
+    id: 'pegs',
+    title: 'Knock the pegs out',
+    blurb: 'Aim from the top and let go. Whatever it hits drops out, and there is always another ball.',
+    kind: 'calm',
+    tier: 'included',
+  },
+  {
+    // No blurb here says what it is for, and this one could have: the clinical
+    // work behind it is real. It stays out because a card that opens with a
+    // health claim is a card that has to be believed before it can be tapped,
+    // and the trial it comes from is about an unhurried few minutes rather than
+    // about this particular field of flowers. The reasoning lives in
+    // `bloom/field.ts`, where it can be as long as it needs to be.
+    id: 'bloom',
+    title: 'Open the flowers',
+    blurb: 'Drag a petal across the field. Whatever it passes opens. Nothing to lose.',
+    kind: 'calm',
+    tier: 'included',
+  },
+  {
     // The blurb says "two of the same" rather than "2048" on purpose — naming
     // a tile to reach would put a target on a shelf that keeps no score. See
     // the note at the top of `merge/merge-tiles.tsx`.
     id: 'merge',
     title: 'Join the numbers',
     blurb: 'Swipe to slide the tiles. Two of the same become one, doubled.',
+    kind: 'calm',
+    tier: 'included',
+  },
+  {
+    // "Neighbours" rather than "pieces" because the one rule that is not
+    // guessable from looking at the board is that a swap has to be adjacent.
+    // Nothing about clearing a line, cascades or how the board refills — all of
+    // that explains itself the first time it happens.
+    id: 'match',
+    title: 'Line up three',
+    blurb: 'Swap two neighbours to line up three of a shape. No clock, no score.',
     kind: 'calm',
     tier: 'included',
   },

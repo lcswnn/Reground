@@ -11,12 +11,15 @@
 import type { ComponentType } from 'react';
 
 import type { GameId } from '@/session/games/catalog';
+import { BloomField } from '@/session/games/bloom/bloom-field';
 import { BounceGame } from '@/session/games/bounce-game';
 import { HiddenCubes } from '@/session/games/cubes/hidden-cubes';
+import { MatchThree } from '@/session/games/match/match-three';
 import { MergeTiles } from '@/session/games/merge/merge-tiles';
 import { MirrorComplete } from '@/session/games/mirror/mirror-complete';
 import { NetFold } from '@/session/games/net-fold/net-fold';
 import { PaperFold } from '@/session/games/paper-fold/paper-fold';
+import { PegDrop } from '@/session/games/pegs/peg-drop';
 import { RotationMatch } from '@/session/games/rotations/rotation-match';
 import { SilhouetteFit } from '@/session/games/silhouette/silhouette-fit';
 import { PuzzleBoard } from '@/session/puzzle/puzzle-board';
@@ -30,7 +33,10 @@ export const GAME_VIEWS: Partial<Record<GameId, ComponentType>> = {
   mirror: MirrorComplete,
   silhouette: SilhouetteFit,
   bounce: BounceGame,
+  pegs: PegDrop,
+  bloom: BloomField,
   merge: MergeTiles,
+  match: MatchThree,
 };
 
 export function isPlayable(id: GameId): boolean {
