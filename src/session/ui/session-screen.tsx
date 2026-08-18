@@ -5,8 +5,8 @@
  * No header beyond one thin row of chrome: a back button top-left on the
  * screens that have somewhere to go back to — see `previousRoute` for which do
  * and where each one lands — the appearance switch top-right on all of them
- * without exception, and between the two, four dots saying which part of the
- * session this is. All three are drawn here rather than by each screen so that
+ * without exception, and between the two, three dots saying which part of the
+ * session this is. All of it is drawn here rather than by each screen so that
  * they are in exactly the same place on every one, which for the switch is the
  * whole point: a control that moves between screens is a control that has to be
  * found again each time.

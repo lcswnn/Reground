@@ -5,18 +5,73 @@
  * Android build without the vibrate permission, these reject, and an unhandled
  * rejection mid-breath is a worse outcome than a missing tick.
  *
- * Six events use haptics in this app and no others: the top of each inhale, the
- * start of each exhale, placing a puzzle piece, each end of a somatic movement
- * — the 3-2-1 into it and the clock running out of it — and each tense or
- * release in progressive muscle relaxation. All six are moments where something
- * actually changed.
+ * Six things use haptics in this app and no others: the breath on both screens
+ * that pace one, placing a puzzle piece, each end of a somatic movement — the
+ * 3-2-1 into it and the clock running out of it — and each tense or release in
+ * progressive muscle relaxation. All of them are moments where something
+ * actually changed, or, in the breath's case, is changing.
  */
 
 import * as Haptics from 'expo-haptics';
 
-/** The breath cues. Deliberately the lightest thing available. */
+import {
+  planBreathPulses,
+  type BreathPhase,
+  type PulseStrength,
+} from '@/session/ui/breath-pulse';
+
+/**
+ * The boundary out of a hold — the one breath cue that is a single tap.
+ *
+ * Nothing is being paced during a hold, so there is nothing to pulse through
+ * it; what a person with their eyes shut needs is to be told when it is over.
+ * `Light`, which is the same tap the exhale opens with, because that is what
+ * usually follows one.
+ */
 export function tickBreath() {
   void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
+}
+
+const IMPACT: Record<PulseStrength, Haptics.ImpactFeedbackStyle> = {
+  soft: Haptics.ImpactFeedbackStyle.Soft,
+  light: Haptics.ImpactFeedbackStyle.Light,
+  medium: Haptics.ImpactFeedbackStyle.Medium,
+};
+
+/**
+ * A breath phase, paced in the hand: a train of pulses that builds through an
+ * inhale and falls away through an exhale.
+ *
+ * The schedule — how many, how far apart, how firm — is `planBreathPulses`,
+ * which is where the reasoning and the convention it follows are written down.
+ * This is the part that fires them.
+ *
+ * The first pulse is fired synchronously, so a phase's opening tap lands on the
+ * boundary rather than a timer's-worth after it. Returns a cancel, and both
+ * screens call it before starting the next phase and again on the way out: a
+ * train that outlives its phase is a tap arriving during the wrong instruction,
+ * which on a screen someone is following with their eyes shut is worse than no
+ * tap at all.
+ */
+export function pulseBreath(phase: BreathPhase, ms: number): () => void {
+  const timers: ReturnType<typeof setTimeout>[] = [];
+
+  for (const pulse of planBreathPulses(phase, ms)) {
+    if (pulse.at <= 0) {
+      void Haptics.impactAsync(IMPACT[pulse.strength]).catch(() => {});
+      continue;
+    }
+
+    timers.push(
+      setTimeout(() => {
+        void Haptics.impactAsync(IMPACT[pulse.strength]).catch(() => {});
+      }, pulse.at),
+    );
+  }
+
+  return () => {
+    for (const timer of timers) clearTimeout(timer);
+  };
 }
 
 /** A piece landing. */

@@ -19,12 +19,13 @@
  *
  * Three things this does differently, each because of what these patterns are:
  *
- *  - **Every phase gets a cue and a tick, including the holds.** The sigh gives
- *    its still phases neither, on the argument that nothing is being asked of
- *    anyone during them. In a box breath a hold *is* what is being asked, and
- *    the boundary out of it is the moment a person with their eyes shut most
- *    needs telling about. A hold nobody is told to end is a hold that ends when
- *    they get uncomfortable, which is the pattern falling apart.
+ *  - **Every phase gets a cue and a haptic, including the holds.** The sigh
+ *    gives its still phases neither, on the argument that nothing is being
+ *    asked of anyone during them. In a box breath a hold *is* what is being
+ *    asked, and the boundary out of it is the moment a person with their eyes
+ *    shut most needs telling about. A hold nobody is told to end is a hold that
+ *    ends when they get uncomfortable, which is the pattern falling apart. It
+ *    is a single tap rather than a train: a hold has nothing to pace.
  *  - **One easing for everything that moves.** `Easing.inOut(Easing.sin)`, which
  *    is what a paced-breathing guide is: constant speed through the middle of a
  *    phase, easing at each turn. The sigh needs four different curves because it
@@ -60,7 +61,7 @@ import { BREATHWORK_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
-import { tickBreath } from '@/session/ui/haptics';
+import { pulseBreath, tickBreath } from '@/session/ui/haptics';
 
 /**
  * Not zero, and not near it: an emptied circle reads as "finished" rather than
@@ -106,6 +107,13 @@ interface Step {
   cue: string;
   /** Holds hold. Everything else swings on the one curve. See the note above. */
   moving: boolean;
+  /**
+   * What the phase does in the hand: a train of pulses through the two that are
+   * a movement, and a single tap on the boundary of the two that are not. See
+   * `breath-pulse.ts`, and the note at the top of this file on why a hold is
+   * given a boundary here and not on the sigh.
+   */
+  kind: BreathPhaseKind;
 }
 
 interface BreathPacerProps {
@@ -130,6 +138,7 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
         scale: SCALES[phase.kind],
         cue: CUES[phase.kind],
         moving: phase.kind === 'in' || phase.kind === 'out',
+        kind: phase.kind,
       })),
     [pattern],
   );
@@ -151,6 +160,8 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
     let index = 0;
     let timeout: ReturnType<typeof setTimeout> | undefined;
     let cancelled = false;
+    /** The pulse train of the phase now running. Stopped before the next one. */
+    let stopPulses: (() => void) | undefined;
 
     // Delayed by the same lead-in as the breath, so the line starts moving when
     // the first inhale does rather than while the circle is still.
@@ -176,8 +187,17 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
       const current = cycle[index % cycle.length];
       setStep(index);
 
-      // Every boundary, holds included. See the note at the top of this file.
-      tickBreath();
+      // Every boundary is marked, holds included — see the note at the top of
+      // this file. What differs is what happens after it: the two phases that
+      // are a movement are paced all the way through, and a hold is left silent
+      // until its own end.
+      stopPulses?.();
+      if (current.kind === 'in' || current.kind === 'out') {
+        stopPulses = pulseBreath(current.kind === 'in' ? 'inhale' : 'exhale', current.ms);
+      } else {
+        stopPulses = undefined;
+        tickBreath();
+      }
 
       // Honouring Reduce Motion by holding the circle still rather than by
       // animating it more gently: someone who asked the system to stop things
@@ -200,6 +220,7 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
     return () => {
       cancelled = true;
       if (timeout) clearTimeout(timeout);
+      stopPulses?.();
     };
   }, [cycle, pattern, progress, reducedMotion, scale]);
 

@@ -1,17 +1,16 @@
 /**
- * Four dots at the top of every session screen: how much of this is left.
+ * Three dots at the top of every session screen: how much of this is left.
  *
- * The session is four parts long — the breath, the puzzle, the one more thing,
- * and the end — and until this existed there was no way to know that from
- * inside it. Someone who has answered two questions and been asked to breathe
+ * The session is three parts long — the breath, the puzzle, the one more thing
+ * — and until this existed there was no way to know that from inside it. Someone who has answered two questions and been asked to breathe
  * has no idea whether they are near the end or at the start of something that
  * keeps going, and "how long is this" is exactly the question a person who
- * opened this app wound up is least able to sit with. Four dots answer it
+ * opened this app wound up is least able to sit with. Three dots answer it
  * without a number, a percentage or a countdown, none of which this app should
  * be putting in front of anyone.
  *
  * Which screen belongs to which part is decided in `routing.ts` and not here —
- * see `stageOf`. This file only knows how to draw a row of four.
+ * see `stageOf`. This file only knows how to draw a row of them.
  *
  * ## Filled means reached, and that is the whole language
  *
@@ -19,8 +18,8 @@
  * filled dot is where you are and the hollow ones are what is left. There is no
  * third state for "currently in" — the palette is ink on paper with no accent
  * to spend on one, and a row of three subtly different circles is a puzzle
- * rather than an answer. The fourth fills on the closing screen, which is the
- * only screen where all four are.
+ * rather than an answer. The last one fills when the last part is reached, and
+ * the row is complete from there to the end of the session.
  *
  * Nothing animates. A dot that fills with a flourish is a reward, this is not a
  * streak, and the one screen where the row changes under the user's eye is the

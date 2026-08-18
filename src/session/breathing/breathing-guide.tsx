@@ -8,9 +8,12 @@
  * part that actually moves you toward the parasympathetic side.
  *
  * The phase machine runs in JS rather than as a single Reanimated sequence,
- * because the haptics have to fire on phase boundaries and a worklet sequence
- * gives no clean hook for that. The circle itself is still animated on the UI
- * thread; only the four transitions per cycle cross back.
+ * because the haptics have to be scheduled per phase and a worklet sequence
+ * gives no clean hook for that. Each moving phase starts a train of pulses that
+ * builds through an inhale and falls away through an exhale — see
+ * `breath-pulse.ts` — and the still ones start nothing. The circle itself is
+ * still animated on the UI thread; only the four transitions per cycle cross
+ * back.
  *
  * Tully, on the top half, is driven from the same machine. They are drawn rather
  * than animated — nine poses, and the breath is which one is showing — so they
@@ -45,7 +48,8 @@ import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
 import { BreathingTully } from '@/session/breathing/breathing-tully';
 import { LEAD_IN_POSE, STILL_POSE, TULLY_CYCLE } from '@/session/breathing/tully-cycle';
-import { tickBreath } from '@/session/ui/haptics';
+import { type BreathPhase } from '@/session/ui/breath-pulse';
+import { pulseBreath } from '@/session/ui/haptics';
 
 type Phase = 'inhale-1' | 'inhale-2' | 'hold' | 'exhale' | 'rest';
 
@@ -109,8 +113,14 @@ interface Step {
   ms: number;
   scale: number;
   easing: (value: number) => number;
-  /** The two still phases get no tick — nothing is being asked of anyone. */
-  haptic: boolean;
+  /**
+   * Which way the phase is going, in the hand: a train of pulses that builds
+   * through it or falls away through it. `null` for the two still phases, which
+   * get nothing — nothing is being asked of anyone during them, and unlike a
+   * breathwork hold they are not a step to be told the end of. See
+   * `breath-pulse.ts`.
+   */
+  pulse: BreathPhase | null;
   cue: string | null;
 }
 
@@ -140,7 +150,7 @@ const CYCLE: readonly Step[] = [
     // `bezierFn`, not `bezier`: the latter returns a factory, and every other
     // entry in this table is a plain easing function.
     easing: Easing.bezierFn(0.33, 0, 0.55, 0.85),
-    haptic: true,
+    pulse: 'inhale',
     cue: BREATHING_COPY.inhale,
   },
   {
@@ -150,7 +160,8 @@ const CYCLE: readonly Step[] = [
     ms: BREATHING.secondInhaleMs,
     scale: 1,
     easing: Easing.in(Easing.quad),
-    haptic: true,
+    // Too short for a train — one firm tap at the top-up, which is what it is.
+    pulse: 'inhale',
     cue: BREATHING_COPY.secondInhale,
   },
   {
@@ -161,7 +172,7 @@ const CYCLE: readonly Step[] = [
     ms: BREATHING.holdMs,
     scale: 1,
     easing: Easing.linear,
-    haptic: false,
+    pulse: null,
     cue: null,
   },
   {
@@ -169,7 +180,7 @@ const CYCLE: readonly Step[] = [
     ms: BREATHING.exhaleMs,
     scale: MIN_SCALE,
     easing: Easing.inOut(Easing.quad),
-    haptic: true,
+    pulse: 'exhale',
     cue: BREATHING_COPY.exhale,
   },
   {
@@ -177,7 +188,7 @@ const CYCLE: readonly Step[] = [
     ms: BREATHING.restMs,
     scale: MIN_SCALE,
     easing: Easing.linear,
-    haptic: false,
+    pulse: null,
     cue: null,
   },
 ];
@@ -250,6 +261,8 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     // and they are replaced wholesale on every phase change.
     let poseTimers: ReturnType<typeof setTimeout>[] = [];
     let cancelled = false;
+    /** The pulse train of the phase now running. Stopped before the next one. */
+    let stopPulses: (() => void) | undefined;
 
     const clearPoses = () => {
       for (const id of poseTimers) clearTimeout(id);
@@ -299,7 +312,12 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
       const current = CYCLE[index % CYCLE.length];
       setStep(index);
 
-      if (current.haptic) tickBreath();
+      // The old train first, in case a phase was cut short — its remaining taps
+      // belong to an instruction that is no longer on screen.
+      stopPulses?.();
+      stopPulses = current.pulse
+        ? pulseBreath(current.pulse, current.ms)
+        : undefined;
 
       // Honouring Reduce Motion by holding the circle still, rather than by
       // animating it more gently: someone who asked the system to stop things
@@ -330,6 +348,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
       cancelled = true;
       if (timeout) clearTimeout(timeout);
       clearPoses();
+      stopPulses?.();
     };
   }, [progress, reducedMotion, scale]);
 

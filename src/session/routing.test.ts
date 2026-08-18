@@ -252,8 +252,8 @@ describe('moodOutcome', () => {
 });
 
 describe('stageOf', () => {
-  it('counts four parts, in the order the session runs them', () => {
-    expect(SESSION_STAGES).toEqual(['breath', 'game', 'oneMore', 'done']);
+  it('counts three parts, in the order the session runs them', () => {
+    expect(SESSION_STAGES).toEqual(['breath', 'game', 'oneMore']);
   });
 
   it('puts the opening questions in the part they lead into', () => {
@@ -282,9 +282,13 @@ describe('stageOf', () => {
     expect(stageOf('/check-in')).toBe('oneMore');
   });
 
-  it('fills the last dot on the closing screen and nowhere before it', () => {
-    expect(stageOf('/close')).toBe('done');
-    expect(stageIndex('done')).toBe(SESSION_STAGES.length - 1);
+  /**
+   * Finishing is not a fourth part. The row fills on the last thing the user
+   * actually does and stays full through the end of the session.
+   */
+  it('ends on the last part rather than adding one for the end', () => {
+    expect(stageOf('/close')).toBe('oneMore');
+    expect(stageIndex('oneMore')).toBe(SESSION_STAGES.length - 1);
   });
 
   /**
@@ -300,7 +304,7 @@ describe('stageOf', () => {
 describe('stageOfPath', () => {
   it('answers for a path off the router', () => {
     expect(stageOfPath('/breathe')).toBe('breath');
-    expect(stageOfPath('/close')).toBe('done');
+    expect(stageOfPath('/close')).toBe('oneMore');
   });
 
   it('treats anything it does not recognise as outside the session', () => {
@@ -311,6 +315,6 @@ describe('stageOfPath', () => {
 
 describe('stageIndex', () => {
   it('runs from nought in flow order', () => {
-    expect(SESSION_STAGES.map(stageIndex)).toEqual([0, 1, 2, 3]);
+    expect(SESSION_STAGES.map(stageIndex)).toEqual([0, 1, 2]);
   });
 });

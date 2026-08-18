@@ -1096,7 +1096,7 @@ export const CLOSED = {
 /**
  * The dots at the top of every session screen, in words.
  *
- * Nothing here is drawn — the indicator is four dots and no labels, because a
+ * Nothing here is drawn — the indicator is three dots and no labels, because a
  * row of captions at the top of a screen that is asking someone how anxious
  * they are is a second thing to read before the first one. The names exist for
  * the screen reader, which cannot see that a dot is filled, and the sentence is
@@ -1106,8 +1106,7 @@ export const PROGRESS = {
   breath: "Breathing",
   game: "Puzzle",
   oneMore: "One more thing",
-  done: "Done",
-  /** Read out in place of the dots, which are four unlabelled circles. */
+  /** Read out in place of the dots, which are three unlabelled circles. */
   label: (name: string, step: number, total: number) =>
     `${name}. Part ${step} of ${total}.`,
 } as const;

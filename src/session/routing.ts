@@ -144,20 +144,22 @@ export type SessionRoute =
   | '/closed';
 
 /**
- * The four parts of a session, in the order they happen — and what the dots at
+ * The three parts of a session, in the order they happen — and what the dots at
  * the top of every screen are counting.
  *
- * The session is longer than four screens, so this is not a screen counter: it
+ * The session is longer than three screens, so this is not a screen counter: it
  * is the answer to 'how much of this is left', which is a different and much
  * shorter list. The opening questions belong to the breath they lead into, the
  * cue and the calibration belong to the game they wrap, and the second rating
  * belongs there too — none of them is a part of the session in the sense a user
  * would count. Nobody arrives at `/topic` thinking they are two steps in.
  *
- * `done` is the fourth: it is filled on the closing screen and nowhere else, so
- * the last dot means the thing it looks like it means.
+ * There is no fourth part for the end. Finishing is not a step somebody does —
+ * the third dot fills when the last thing is reached and the row is simply
+ * complete from there, which is what a finished thing looks like. A dot that
+ * lit up on the closing screen was counting the session's own paperwork.
  */
-export const SESSION_STAGES = ['breath', 'game', 'oneMore', 'done'] as const;
+export const SESSION_STAGES = ['breath', 'game', 'oneMore'] as const;
 
 export type SessionStage = (typeof SESSION_STAGES)[number];
 
@@ -193,7 +195,9 @@ const STAGE_BY_ROUTE: Record<SessionRoute, SessionStage | null> = {
   // only reason it is ever reached.
   '/one-more': 'oneMore',
   '/check-in': 'oneMore',
-  '/close': 'done',
+  // The end of the last part rather than a part of its own: the row is already
+  // full by the time anyone gets here, and it stays that way.
+  '/close': 'oneMore',
   '/closed': null,
 };
 
