@@ -57,7 +57,7 @@ const mark = require("../../../assets/icon-no-bg.png");
 
 /**
  * `expo.splash.backgroundColor` in `app.json`, and not `Colors.light.background`
- * — the two are a shade apart (`#F3F0E7` against `#F4F4F0`) and it is the splash
+ * — the two are a shade apart (`#F3F0E7` against `#F0EBDE`) and it is the splash
  * this has to match, since that is what goes away onto it. The difference leaves
  * with the veil's own fade.
  */
