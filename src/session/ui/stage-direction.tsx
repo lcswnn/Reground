@@ -19,8 +19,15 @@
  * impression, and a sentence set at reading size in the middle of an empty page
  * reads as a caption to a picture that failed to load.
  *
- * So the opening takes `framed`: the title tier, full ink, and a short rule
- * above and below it. Everything the frame does is say *this is deliberate* —
+ * So the opening takes `framed`: the heading tier, full ink, and a short rule
+ * above and below it. It ran a tier higher than that for a while, at the screen
+ * title's 28, which is the size a line gets when it is the only thing on the
+ * page. This one is not quite that: it is a sentence about what the next four
+ * minutes are, and set at 28 it wrapped to three lines on a phone and read as a
+ * headline being announced rather than as the app saying hello. At 20 it holds
+ * on two, and the frame is doing more of the work of placing it than the size
+ * is — which is what the frame is for. Everything the frame does is say *this
+ * is deliberate* —
  * a line with nothing around it is ambiguous about whether it was placed or
  * merely left there, and two hairlines are the cheapest way in typography to
  * settle that. The rules are deliberately far shorter than the text they hold,
@@ -30,8 +37,8 @@
  * itself and is shared with the breath's intro screen.
  *
  * The voice is unchanged. It is the same sentence in the same reading cut the
- * closing line is set in — see `readingCut`, which holds the title tier's size
- * and hands back its weight — given the size the moment actually has.
+ * closing line is set in — see `readingCut`, which holds the tier's size and
+ * hands back its weight — given the size the moment actually has.
  */
 
 import { StyleSheet, View } from "react-native";
@@ -43,9 +50,9 @@ import { Rule } from "@/session/ui/rule";
 interface StageDirectionProps {
   children: string;
   /**
-   * The opening treatment: title tier, full ink, a rule above and below. Off by
-   * default, which is the closing line — see the note above on why the two ends
-   * stopped matching.
+   * The opening treatment: heading tier, full ink, a rule above and below. Off
+   * by default, which is the closing line — see the note above on why the two
+   * ends stopped matching.
    */
   framed?: boolean;
 }
@@ -56,7 +63,7 @@ export function StageDirection({ children, framed = false }: StageDirectionProps
       {framed ? <Rule /> : null}
 
       <ThemedText
-        type={framed ? "title" : "default"}
+        type={framed ? "subtitle" : "default"}
         themeColor={framed ? "text" : "textMuted"}
         style={[styles.line, framed && readingCut]}>
         {children}
@@ -80,7 +87,7 @@ const styles = StyleSheet.create({
   },
   // The rules sit off the text by a block's gap rather than a line's: they are
   // not another line of the sentence, and at a line's distance they crowd the
-  // ascenders and descenders of a title-sized face.
+  // ascenders and descenders of a display-sized face.
   framed: {
     gap: Spacing.three,
   },

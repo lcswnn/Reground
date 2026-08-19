@@ -9,9 +9,12 @@
  * the question lands on a person who has been breathing rather than on one who
  * has just picked the phone up.
  *
- * No back button, which is why `useSessionBack` isn't called here — behind this
- * is a minute-long breath that is already done, and a button that costs a
- * minute to press is a second start button rather than a way back. See
+ * The back button goes to `/breathe-intro`, not to the breath. This screen had
+ * none at all for a while, on the argument that everything behind it is either
+ * a timed line or a breath already taken — but this is the first screen that
+ * asks the user for something, and a question with no way back off it reads as
+ * a form. The breath's front door is a still page with a Start button, so the
+ * cost of pressing back here is a tap rather than another half-minute. See
  * `previousRoute`.
  *
  * Tapping an answer advances immediately rather than arming a Start button.
@@ -30,11 +33,13 @@ import { OptionCard } from '@/session/ui/option-card';
 import { OptionList } from '@/session/ui/option-list';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { needsTopic } from '@/session/routing';
+import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 
 export default function EntryScreen() {
   const router = useRouter();
   const { begin } = useSessionFlow();
+  const back = useSessionBack('/category');
 
   const choose = (category: Category) => {
     begin(category);
@@ -44,7 +49,7 @@ export default function EntryScreen() {
   };
 
   return (
-    <SessionScreen centered>
+    <SessionScreen centered onBack={back}>
       <View style={styles.root}>
         <ThemedText type="title">{ENTRY.title}</ThemedText>
 

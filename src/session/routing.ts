@@ -262,10 +262,21 @@ export interface BackContext {
  *    again, which is a back button that does nothing. `reachesReactivation` is
  *    the one answer both this and the cue screen read.
  *
- * And one screen that stopped having a target for the same reason: `/category`
- * used to return to the door, which was a line and a button. The door now moves
- * on a timer, so going back to it lands on a screen that walks forward again a
- * few seconds later — the `/games` case above, with the bounce slowed down.
+ *  - `/category` goes back to `/breathe-intro` for the same reason, and it is
+ *    the third screen pointed there rather than at the breath. It had no target
+ *    at all for a while, on the argument that everything behind the first
+ *    question is either a timed line or a breath already taken, so a back button
+ *    there costs half a minute to press. What that argument missed is that this
+ *    is the first screen in the session that *asks* for something, and the first
+ *    place someone can want out of an answer they have not given yet. A screen
+ *    with a question on it and no way back is a screen that reads as a form. The
+ *    intro is a still page with a Start button, so the cost of landing there is
+ *    a tap, not a minute — and skipping the breath from there is already
+ *    offered on the breath itself.
+ *
+ * The door is the one thing nothing points back at: it moves on a timer, so any
+ * button aimed at it lands on a screen that walks forward again a few seconds
+ * later — the `/games` case above, with the bounce slowed down.
  */
 export function previousRoute(
   route: SessionRoute,
@@ -273,19 +284,19 @@ export function previousRoute(
 ): SessionRoute | null {
   switch (route) {
     // The door starts nothing, and the dead end has already cleared the
-    // session. Neither has anything behind it worth returning to. Two more
-    // join them for the same reason in different words: the breath's front
-    // door has only the timed line behind it, which would just walk forward
-    // again — and the first question has only the breath, which is a minute
-    // long and already done. A back button that costs a minute to press is not
-    // a way back, it is a second start button.
+    // session. Neither has anything behind it worth returning to. The breath's
+    // front door joins them: the only thing behind it is the timed line, which
+    // would just walk forward again.
     case '/':
     case '/breathe-intro':
-    case '/category':
     case '/closed':
       return null;
 
+    // Both back to the breath's front door rather than to the breath — see
+    // above. It is the step's own still page, and it is a tap away from either
+    // starting the breath again or leaving it alone.
     case '/breathe':
+    case '/category':
       return '/breathe-intro';
     case '/topic':
       return '/category';

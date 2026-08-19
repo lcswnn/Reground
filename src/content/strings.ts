@@ -585,15 +585,14 @@ export const MOOD_AFTER = {
   moodLowLabel: "okay",
   moodHighLabel: "awful",
   continue: "Next",
-  /** Shown when the rating dropped by at least `MEANINGFUL_MOOD_DROP`. */
-  improved: "Good. That was the point.",
-  /**
-   * Shown when it did not. Both answers now lead to the same screen — the
-   * offer of one more thing — so this line no longer promises anything the
-   * other one doesn't. What it still does is say the thing out loud, which is
-   * the half of it that mattered.
+  /*
+   * The two replies that used to sit under the scale — "Good. That was the
+   * point." for a real drop, and a plainer line for none — are gone with the
+   * slot that held them. See the note at the top of `mood-after.tsx`: the
+   * screen asks the same question as `mood.tsx` and now looks like it. The
+   * rule they were chosen by is still `moodOutcome`, still tested, and read by
+   * nothing on screen.
    */
-  unchanged: "That didn't shift it. One more thing, then we're done.",
 } as const;
 
 /**
@@ -1126,7 +1125,11 @@ export const PARK_WORRY = {
   done: "Done",
 } as const;
 
-/** Hoisted only because `CLOSE` cannot refer to itself while being built. */
+/**
+ * Hoisted only because `CLOSE` cannot refer to itself while being built. The
+ * colon belongs to the spoken sentence `idea()` assembles, not to the label on
+ * screen — see `ideaHeading`.
+ */
 const IDEA_LABEL = "Idea:";
 
 export const CLOSE = {
@@ -1151,11 +1154,17 @@ export const CLOSE = {
     "Bundle up and watch your favorite movie, or discover a new one",
   ],
   /**
-   * Split out because the label is set in the semibold cut while the suggestion
-   * itself is not — see `close.tsx`. `idea()` still assembles the whole line,
-   * which is what the screen hands to a screen reader.
+   * The label, stacked above the suggestion rather than running into it — see
+   * `close.tsx`. No colon: it sits in the eyebrow slot now, and a colon is a
+   * mark for joining two things on one line. Nothing else in the app's eyebrows
+   * carries one either.
    */
-  ideaLabel: IDEA_LABEL,
+  ideaHeading: "Idea",
+  /**
+   * The whole thing as one sentence, which is what the screen hands to a screen
+   * reader — label, colon and suggestion read in one breath rather than as two
+   * unrelated items. This is where the colon lives.
+   */
   idea: (idea: string) => `${IDEA_LABEL} ${idea}.`,
   /** The only action on the screen. No rating, no share, no "come back". */
   done: "Close",

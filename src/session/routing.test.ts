@@ -125,24 +125,23 @@ describe('previousRoute', () => {
   });
 
   /**
-   * Four with nothing behind them, for three different reasons. The door moves
-   * on a timer, so anything pointing at it is a button that does nothing
-   * slowly; the breath's front door has only the door behind it; the first
-   * question has only the breath, which is half a minute long and already
-   * done; and the dead end has already cleared the session.
+   * Three with nothing behind them, for two reasons. The door moves on a timer,
+   * so anything pointing at it is a button that does nothing slowly, and the
+   * breath's front door has only the door behind it; the dead end has already
+   * cleared the session.
    */
-  it('gives the door, the breath intro, the first question and the dead end no way back', () => {
+  it('gives the door, the breath intro and the dead end no way back', () => {
     expect(previousRoute('/', context())).toBeNull();
     expect(previousRoute('/breathe-intro', context())).toBeNull();
-    expect(previousRoute('/category', context())).toBeNull();
     expect(previousRoute('/closed', context())).toBeNull();
   });
 
-  // The only four that are null. A screen added without a target would be a
+  // The only three that are null. A screen added without a target would be a
   // screen the user can be stuck on, so this is the check that catches it.
   it('gives every other screen one', () => {
     const routes: SessionRoute[] = [
       '/breathe',
+      '/category',
       '/topic',
       '/mood',
       '/reactivate',
@@ -192,9 +191,9 @@ describe('previousRoute', () => {
   // breathing is a forward move, whatever button asked for it — which is why
   // the breath's own back button points at its front door, and why nothing
   // downstream points at either of them.
-  it('returns the breath to its front door and nothing else to the breath', () => {
+  it('returns the breath and the first question to the front door, never to the breath', () => {
     expect(previousRoute('/breathe', context())).toBe('/breathe-intro');
-    expect(previousRoute('/category', context())).toBeNull();
+    expect(previousRoute('/category', context())).toBe('/breathe-intro');
   });
 
   // The cue is the first screen after the rating now, so it is the one that
