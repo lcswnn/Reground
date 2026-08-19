@@ -1,6 +1,10 @@
 /**
  * One game on the picker.
  *
+ * A row on a ruled list rather than a card — `OptionList` draws the lines and
+ * carries the reasoning. What is left here is the title, the blurb, the lock
+ * badge and the press.
+ *
  * The locked variant is a `View` rather than a disabled `Pressable` on purpose:
  * there is nothing behind it yet, and a card that depresses under the finger
  * and then does nothing is worse than one that plainly isn't a button. It is
@@ -14,6 +18,7 @@ import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { GAME_PICKER } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
+import { LIST_INSET } from '@/session/ui/option-list';
 import { useTheme } from '@/hooks/use-theme';
 
 interface GameCardProps {
@@ -51,18 +56,14 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
       <View
         accessible
         accessibilityLabel={`${title}. ${blurb} ${GAME_PICKER.lockedLabel}. ${GAME_PICKER.lockedHeading}.`}
-        style={[
-          styles.card,
-          styles.locked,
-          { backgroundColor: theme.background, borderColor: theme.border },
-        ]}>
+        style={[styles.row, styles.locked]}>
         {body}
       </View>
     );
   }
 
   return (
-    // The card is a picker, not a game — it is the same card as `OptionCard`
+    // The row is a picker, not a game — it is the same row as `OptionCard`
     // wearing a different label, and it takes the same press. Nothing inside a
     // game does; see `PressableScale`.
     <PressableScale
@@ -71,9 +72,8 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
       onPress={onPress}
       depth="card"
       style={({ pressed }) => [
-        styles.card,
-        { backgroundColor: theme.backgroundElement, borderColor: theme.border },
-        pressed && { backgroundColor: theme.backgroundSelected },
+        styles.row,
+        pressed && { backgroundColor: theme.backgroundElement },
       ]}>
       {body}
     </PressableScale>
@@ -81,17 +81,18 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
 }
 
 const styles = StyleSheet.create({
-  card: {
-    padding: Spacing.four,
-    borderRadius: Radius.md,
-    borderWidth: StyleSheet.hairlineWidth * 2,
+  // Indented to the rules' own edges — see the note on `row` in
+  // `option-card.tsx`, which this matches exactly.
+  row: {
+    paddingVertical: Spacing.four,
+    paddingHorizontal: LIST_INSET,
     gap: Spacing.two,
   },
-  // Sits *in* the page rather than on it — the unlocked cards are lifted off
-  // the background, so a flat one reads as out of reach without needing to be
-  // greyed into illegibility.
+  // Faded rather than filled differently: with the card gone there is no
+  // surface left to draw a locked one on, and the badge and the section heading
+  // say the rest. Held above the point where the blurb stops being legible.
   locked: {
-    opacity: 0.72,
+    opacity: 0.55,
   },
   heading: {
     flexDirection: 'row',

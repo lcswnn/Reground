@@ -7,9 +7,26 @@ import { useTheme } from '@/hooks/use-theme';
 
 type Variant = 'primary' | 'secondary' | 'positive' | 'ghost';
 
+/**
+ * How much room a button takes.
+ *
+ * `regular` is every button in the session. `large` exists for one job: the
+ * single button on a screen whose only purpose is to start something — right
+ * now that is Start on the breath's intro, which is the first thing the app
+ * ever asks anybody to press and the one press that decides whether the next
+ * four minutes happen. A screen with one action on it can afford to make that
+ * action look like the point of the screen.
+ *
+ * It is a variant rather than a one-off style on that screen so that the second
+ * screen wanting it gets the same button, and so the two cannot drift the way
+ * two copies of a padding value do.
+ */
+type Size = 'regular' | 'large';
+
 export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
   title: string;
   variant?: Variant;
+  size?: Size;
   loading?: boolean;
   /**
    * Fill the parent instead of hugging the label. For buttons that share a row
@@ -22,6 +39,7 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
 export function Button({
   title,
   variant = 'primary',
+  size = 'regular',
   loading = false,
   stretch = false,
   disabled,
@@ -54,6 +72,7 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
+        size === 'large' && styles.large,
         stretch && styles.stretch,
         { backgroundColor: background },
         variant === 'ghost' && [styles.ghost, { borderColor: theme.border }],
@@ -68,7 +87,12 @@ export function Button({
           // The same Dynamic Type ceiling `ThemedText` applies — this is the
           // one piece of type in the app that doesn't go through it.
           maxFontSizeMultiplier={MaxFontScale}
-          style={[styles.label, { color: foreground }, softGlow(foreground)]}>
+          style={[
+            styles.label,
+            size === 'large' && styles.labelLarge,
+            { color: foreground },
+            softGlow(foreground),
+          ]}>
           {title}
         </Text>
       )}
@@ -94,6 +118,16 @@ const styles = StyleSheet.create({
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.five,
   },
+  // Taller, wider and set a tier up. Every number here is one step along a
+  // scale the app already has rather than a new value: the height clears the
+  // 52 the regular one sits at by a comfortable margin, the padding moves from
+  // `two` to `three`, and the label moves from the body tier to the heading
+  // one. See `Size`.
+  large: {
+    minHeight: 62,
+    minWidth: 240,
+    paddingVertical: Spacing.three,
+  },
   stretch: {
     alignSelf: 'stretch',
     minWidth: 0,
@@ -113,6 +147,9 @@ const styles = StyleSheet.create({
     // what separates it, not size, now that a semibold face is actually loaded.
     fontFamily: Fonts.semibold,
     fontSize: Type.body.fontSize,
+  },
+  labelLarge: {
+    fontSize: Type.heading.fontSize,
   },
   pressed: {
     // Just a shade off, now that the press is a movement. This used to be 0.75

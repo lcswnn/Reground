@@ -31,11 +31,11 @@ import { useRouter } from 'expo-router';
 import { ThemedText } from '@/components/themed-text';
 import { GAME_PICKER } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
 import { partitionGames, type Game } from '@/session/games/catalog';
 import { usePremiumAccess } from '@/session/games/premium';
 import { isPlayable } from '@/session/games/views';
 import { GameCard } from '@/session/ui/game-card';
+import { OptionList } from '@/session/ui/option-list';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
@@ -43,7 +43,6 @@ import { useSessionGuard } from '@/session/use-session-guard';
 
 export default function GamesScreen() {
   const router = useRouter();
-  const theme = useTheme();
   const active = useSessionGuard();
   const { chooseGame, gameKind } = useSessionFlow();
   const back = useSessionBack('/games');
@@ -75,7 +74,7 @@ export default function GamesScreen() {
             : GAME_PICKER.calmTitle}
         </ThemedText>
 
-        <View style={styles.list}>
+        <OptionList>
           {unlocked.map((game) => (
             <GameCard
               key={game.id}
@@ -83,17 +82,19 @@ export default function GamesScreen() {
               blurb={game.blurb}
               // Unlocked but unbuilt is only reachable if a real entitlement
               // lands before the premium games do. Locked is the honest way to
-              // draw that, rather than a card that opens an empty board.
+              // draw that, rather than a row that opens an empty board.
               locked={!isPlayable(game.id)}
               onPress={() => choose(game)}
             />
           ))}
-        </View>
+        </OptionList>
 
         {locked.length > 0 ? (
           <View style={styles.paid}>
-            <View style={[styles.rule, { backgroundColor: theme.border }]} />
-
+            {/* The full-width rule that used to open this section has gone with
+                the cards: the list below now closes itself off top and bottom,
+                and a third kind of line above the heading was one more than the
+                page could tell apart. */}
             <View style={styles.paidHeading}>
               <ThemedText type="eyebrow" themeColor="textMuted">
                 {GAME_PICKER.lockedHeading}
@@ -103,11 +104,11 @@ export default function GamesScreen() {
               </ThemedText>
             </View>
 
-            <View style={styles.list}>
+            <OptionList>
               {locked.map((game) => (
                 <GameCard key={game.id} title={game.title} blurb={game.blurb} locked />
               ))}
-            </View>
+            </OptionList>
           </View>
         ) : null}
       </ScrollView>
@@ -120,15 +121,8 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
     paddingBottom: Spacing.five,
   },
-  list: {
-    gap: Spacing.three,
-  },
   paid: {
     gap: Spacing.four,
-  },
-  rule: {
-    height: StyleSheet.hairlineWidth * 2,
-    alignSelf: 'stretch',
   },
   paidHeading: {
     gap: Spacing.two,

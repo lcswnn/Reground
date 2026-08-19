@@ -23,16 +23,16 @@
  * now open with an empty row and the switch at the end of it.
  */
 
-import { StyleSheet, View, type ViewProps } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { usePathname } from 'expo-router';
+import { usePathname } from "expo-router";
+import { StyleSheet, View, type ViewProps } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
-import { MaxContentWidth, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { stageOfPath } from '@/session/routing';
-import { BackButton } from '@/session/ui/back-button';
-import { ProgressDots } from '@/session/ui/progress-dots';
-import { ThemeToggle } from '@/session/ui/theme-toggle';
+import { MaxContentWidth, Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { stageOfPath } from "@/session/routing";
+import { BackButton } from "@/session/ui/back-button";
+import { ProgressDots } from "@/session/ui/progress-dots";
+import { ThemeToggle } from "@/session/ui/theme-toggle";
 
 interface SessionScreenProps extends ViewProps {
   /** Centres the column vertically. Off for screens that scroll. */
@@ -74,7 +74,8 @@ export function SessionScreen({
         },
         style,
       ]}
-      {...rest}>
+      {...rest}
+    >
       <View style={styles.column}>
         {/* The spacer, not `space-between`, is what pins the switch to the
             right on the screens that have no back button to sit opposite. */}
@@ -98,7 +99,9 @@ export function SessionScreen({
 
         {/* Its own flex child so that `centered` still centres the screen's
             content, not the content plus the chrome above it. */}
-        <View style={[styles.content, centered && styles.centered]}>{children}</View>
+        <View style={[styles.content, centered && styles.centered]}>
+          {children}
+        </View>
       </View>
     </View>
   );
@@ -108,16 +111,16 @@ const styles = StyleSheet.create({
   root: {
     flex: 1,
     paddingHorizontal: Spacing.four,
-    alignItems: 'center',
+    alignItems: "center",
   },
   column: {
     flex: 1,
-    width: '100%',
+    width: "100%",
     maxWidth: MaxContentWidth,
   },
   chrome: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     marginBottom: Spacing.three,
   },
   spacer: {
@@ -128,18 +131,18 @@ const styles = StyleSheet.create({
   // up being. It takes no layout space and no touches — the row's height is
   // still set by the back button and the switch.
   progress: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     bottom: 0,
     left: 0,
     right: 0,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,
   },
   centered: {
-    justifyContent: 'center',
+    justifyContent: "center",
   },
 });

@@ -32,6 +32,7 @@ import { TOPIC } from '@/content/strings';
 import { WORLD_TOPICS, type WorldTopic } from '@/content/topics';
 import { Spacing } from '@/constants/theme';
 import { OptionCard } from '@/session/ui/option-card';
+import { OptionList } from '@/session/ui/option-list';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { needsTopic } from '@/session/routing';
 import { useSessionBack } from '@/session/use-session-back';
@@ -67,7 +68,9 @@ export default function TopicScreen() {
       <View style={styles.root}>
         <ThemedText type="title">{TOPIC.title}</ThemedText>
 
-        <View style={styles.options}>
+        {/* Ruled rather than boxed, like the question before it — the rows
+            carry no chrome of their own now. See `OptionList`. */}
+        <OptionList>
           {WORLD_TOPICS.map((topic) => (
             <OptionCard
               key={topic.id}
@@ -77,20 +80,14 @@ export default function TopicScreen() {
               onPress={() => choose(topic)}
             />
           ))}
-        </View>
+        </OptionList>
       </View>
     </SessionScreen>
   );
 }
 
-// Tighter than the entry screen throughout: six options and a heading is close
-// to a full phone even at the compact size, and the space between them is what
-// there is to give.
 const styles = StyleSheet.create({
   root: {
     gap: Spacing.four,
-  },
-  options: {
-    gap: Spacing.three,
   },
 });

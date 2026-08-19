@@ -44,6 +44,22 @@ export function softGlow(color: string) {
  * failed to hold still. It is gone, and its screens are on `subtitle`. `link`
  * and `code` went with it, unused.
  */
+/**
+ * The reading cut, at whatever size the tier it is applied to carries.
+ *
+ * The one sanctioned override of a tier's own face, and it exists for a shape
+ * that turns up twice: a single line, large, alone on a page — the app's
+ * opening title card, and the heading on the breath's intro. The display cut is
+ * drawn for headings that have copy underneath them to outweigh. A line with
+ * nothing under it does not need outweighing, and set in 600 at those sizes it
+ * reads as the app raising its voice at somebody who opened it wound up.
+ *
+ * Exported rather than copied into each screen so the two cannot drift, and so
+ * that anywhere a third one appears has to come past this note first. Size and
+ * leading still come from the tier; this changes the face and nothing else.
+ */
+export const readingCut = { fontFamily: Fonts.body } as const;
+
 export type ThemedTextType =
   | "default"
   | "defaultSemiBold"

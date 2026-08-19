@@ -27,6 +27,7 @@ import { CATEGORIES, type Category } from '@/content/categories';
 import { ENTRY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { OptionCard } from '@/session/ui/option-card';
+import { OptionList } from '@/session/ui/option-list';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { needsTopic } from '@/session/routing';
 import { useSessionFlow } from '@/session/session-context';
@@ -47,7 +48,7 @@ export default function EntryScreen() {
       <View style={styles.root}>
         <ThemedText type="title">{ENTRY.title}</ThemedText>
 
-        <View style={styles.options}>
+        <OptionList>
           {CATEGORIES.map((category) => (
             <OptionCard
               key={category.id}
@@ -56,17 +57,19 @@ export default function EntryScreen() {
               onPress={() => choose(category)}
             />
           ))}
-        </View>
+        </OptionList>
       </View>
     </SessionScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  // A step wider than the screen gap the rest of the app uses, and the one
+  // screen that earns it. The list is ruled now, so what sits under the
+  // question is a line rather than the top of a card — and a line at the
+  // ordinary distance reads as underlining the question instead of opening the
+  // options. The extra step is what separates the two roles.
   root: {
-    gap: Spacing.four,
-  },
-  options: {
-    gap: Spacing.three,
+    gap: Spacing.five,
   },
 });

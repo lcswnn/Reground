@@ -22,7 +22,7 @@
  * breath" is read at the speed of any other sentence; this one can't be.
  */
 export const WELCOME = {
-  line: "Let's relieve that anxiety in 3 easy steps.",
+  line: "Let's relieve that anxiety in three easy steps.",
 } as const;
 
 /**
@@ -151,13 +151,6 @@ export const BREATHE_INTRO = {
    * be — it tells the user this is a method, not a mood.
    */
   body: "Let's begin with some physiological sigh breathing.",
-  /**
-   * Behind a tap, not on the screen. Someone who already knows the technique,
-   * or who just wants the minute to start, should see a title and a button —
-   * and a paragraph of instruction is the last thing to hand a person who
-   * opened this app because they were wound up.
-   */
-  explainLabel: "What is a physiological sigh?",
   /**
    * What the breath is, in the two lines it takes to say it.
    *
@@ -587,7 +580,8 @@ export const SUPPORT_RESOURCE = {
    * line above strikes. If the app ever localises, this is the string that has
    * to localise first.
    */
-  resource: "In the US, you can call or text 988 — the Suicide & Crisis Lifeline — any time.",
+  resource:
+    "In the US, you can call or text 988 — the Suicide & Crisis Lifeline — any time.",
 } as const;
 
 /**

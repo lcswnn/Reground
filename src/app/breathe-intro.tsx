@@ -24,22 +24,31 @@
  * seen what they would be skipping — an out on the screen before it is just a
  * second decision asked of someone who has already made enough of them.
  *
- * What the minute holds — the shape of the breath, how many rounds, what on
- * screen is pacing it — is behind a tap rather than on the screen. It is worth
- * saying and it is not worth making anyone read: someone who already knows the
- * technique, or who just wants to start, gets a title and a button.
+ * ## The explanation is on the screen now, not behind a tap
+ *
+ * It spent a long time inside a `Disclosure`, on the argument that someone who
+ * already knows the technique — or who just wants to start — should get a title
+ * and a button and nothing else to read. What changed is the screen's place in
+ * the session: this is the first thing the app does now, before a single
+ * question, so it is also where a person decides whether this app is worth the
+ * next four minutes. A collapsed row that has to be tapped to find out what is
+ * being asked of you is the wrong thing to meet first — it reads as an app
+ * withholding its own instructions.
+ *
+ * So the two lines are simply there, under a rule that separates them from the
+ * title. They are two sentences; the cost of having them on the page is far
+ * lower than the cost of the tap, and nobody has to read them to press Start.
  */
 
 import { StyleSheet, View } from 'react-native';
-import Animated from 'react-native-reanimated';
 import { useRouter } from 'expo-router';
 
-import { ThemedText } from '@/components/themed-text';
+import { readingCut, ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { BREATH_CYCLES } from '@/config/session';
 import { BREATHE_INTRO } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
-import { Disclosure, DISCLOSURE_LAYOUT } from '@/session/ui/disclosure';
+import { Rule } from '@/session/ui/rule';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
 
@@ -56,32 +65,43 @@ export default function BreatheIntroScreen() {
   return (
     <SessionScreen centered onBack={back}>
       <View style={styles.root}>
-        {/* Grouped so the control sits with the line it explains rather than
-            floating halfway to the button — the big gap on this screen belongs
-            between the reading and the doing, and there is only one of it. */}
+        {/* One block: the title, the mark under it, and the two lines that say
+            what the minute holds. The big gap on this screen belongs between
+            the reading and the doing, and there is only one of it. */}
         <View style={styles.intro}>
-          <ThemedText type="subtitle">{BREATHE_INTRO.body}</ThemedText>
+          {/* The title tier's size in the reading cut — see `readingCut`. The
+              same treatment the opening title card takes, and for the same
+              reason: one large line with nothing above it to compete with does
+              not need the display weight as well as the size. */}
+          <ThemedText type="title" style={readingCut}>
+            {BREATHE_INTRO.body}
+          </ThemedText>
 
-          <Disclosure label={BREATHE_INTRO.explainLabel}>
-            <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              {BREATHE_INTRO.shape(BREATH_CYCLES)}
-            </ThemedText>
-          </Disclosure>
+          {/* Left, because the column is — `Rule` takes its alignment from
+              whatever holds it, and the title card at the door centres the same
+              mark. It is what separates the heading from its explanation
+              without spending a line of copy on a subheading. */}
+          <Rule />
+
+          <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
+          <ThemedText themeColor="textSecondary">
+            {BREATHE_INTRO.shape(BREATH_CYCLES)}
+          </ThemedText>
         </View>
 
-        {/* Slides rather than jumping when the explanation opens above it. A
-            layout animation only moves the view it is on, so this has to be
-            here and not inside the disclosure. */}
-        <Animated.View layout={DISCLOSURE_LAYOUT} style={styles.actions}>
+        <View style={styles.actions}>
+          {/* The one `large` button in the app — see `Size` in `button.tsx`.
+              This screen has a single action on it and it is the action that
+              decides whether the session happens at all. */}
           <Button
             title={BREATHE_INTRO.start}
+            size="large"
             onPress={() => router.replace('/breathe')}
           />
           <ThemedText type="small" themeColor="textMuted" style={styles.hint}>
             {BREATHE_INTRO.hint}
           </ThemedText>
-        </Animated.View>
+        </View>
       </View>
     </SessionScreen>
   );
@@ -91,8 +111,11 @@ const styles = StyleSheet.create({
   root: {
     gap: Spacing.six,
   },
+  // One gap throughout, so the mark sits the same distance from the title above
+  // it as from the copy below: a divider closer to one side than the other
+  // reads as belonging to that side rather than as separating the two.
   intro: {
-    gap: Spacing.two,
+    gap: Spacing.three,
   },
   actions: {
     gap: Spacing.three,

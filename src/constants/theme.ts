@@ -317,12 +317,18 @@ export const Radius = {
   /**
    * What anything you can press is rounded by, from the primary buttons down to
    * the numbers on the mood scale. Squarer than the pill these used to be: a
-   * fully rounded end reads as a tag or a status more than as a control, and at
-   * this size the corner is still soft enough that nothing looks like a box cut
-   * out of the page. Cards keep `md` — a pressable surface is allowed to be a
-   * touch rounder than the button sitting on it.
+   * fully rounded end reads as a tag or a status more than as a control.
+   *
+   * It came down twice — 999 to 14, then 14 to 10 — and 10 is where it stops
+   * being worth touching again. The corner is still plainly a corner, which is
+   * the whole requirement; a step further and the small controls (the mood
+   * chips, the glyph buttons) start reading as cut squares, because a fixed
+   * radius is a larger share of a 46-point box than of a 52-point one.
+   *
+   * Cards keep `md` — a pressable surface is allowed to be a touch rounder than
+   * the button sitting on it.
    */
-  button: 14,
+  button: 10,
 } as const;
 
 /**

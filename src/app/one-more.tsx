@@ -81,6 +81,7 @@ import { useSomaticFlow } from '@/session/somatic/use-somatic-flow';
 import { hasSoundscapes } from '@/session/soundscape/audio';
 import { SoundscapeFlowView, useSoundscapeFlow } from '@/session/soundscape/soundscape-flow';
 import { OptionCard } from '@/session/ui/option-card';
+import { OptionList } from '@/session/ui/option-list';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
@@ -200,7 +201,7 @@ export default function OneMoreScreen() {
             </ThemedText>
           </View>
 
-          <View style={styles.list}>
+          <OptionList>
             {ONE_MORE_OPTIONS.map((option) => (
               <OptionCard
                 key={option.id}
@@ -212,7 +213,7 @@ export default function OneMoreScreen() {
                 onPress={() => choose(option.id)}
               />
             ))}
-          </View>
+          </OptionList>
 
           {/* The way past the question. Ghost and last, because it is an
               answer to the offer and not a step of its own — but it is on the
@@ -270,8 +271,5 @@ const styles = StyleSheet.create({
   },
   heading: {
     gap: Spacing.two,
-  },
-  list: {
-    gap: Spacing.three,
   },
 });
