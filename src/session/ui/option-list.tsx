@@ -28,15 +28,16 @@
  * row imports the inset from here rather than writing a number of its own, so
  * the two cannot drift when the width is next tuned.
  *
- * The *target* stays full width, and only the type moves. A row is a tap, and
- * a tap that misses because it landed in the margin beside the words is a bad
- * row — so the pressable and its highlight run the whole measure while the
- * type and the rules line up inside it.
+ * The *target* is wider than either, and only the type moves. A row is a tap,
+ * and a tap that misses because it landed in the margin beside the words is a
+ * bad row — so the pressable runs past the rules, past the column, and out to
+ * the edge of the screen. See `LIST_BLEED`.
  */
 
 import { Children, Fragment, type ReactNode } from "react";
 import { StyleSheet, View, type DimensionValue } from "react-native";
 
+import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 /**
@@ -55,6 +56,29 @@ const LINE_WIDTH = 95;
  * arithmetic produces a `string` where the style wants a percentage.
  */
 export const LIST_INSET = `${(100 - LINE_WIDTH) / 2}%` as DimensionValue;
+
+/**
+ * How far a row reaches past the column it sits in, on each side.
+ *
+ * `SessionScreen` gutters every screen by `Spacing.four`, so a row given that
+ * much negative margin — and the same amount back as padding, which puts its
+ * contents exactly where they were — is 48 points wider than it looks, running
+ * edge to edge on the glass while everything inside it stays lined up with the
+ * rules.
+ *
+ * Nothing is drawn out there. It is target and only target: a tap that lands in
+ * the gutter beside the words is a tap meant for that row, and a row that
+ * ignored it would be a row with a dead strip down each side. It cost nothing
+ * to widen, and the two hardest options to hit — the first screen's pair, which
+ * everything downstream branches on — got the most out of it.
+ *
+ * The bleed outlived the reason it was added. A press used to tint the row and
+ * the tint had to reach the edges or read as a panel lighting up rather than as
+ * the row you touched; the tint is gone now and the press is the row giving
+ * under the finger. The width stayed because the target was the better half of
+ * it anyway.
+ */
+export const LIST_BLEED = Spacing.four;
 
 export function OptionList({ children }: { children: ReactNode }) {
   const theme = useTheme();

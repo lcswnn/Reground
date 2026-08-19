@@ -23,12 +23,12 @@
  * below the fold there costs a flick rather than a decision.
  */
 
-import { StyleSheet } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 
 import { softGlow, ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Spacing } from '@/constants/theme';
-import { LIST_INSET } from '@/session/ui/option-list';
+import { LIST_BLEED, LIST_INSET } from '@/session/ui/option-list';
 import { useTheme } from '@/hooks/use-theme';
 
 interface OptionCardProps {
@@ -51,40 +51,50 @@ export function OptionCard({ label, detail, onPress, compact = false }: OptionCa
       accessibilityLabel={`${label}. ${detail}`}
       onPress={onPress}
       depth="card"
-      style={({ pressed }) => [
-        styles.row,
-        compact && styles.rowCompact,
-        // Full width, unlike the rules above and below it: the highlight is the
-        // target lighting up, and the target is the whole row.
-        pressed && { backgroundColor: theme.backgroundElement },
-      ]}>
-      {/* `subtitle` glows on its own — see `GLOWS_SOFTLY` in `themed-text.tsx`
-          — but `defaultSemiBold` doesn't, so the compact size needs the glow
-          named explicitly to still read as a button rather than a caption. */}
-      <ThemedText
-        type={compact ? 'defaultSemiBold' : 'subtitle'}
-        style={compact ? softGlow(theme.text) : undefined}>
-        {label}
-      </ThemedText>
-      <ThemedText type={compact ? 'small' : 'default'} themeColor="textMuted">
-        {detail}
-      </ThemedText>
+      // No tint on press: the whole row gives instead. A wash the width of the
+      // screen is a lot of ink to spend saying "registered", and it competed
+      // with the rules for what the eye had to sort out — see `PressableScale`,
+      // which is doing the work now.
+      style={[styles.row, compact && styles.rowCompact]}>
+      <View style={[styles.content, compact && styles.contentCompact]}>
+        {/* `subtitle` glows on its own — see `GLOWS_SOFTLY` in
+            `themed-text.tsx` — but `defaultSemiBold` doesn't, so the compact
+            size needs the glow named explicitly to still read as a button
+            rather than a caption. */}
+        <ThemedText
+          type={compact ? 'defaultSemiBold' : 'subtitle'}
+          style={compact ? softGlow(theme.text) : undefined}>
+          {label}
+        </ThemedText>
+        <ThemedText type={compact ? 'small' : 'default'} themeColor="textMuted">
+          {detail}
+        </ThemedText>
+      </View>
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  // Indented to exactly where the rules above and below it start — see
-  // `LIST_INSET`, which is that number and is derived from the line's width so
-  // the two cannot come apart. The padding is on the row rather than the text
-  // so the tap target keeps the full measure.
+  // Pulled out into the screen's gutter and given it straight back as padding,
+  // so the row is wider than the column while its contents are not — see
+  // `LIST_BLEED`. Everything the eye lines up on is set on `content` below;
+  // this outer box exists to be pressed.
   row: {
+    marginHorizontal: -LIST_BLEED,
+    paddingHorizontal: LIST_BLEED,
     paddingVertical: Spacing.four,
-    paddingHorizontal: LIST_INSET,
-    gap: Spacing.two,
   },
   rowCompact: {
     paddingVertical: Spacing.three,
+  },
+  // Indented to exactly where the rules above and below it start — see
+  // `LIST_INSET`, which is that number and is derived from the line's width so
+  // the two cannot come apart.
+  content: {
+    paddingHorizontal: LIST_INSET,
+    gap: Spacing.two,
+  },
+  contentCompact: {
     gap: Spacing.half,
   },
 });

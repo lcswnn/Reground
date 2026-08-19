@@ -38,16 +38,39 @@
  * So the two lines are simply there, under a rule that separates them from the
  * title. They are two sentences; the cost of having them on the page is far
  * lower than the cost of the tap, and nobody has to read them to press Start.
+ *
+ * ## The example is behind a tap, and for the opposite reason
+ *
+ * "See example" opens `SighExampleModal`: the breath in miniature, looping,
+ * with its three steps lit one at a time. That is not the arrangement the
+ * paragraph above argues against — what was wrong with the collapsed
+ * explanation was hiding the *instructions*, and those are now on the page.
+ * This hides a demonstration, which is a different thing to owe somebody.
+ *
+ * It has to be a tap because of what this screen is for. Nothing here starts on
+ * its own — that is the whole reason the screen exists, ahead of `breathe.tsx`
+ * — and a circle already breathing when the screen fades in would take that
+ * back before the Start button could offer it. Someone who reads the steps and
+ * knows what a sigh is presses Start against a still page; someone who doesn't
+ * asks to be shown, and is.
+ *
+ * A panel over the screen rather than a block inside it, for the reason written
+ * out in `sigh-example-modal.tsx`: an example that pushed the Start button down
+ * the page while it played would be paying for a look with the layout of the
+ * one screen in the app that is meant to sit still.
  */
 
-import { StyleSheet, View } from 'react-native';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
 import { readingCut, ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { BREATH_CYCLES } from '@/config/session';
 import { BREATHE_INTRO } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
+import { SighExampleModal } from '@/session/breathing/sigh-example-modal';
 import { Rule } from '@/session/ui/rule';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
@@ -61,53 +84,99 @@ export default function BreatheIntroScreen() {
    * `undefined`, which is what draws no back button.
    */
   const back = useSessionBack('/breathe-intro');
+  /**
+   * The example, and the whole of what this screen remembers. Closed on
+   * arrival and never remembered between visits — the same rule `Disclosure`
+   * holds itself to, and for the same reason: a screen that opens something
+   * because of what you did last time is a screen deciding for you.
+   */
+  const [example, setExample] = useState(false);
 
   return (
-    <SessionScreen centered onBack={back}>
-      <View style={styles.root}>
-        {/* One block: the title, the mark under it, and the two lines that say
-            what the minute holds. The big gap on this screen belongs between
-            the reading and the doing, and there is only one of it. */}
-        <View style={styles.intro}>
-          {/* The title tier's size in the reading cut — see `readingCut`. The
-              same treatment the opening title card takes, and for the same
-              reason: one large line with nothing above it to compete with does
-              not need the display weight as well as the size. */}
-          <ThemedText type="title" style={readingCut}>
-            {BREATHE_INTRO.body}
-          </ThemedText>
+    <SessionScreen onBack={back}>
+      {/* Scrolls, but only when it has to. `centered` on the screen would have
+          done the centring and nothing else — it is a flex child with no scroll
+          in it, so the numbered method plus a large type setting pushes the
+          Start button off the bottom of a small phone rather than making it
+          reachable. `flexGrow: 1` with `justifyContent: 'center'` is the same
+          centred column while the content fits, and a scroll the moment it
+          doesn't. */}
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}>
+        <View style={styles.root}>
+          {/* One block: the title, the mark under it, and the two lines that say
+              what the minute holds. The big gap on this screen belongs between
+              the reading and the doing, and there is only one of it. */}
+          <View style={styles.intro}>
+            {/* The title tier's size in the reading cut — see `readingCut`. The
+                same treatment the opening title card takes, and for the same
+                reason: one large line with nothing above it to compete with does
+                not need the display weight as well as the size. */}
+            <ThemedText type="title" style={readingCut}>
+              {BREATHE_INTRO.body}
+            </ThemedText>
 
-          {/* Left, because the column is — `Rule` takes its alignment from
-              whatever holds it, and the title card at the door centres the same
-              mark. It is what separates the heading from its explanation
-              without spending a line of copy on a subheading. */}
-          <Rule />
+            {/* Left, because the column is — `Rule` takes its alignment from
+                whatever holds it, and the title card at the door centres the same
+                mark. It is what separates the heading from its explanation
+                without spending a line of copy on a subheading. */}
+            <Rule />
 
-          <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
-          <ThemedText themeColor="textSecondary">
-            {BREATHE_INTRO.shape(BREATH_CYCLES)}
-          </ThemedText>
+            <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
+            <ThemedText themeColor="textSecondary">
+              {BREATHE_INTRO.shape(BREATH_CYCLES)}
+            </ThemedText>
+            {/* Last in the block, so it sits between the reading and the doing
+                — the thing you reach for having read the steps and wanted to
+                see them rather than be told them.
+
+                Underlined small text rather than a second button: the screen
+                has one action on it and this is not it. The underline is what
+                says "tappable" without a word of explanation — the same three
+                quiet steps the tip link at the end of the session takes, one
+                rank quieter, because down there the link is the only offer on
+                the screen and up here it sits beside the Start button. */}
+            <PressableScale
+              accessibilityRole="button"
+              accessibilityLabel={BREATHE_INTRO.example}
+              depth="text"
+              hitSlop={Spacing.three}
+              onPress={() => setExample(true)}
+              style={({ pressed }) => [styles.example, pressed && styles.pressed]}>
+              <ThemedText type="small" themeColor="textSecondary" style={styles.underline}>
+                {BREATHE_INTRO.example}
+              </ThemedText>
+            </PressableScale>
+          </View>
+
+          <View style={styles.actions}>
+            {/* The one `large` button in the app — see `Size` in `button.tsx`.
+                This screen has a single action on it and it is the action that
+                decides whether the session happens at all. */}
+            <Button
+              title={BREATHE_INTRO.start}
+              size="large"
+              onPress={() => router.replace('/breathe')}
+            />
+            <ThemedText type="small" themeColor="textMuted" style={styles.hint}>
+              {BREATHE_INTRO.hint}
+            </ThemedText>
+          </View>
         </View>
+      </ScrollView>
 
-        <View style={styles.actions}>
-          {/* The one `large` button in the app — see `Size` in `button.tsx`.
-              This screen has a single action on it and it is the action that
-              decides whether the session happens at all. */}
-          <Button
-            title={BREATHE_INTRO.start}
-            size="large"
-            onPress={() => router.replace('/breathe')}
-          />
-          <ThemedText type="small" themeColor="textMuted" style={styles.hint}>
-            {BREATHE_INTRO.hint}
-          </ThemedText>
-        </View>
-      </View>
+      <SighExampleModal visible={example} onClose={() => setExample(false)} />
     </SessionScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  scroll: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    paddingVertical: Spacing.four,
+  },
   root: {
     gap: Spacing.six,
   },
@@ -122,5 +191,19 @@ const styles = StyleSheet.create({
   },
   hint: {
     textAlign: 'center',
+  },
+  // Sized to its own words rather than stretched across the column, like the
+  // disclosure trigger it replaced: a full-width target on a screen with one
+  // real button reads as a second button.
+  example: {
+    alignSelf: 'flex-start',
+    paddingVertical: Spacing.one,
+  },
+  underline: {
+    textDecorationLine: 'underline',
+  },
+  // The same shallow dim every other small text control takes.
+  pressed: {
+    opacity: 0.75,
   },
 });

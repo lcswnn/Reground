@@ -164,7 +164,7 @@ export const BREATHE_INTRO = {
    * cues ("In", "In again", "Out") have never had room to say so.
    */
   method:
-    "Physiological sigh: one shorter inhale, followed by a second quick inhale through the nose, then one long exhale through your mouth.",
+    "How to do the Physiological sigh:\n\n 1. Inhale deeply through your nose, and fill your lungs with air.\n 2. Inhale again sharply through your nose.\n 3. Exhale slowly and fully through your mouth.",
   /**
    * The other half of "what to expect": how long, and what to watch.
    *
@@ -186,6 +186,85 @@ export const BREATHE_INTRO = {
   /** Under the button, quiet. The screen waits: nothing starts on arrival. */
   hint: "Tap start to begin.",
   start: "Start",
+  /**
+   * The tap that shows the breath instead of describing it — see
+   * `SIGH_EXAMPLE` and `sigh-example-modal.tsx`.
+   *
+   * "See" rather than "What does it look like?", which is the question form the
+   * disclosures on the picker screens use. Those hide prose, and a question is
+   * what makes reading more of it worth the tap. This one opens a picture of
+   * the thing numbered directly above it, and the shortest true label is the
+   * one that gets pressed.
+   */
+  example: "See example",
+} as const;
+
+/**
+ * The example itself: what a physiological sigh is, and the three steps as the
+ * miniature circle runs them.
+ *
+ * Held apart from `BREATHE_INTRO` for the reason `BREATHING_COPY` is — this is
+ * the component's own copy, read by `sigh-example.tsx` and the modal around it,
+ * not the screen's. The intro screen owns the line you press to open it and
+ * nothing else.
+ *
+ * ## Why it says it all again
+ *
+ * `BREATHE_INTRO.method` numbers the same three steps on the screen underneath.
+ * That is not an oversight: the modal covers the screen, so anything it leaves
+ * out is not "still visible above" — it is gone for as long as the modal is up.
+ * A panel that says "see the steps behind me" would be the worst of both. So
+ * these steps are written to stand alone, and they are longer than the screen's
+ * because they have the room and because they are read one at a time, at the
+ * moment the circle is doing the thing they name.
+ *
+ * They keep the nose and the mouth, which is the half of the technique the
+ * animation cannot show — a circle growing twice and shrinking once is the
+ * shape of the breath, and nose-nose-mouth is what makes it a sigh.
+ */
+export const SIGH_EXAMPLE = {
+  /** Names it, plainly. The screen behind says "physiological sigh breathing"
+      and someone who tapped for a picture has already met the term. */
+  title: "The physiological sigh",
+  /**
+   * What it is, before how to do it.
+   *
+   * Written under `CALIBRATION_COPY`'s rule, the same one `breathwork.ts`'s
+   * `evidence` lines are held to: a claim earns its place only if the reader
+   * could go and check it and find it holds. So it says what the trial actually
+   * compared and over what period, rather than "proven to reduce anxiety" —
+   * and it names the thing the body already does on its own, because that is
+   * the honest reason this works rather than a mechanism anybody has to take on
+   * faith.
+   */
+  what:
+    "Your body already does this by itself — the double breath you take before a sigh, or after crying. The first inhale fills your lungs, the second reinflates the small sacs that have collapsed, and the long exhale out of your mouth is the part that slows your heart down. In a Stanford trial, five minutes a day of it lowered anxiety and lifted mood more than mindfulness meditation did over the same month.",
+  steps: [
+    "In through your nose, filling your lungs.",
+    "A second, sharper breath in through your nose, on top of the first.",
+    "A long, slow breath out through your mouth, all the way down.",
+  ],
+  /**
+   * Under the miniature, muted. It says the two things the loop cannot say for
+   * itself: that it repeats, and that this is the same breath at the same pace
+   * the next screen will ask for — the example is not a sped-up illustration.
+   */
+  caption: "Repeats while you watch, at the pace the breath itself runs.",
+  /**
+   * The way out, and it is a real button rather than a corner glyph.
+   *
+   * Tapping the dimmed page behind also closes it, which is what most people
+   * will do — but a modal whose only stated exit is "tap somewhere else" is a
+   * guess, and this screen is the first thing the app does. "Got it" rather
+   * than "Close" because it is the answer to what the panel just did.
+   */
+  close: "Got it",
+  /**
+   * The dimmed page behind the card, for a screen reader — it is a tap target
+   * with nothing in it to read out, and unlabelled it announces as a bare
+   * button of unknown purpose sitting over the whole screen.
+   */
+  dismiss: "Close the example",
 } as const;
 
 export const BREATHING_COPY = {

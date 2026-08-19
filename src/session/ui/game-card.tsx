@@ -18,7 +18,7 @@ import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { GAME_PICKER } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
-import { LIST_INSET } from '@/session/ui/option-list';
+import { LIST_BLEED, LIST_INSET } from '@/session/ui/option-list';
 import { useTheme } from '@/hooks/use-theme';
 
 interface GameCardProps {
@@ -32,7 +32,7 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
   const theme = useTheme();
 
   const body = (
-    <>
+    <View style={styles.content}>
       <View style={styles.heading}>
         <ThemedText type="subtitle" style={styles.title}>
           {title}
@@ -48,7 +48,7 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
       <ThemedText type="small" themeColor="textMuted">
         {blurb}
       </ThemedText>
-    </>
+    </View>
   );
 
   if (locked) {
@@ -71,20 +71,24 @@ export function GameCard({ title, blurb, onPress, locked = false }: GameCardProp
       accessibilityLabel={`${title}. ${blurb}`}
       onPress={onPress}
       depth="card"
-      style={({ pressed }) => [
-        styles.row,
-        pressed && { backgroundColor: theme.backgroundElement },
-      ]}>
+      // No tint on press — the row gives instead. Same as `OptionCard`, and
+      // the note is there.
+      style={styles.row}>
       {body}
     </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  // Indented to the rules' own edges — see the note on `row` in
-  // `option-card.tsx`, which this matches exactly.
+  // The pressable box, out past the column on both sides — see the note on
+  // `row` in `option-card.tsx`, which this matches exactly.
   row: {
+    marginHorizontal: -LIST_BLEED,
+    paddingHorizontal: LIST_BLEED,
     paddingVertical: Spacing.four,
+  },
+  // And the part that lines up with the rules.
+  content: {
     paddingHorizontal: LIST_INSET,
     gap: Spacing.two,
   },
