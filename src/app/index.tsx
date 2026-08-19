@@ -142,7 +142,11 @@ export default function WelcomeScreen() {
   return (
     <SessionScreen centered>
       <Animated.View style={lineStyle}>
-        <StageDirection>{WELCOME.line}</StageDirection>
+        {/* Framed: the title tier between two short rules. This is the app's
+            first impression and the only thing on the screen — see the note in
+            `StageDirection` on why the two ends of the session stopped being
+            drawn the same way. */}
+        <StageDirection framed>{WELCOME.line}</StageDirection>
       </Animated.View>
     </SessionScreen>
   );
