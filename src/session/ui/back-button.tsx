@@ -3,11 +3,26 @@
  * top-left, and the appearance switch in `theme-toggle.tsx` opposite it. They
  * share a row, drawn by `SessionScreen`, and are deliberately drawn alike.
  *
- * Quiet on purpose — muted, small, and no chrome around it. It is a way out of
- * a mis-tap, not a step in the session, and it should never compete with the
- * thing the screen is actually asking. That is also why it carries a word as
+ * Quiet on purpose — small, unchromed, and tucked into a corner. It is a way
+ * out of a mis-tap, not a step in the session, and it should never compete with
+ * the thing the screen is actually asking. That is also why it carries a word as
  * well as the arrow: an arrow alone on a screen with a mood scale on it reads
  * as another control to work out.
+ *
+ * ## Why this is ink and not muted
+ *
+ * The two ends of the row are the same tier and always have been — the body
+ * one, no overrides, the same face, every glyph present in it — and they still
+ * read as two different sizes when this was muted and the switch opposite had a
+ * word in full ink. Type of the same size in higher contrast reads as larger and
+ * heavier; that is all the difference was. The switch cannot give its ink up,
+ * because ink-versus-muted is the whole of how it says which mode you are in,
+ * so the fix belongs on this side.
+ *
+ * What keeps it quiet is everything else about it: the corner it sits in, the
+ * size, the absence of a border or a fill, and a row no taller than the words
+ * on it. Colour was never doing that job alone, and it was costing the pair
+ * their symmetry.
  *
  * The glyph is a text arrow rather than an icon, for the same reason the
  * calibration screen's trend arrows are — there is no icon set in this app, and
@@ -33,12 +48,13 @@ export function BackButton({ onPress }: { onPress: () => void }) {
         depth="text"
         hitSlop={Spacing.three}
         style={({ pressed }) => [styles.button, pressed && styles.pressed]}>
-        {/* The body tier, not the caption one. These are the only tappable
-            words on most screens and they sit muted in a corner the eye is not
-            looking at; set as a caption they read as a footnote to hunt for.
-            Muted colour is what keeps them quiet — see `theme-toggle.tsx`,
-            which is drawn to match this and reads off the same tier. */}
-        <ThemedText themeColor="textMuted">
+        {/* The body tier, not the caption one: these are the only tappable
+            words on most screens and they sit in a corner the eye is not
+            looking at, so set as a caption they read as a footnote to hunt for.
+            The same tier the switch opposite reads off, so the two corners are
+            the same size, and full ink to match the mode in use on it — see the
+            note above on why the pair looked mismatched without it. */}
+        <ThemedText>
           {BACK.arrow} {BACK.label}
         </ThemedText>
       </PressableScale>
@@ -61,8 +77,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     paddingVertical: Spacing.one,
   },
-  // Shallower than the 0.6 it was: the press is a movement now, and muted text
-  // at 60% on a paper background is close to gone.
+  // Shallower than the 0.6 it was: the press is a movement now, and text at 60%
+  // on a paper background is close to gone.
   pressed: {
     opacity: 0.75,
   },

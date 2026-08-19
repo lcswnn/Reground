@@ -1,11 +1,16 @@
-import { ActivityIndicator, StyleSheet, Text, type PressableProps } from 'react-native';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  type PressableProps,
+} from "react-native";
 
-import { softGlow } from '@/components/themed-text';
-import { PressableScale } from '@/components/ui/pressable-scale';
-import { Fonts, MaxFontScale, Radius, Spacing, Type } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { softGlow } from "@/components/themed-text";
+import { PressableScale } from "@/components/ui/pressable-scale";
+import { Fonts, MaxFontScale, Radius, Spacing, Type } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
 
-type Variant = 'primary' | 'secondary' | 'positive' | 'ghost';
+type Variant = "primary" | "secondary" | "positive" | "ghost";
 
 /**
  * How much room a button takes.
@@ -21,9 +26,12 @@ type Variant = 'primary' | 'secondary' | 'positive' | 'ghost';
  * screen wanting it gets the same button, and so the two cannot drift the way
  * two copies of a padding value do.
  */
-type Size = 'regular' | 'large';
+type Size = "regular" | "large";
 
-export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> {
+export interface ButtonProps extends Omit<
+  PressableProps,
+  "children" | "style"
+> {
   title: string;
   variant?: Variant;
   size?: Size;
@@ -38,8 +46,8 @@ export interface ButtonProps extends Omit<PressableProps, 'children' | 'style'> 
 
 export function Button({
   title,
-  variant = 'primary',
-  size = 'regular',
+  variant = "primary",
+  size = "regular",
   loading = false,
   stretch = false,
   disabled,
@@ -49,19 +57,19 @@ export function Button({
   const isDisabled = disabled || loading;
 
   const background =
-    variant === 'primary'
+    variant === "primary"
       ? theme.brand
-      : variant === 'positive'
+      : variant === "positive"
         ? theme.positive
-        : variant === 'secondary'
+        : variant === "secondary"
           ? theme.backgroundElement
-          : 'transparent';
+          : "transparent";
   const foreground =
-    variant === 'primary'
+    variant === "primary"
       ? theme.textOnBrand
-      : variant === 'positive'
+      : variant === "positive"
         ? theme.textOnPositive
-        : variant === 'ghost'
+        : variant === "ghost"
           ? theme.textSecondary
           : theme.text;
 
@@ -72,14 +80,15 @@ export function Button({
       disabled={isDisabled}
       style={({ pressed }) => [
         styles.base,
-        size === 'large' && styles.large,
+        size === "large" && styles.large,
         stretch && styles.stretch,
         { backgroundColor: background },
-        variant === 'ghost' && [styles.ghost, { borderColor: theme.border }],
+        variant === "ghost" && [styles.ghost, { borderColor: theme.border }],
         pressed && styles.pressed,
         isDisabled && styles.disabled,
       ]}
-      {...rest}>
+      {...rest}
+    >
       {loading ? (
         <ActivityIndicator color={foreground} />
       ) : (
@@ -89,10 +98,11 @@ export function Button({
           maxFontSizeMultiplier={MaxFontScale}
           style={[
             styles.label,
-            size === 'large' && styles.labelLarge,
+            size === "large" && styles.labelLarge,
             { color: foreground },
             softGlow(foreground),
-          ]}>
+          ]}
+        >
           {title}
         </Text>
       )}
@@ -110,11 +120,11 @@ const styles = StyleSheet.create({
     // overflow. Height is a minimum so a label that does wrap isn't clipped.
     minHeight: 52,
     minWidth: 200,
-    maxWidth: '100%',
-    alignSelf: 'center',
+    maxWidth: "100%",
+    alignSelf: "center",
     borderRadius: Radius.button,
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignItems: "center",
+    justifyContent: "center",
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.five,
   },
@@ -123,13 +133,23 @@ const styles = StyleSheet.create({
   // 52 the regular one sits at by a comfortable margin, the padding moves from
   // `two` to `three`, and the label moves from the body tier to the heading
   // one. See `Size`.
+  //
+  // The floor is 300 rather than the 240 it started at. Both screens that use
+  // this size — Begin on the door, Start on the breath's intro — are a column
+  // of centred content with one button at the bottom, and at 240 the button was
+  // visibly narrower than the text above it, which reads as the screen's one
+  // action being the smallest thing on it. At 300 it is wider than most of what
+  // it sits under while `maxWidth` still keeps it inside the gutters: on a
+  // narrow phone the column is the limit and the button gives up and matches
+  // it, which is the one case where full width is right — there is nothing left
+  // for it to be narrower than.
   large: {
     minHeight: 62,
-    minWidth: 240,
+    minWidth: 330,
     paddingVertical: Spacing.three,
   },
   stretch: {
-    alignSelf: 'stretch',
+    alignSelf: "stretch",
     minWidth: 0,
     paddingHorizontal: Spacing.four,
   },

@@ -2,9 +2,10 @@
  * The appearance switch, top-right on every screen.
  *
  * The second of the two controls that sit outside the session — see
- * `back-button.tsx`, which sits opposite it and is drawn to match. Both are
- * small, muted and unchromed, because neither is a step in the session and
- * neither should ever compete with what the screen is actually asking.
+ * `back-button.tsx`, which sits opposite it and is drawn to match: the same
+ * tier and the same ink this gives the mode in use, so the two corners read as
+ * one size. Both are small and unchromed, because neither is a step in the
+ * session and neither should ever compete with what the screen is asking.
  *
  * Two words rather than one, and both always on screen: the current mode is the
  * one drawn in ink and the other is muted. A switch has to say what it will do

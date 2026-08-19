@@ -121,6 +121,39 @@ export const MOOD_BEFORE = {
   answerPrefix: "Your answer:",
 } as const;
 
+/**
+ * The rating control itself — the row of dots both mood screens are answered
+ * on. Its own block rather than living in `MOOD_BEFORE` and `MOOD_AFTER`,
+ * because it is one control asked twice: the two screens own their questions
+ * and their ends-of-scale labels, and the thing they are answered with says the
+ * same words either time.
+ *
+ * Almost all of it is for a screen reader. The row is a single adjustable
+ * control to VoiceOver — eleven separate buttons would be eleven stops on the
+ * way past a question that takes one gesture to answer — so it needs a name and
+ * a spoken value, and those cannot be read off the dots.
+ */
+export const MOOD_CONTROL = {
+  /**
+   * The whole row, named. It says both ends because a number on its own is
+   * meaningless here: "8" is only bad if 10 is the bad end, and this control is
+   * the one place in the session where getting that backwards would silently
+   * invert the app's one measurement.
+   */
+  label: (min: number, max: number, low: string, high: string) =>
+    `Rating, ${min} is ${low} and ${max} is ${high}`,
+  /** The spoken value, once there is one. */
+  value: (rating: number) => `${rating}`,
+  /** And before there is. Kept out of `value` so the two cannot drift. */
+  empty: "No rating yet",
+  /**
+   * Stands in for the number above the row until one is picked, so the readout
+   * has something in it and the dots do not move when the first tap lands. An
+   * em dash: the typographic mark for a value that is not there yet.
+   */
+  blank: "—",
+} as const;
+
 export const REACTIVATION = {
   /**
    * Deliberately not a request to describe or type anything — bringing the

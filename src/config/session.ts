@@ -6,7 +6,20 @@
  * without reading a component.
  */
 
-/** The 0–10 scale used for both mood questions. 10 is the bad end. */
+/**
+ * The 0–10 scale used for both mood questions. 10 is the bad end.
+ *
+ * It is the form these scales take in the literature, and the odd count is what
+ * the control wants as well: eleven dots have a middle dot, and the row is
+ * labelled at three points — both ends and that middle — so nobody has to count
+ * along it to find their way. Ten dots would put the midpoint in the gap
+ * between two of them, and the `5` would sit off the mark it names.
+ *
+ * The two thresholds below are points on this scale rather than fractions of
+ * it, so they mean what they say either way: `HIGH_DISTRESS_MOOD` is an 8, and
+ * `MEANINGFUL_MOOD_DROP` is a distance, which does not care where the scale
+ * starts.
+ */
 export const MOOD_SCALE = {
   min: 0,
   max: 10,

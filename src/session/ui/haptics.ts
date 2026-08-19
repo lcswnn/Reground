@@ -5,11 +5,18 @@
  * Android build without the vibrate permission, these reject, and an unhandled
  * rejection mid-breath is a worse outcome than a missing tick.
  *
- * Six things use haptics in this app and no others: the breath on both screens
- * that pace one, placing a puzzle piece, each end of a somatic movement — the
- * 3-2-1 into it and the clock running out of it — and each tense or release in
- * progressive muscle relaxation. All of them are moments where something
- * actually changed, or, in the breath's case, is changing.
+ * A short list uses haptics in this app and nothing else does: the breath on
+ * both screens that pace one, placing a puzzle piece, each end of a somatic
+ * movement — the 3-2-1 into it and the clock running out of it — each tense or
+ * release in progressive muscle relaxation, the appearance switch, and the
+ * rating row, which ticks once per dot as a finger drags along it. All of them
+ * are moments where something actually changed, or, in the breath's case, is
+ * changing.
+ *
+ * The rating is the one that fires repeatedly under a single gesture, and it is
+ * held to the same rule by only firing on a *change* of value: a finger held
+ * still on a dot is silent, and one dragged the length of the row ticks eleven
+ * times at most — once per number it actually passes through.
  */
 
 import * as Haptics from 'expo-haptics';
