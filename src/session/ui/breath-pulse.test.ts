@@ -64,13 +64,72 @@ describe('planning a breath phase', () => {
   });
 
   it('gives a snatched phase one tap rather than a stutter', () => {
-    // The sigh's top-up is the short one, and two pulses inside it would land a
-    // third of a second apart — a double tap, which means something else. A
+    // At the paced cadence two pulses inside the sigh's 600ms top-up would land
+    // a third of a second apart — a double tap, which means something else. A
     // one-second phase is the same problem one step up, and takes one tap too.
     const topUp = planBreathPulses('inhale', BREATHING.secondInhaleMs);
     expect(topUp).toEqual([{ at: 0, strength: 'medium' }]);
     expect(planBreathPulses('exhale', 400)).toEqual([{ at: 0, strength: 'light' }]);
     expect(planBreathPulses('exhale', 1_000)).toEqual([{ at: 0, strength: 'light' }]);
+  });
+
+  /**
+   * The sigh's own cadence. Its inhales are the shape of the technique rather
+   * than a rate to hold, so they run about three taps a second — see the note
+   * in `breath-pulse.ts`. Written against the real phase lengths, because the
+   * only question worth asking of this is what the breath the app actually runs
+   * comes out as.
+   */
+  describe("under the sigh's cadence", () => {
+    it('runs the first inhale about three times as often as the pacer would', () => {
+      const quick = planBreathPulses('inhale', BREATHING.firstInhaleMs, 'sigh');
+      const paced = planBreathPulses('inhale', BREATHING.firstInhaleMs);
+
+      expect(quick.length).toBeGreaterThan(paced.length);
+      expect(quick).toEqual([
+        { at: 0, strength: 'light' },
+        { at: 350, strength: 'light' },
+        { at: 700, strength: 'light' },
+        { at: 1_050, strength: 'medium' },
+      ]);
+    });
+
+    it('gives the top-up two taps, opening light and topping out firm', () => {
+      expect(planBreathPulses('inhale', BREATHING.secondInhaleMs, 'sigh')).toEqual([
+        { at: 0, strength: 'light' },
+        { at: 300, strength: 'medium' },
+      ]);
+    });
+
+    it('leaves the exhale exactly as the pacer has it', () => {
+      expect(planBreathPulses('exhale', BREATHING.exhaleMs, 'sigh')).toEqual(
+        planBreathPulses('exhale', BREATHING.exhaleMs),
+      );
+    });
+
+    // The ceiling is the thing that keeps a faster train from becoming a buzz
+    // if a phase is ever lengthened. Nothing the sigh runs today reaches it.
+    it('still never becomes a buzz', () => {
+      for (const ms of [1_400, 2_000, 4_000, 8_000]) {
+        const pulses = planBreathPulses('inhale', ms, 'sigh');
+        expect(pulses.length).toBeLessThanOrEqual(6);
+
+        const gaps = pulses.slice(1).map((pulse, index) => pulse.at - pulses[index].at);
+        gaps.forEach((gap) => expect(gap).toBeGreaterThanOrEqual(260));
+        expect(pulses[pulses.length - 1].at).toBeLessThan(ms);
+      }
+    });
+
+    it('still peaks at the top of the breath and nowhere else', () => {
+      for (const ms of [BREATHING.firstInhaleMs, 2_000, 4_000]) {
+        const pulses = planBreathPulses('inhale', ms, 'sigh');
+        const firm = pulses.filter((pulse) => pulse.strength === 'medium');
+
+        expect(firm.length).toBeGreaterThan(0);
+        expect(pulses.indexOf(firm[0])).toBeGreaterThan(0);
+        expect(firm[firm.length - 1]).toBe(pulses[pulses.length - 1]);
+      }
+    });
   });
 
   it('has nothing to say about a phase with no length', () => {

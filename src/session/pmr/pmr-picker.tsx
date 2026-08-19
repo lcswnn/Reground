@@ -31,6 +31,7 @@ import { PMR_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { Disclosure, DISCLOSURE_LAYOUT } from '@/session/ui/disclosure';
 import { OptionCard } from '@/session/ui/option-card';
+import { OptionList } from '@/session/ui/option-list';
 
 export function PmrPicker({ onPick }: { onPick: (id: PmrRoutineId) => void }) {
   return (
@@ -62,18 +63,24 @@ export function PmrPicker({ onPick }: { onPick: (id: PmrRoutineId) => void }) {
           </ThemedText>
         </Disclosure>
 
-        {/* Carries the layout transition so the cards slide down when the rules
-            open above them, rather than jumping. See `DISCLOSURE_LAYOUT`. */}
-        <Animated.View layout={DISCLOSURE_LAYOUT} style={styles.list}>
-          {PMR_ROUTINES.map((routine) => (
-            <OptionCard
-              key={routine.id}
-              label={routine.title}
-              detail={routine.blurb}
-              compact
-              onPress={() => onPick(routine.id)}
-            />
-          ))}
+        {/* Carries the layout transition so the list slides down when the rules
+            open above it, rather than jumping. See `DISCLOSURE_LAYOUT`. */}
+        <Animated.View layout={DISCLOSURE_LAYOUT}>
+          {/* Ruled, like every other list in the app you pick from — see
+              `OptionList`. This screen, the breathwork picker and the somatic
+              one were the three still separating their rows with a gap and
+              nothing else, which is a stack of paragraphs rather than a list. */}
+          <OptionList>
+            {PMR_ROUTINES.map((routine) => (
+              <OptionCard
+                key={routine.id}
+                label={routine.title}
+                detail={routine.blurb}
+                compact
+                onPress={() => onPick(routine.id)}
+              />
+            ))}
+          </OptionList>
         </Animated.View>
       </ScrollView>
     </Animated.View>
@@ -90,8 +97,5 @@ const styles = StyleSheet.create({
   },
   heading: {
     gap: Spacing.two,
-  },
-  list: {
-    gap: Spacing.three,
   },
 });

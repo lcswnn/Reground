@@ -47,17 +47,31 @@ export function MoodScale({ value, onChange, lowLabel, highLabel }: MoodScalePro
               accessibilityState={{ selected }}
               accessibilityLabel={`${option} out of ${MOOD_SCALE.max}`}
               onPress={() => onChange(option)}
+              // Selected takes the accent rather than the ink it used to fill
+              // with. The number a person picks here is the one answer the
+              // whole session is measured on, and it is the one place in the
+              // app where the user can see their own choice sitting on the
+              // page — worth the hue, on a screen that is otherwise eleven
+              // identical grey targets and two labels.
+              //
+              // `accentStrong` and not `accent`: the chip carries a numeral at
+              // 17pt semibold, which is below the size where 3:1 would do, and
+              // the accent proper is 3.99:1 against the paper it would have to
+              // put paper-coloured type on. The strong step is the same hue
+              // taken to 4.99:1 for exactly this. See `constants/theme.ts`.
               style={({ pressed }) => [
                 styles.option,
                 {
-                  backgroundColor: selected ? theme.brand : theme.backgroundElement,
-                  borderColor: selected ? theme.brand : theme.border,
+                  backgroundColor: selected
+                    ? theme.accentStrong
+                    : theme.backgroundElement,
+                  borderColor: selected ? theme.accentStrong : theme.border,
                 },
                 pressed && !selected && { backgroundColor: theme.backgroundSelected },
               ]}>
               <ThemedText
                 type="defaultSemiBold"
-                style={{ color: selected ? theme.textOnBrand : theme.text }}>
+                style={{ color: selected ? theme.textOnAccent : theme.text }}>
                 {option}
               </ThemedText>
             </PressableScale>

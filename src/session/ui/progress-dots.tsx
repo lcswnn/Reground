@@ -63,8 +63,12 @@ export function ProgressDots({ stage }: { stage: SessionStage }) {
           key={name}
           style={[
             styles.dot,
+            // Filled dots take the accent; empty ones keep the ink hairline
+            // they always had. The row is the app reporting on its own
+            // progress — nothing the user chose — which is the company the
+            // accent keeps everywhere else it appears. See `constants/theme.ts`.
             index <= current
-              ? { backgroundColor: theme.brand, borderColor: theme.brand }
+              ? { backgroundColor: theme.accent, borderColor: theme.accent }
               : { borderColor: theme.border },
           ]}
         />

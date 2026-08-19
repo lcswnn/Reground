@@ -29,6 +29,7 @@ import { SOMATIC_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { Disclosure, DISCLOSURE_LAYOUT } from '@/session/ui/disclosure';
 import { OptionCard } from '@/session/ui/option-card';
+import { OptionList } from '@/session/ui/option-list';
 
 export function SomaticPicker({ onPick }: { onPick: (id: SomaticId) => void }) {
   return (
@@ -61,20 +62,27 @@ export function SomaticPicker({ onPick }: { onPick: (id: SomaticId) => void }) {
           </ThemedText>
         </Disclosure>
 
-        {/* Carries the layout transition so the cards slide down when the rules
-            open above them, rather than jumping. See `DISCLOSURE_LAYOUT`. */}
-        <Animated.View layout={DISCLOSURE_LAYOUT} style={styles.list}>
-          {SOMATIC_MOVEMENTS.map((movement) => (
-            <OptionCard
-              key={movement.id}
-              label={movement.title}
-              detail={movement.blurb}
-              // Six of them, which is the topic picker's count — past the point
-              // where the full size fits on a phone.
-              compact
-              onPress={() => onPick(movement.id)}
-            />
-          ))}
+        {/* Carries the layout transition so the list slides down when the rules
+            open above it, rather than jumping. See `DISCLOSURE_LAYOUT`. */}
+        <Animated.View layout={DISCLOSURE_LAYOUT}>
+          {/* Ruled, like every other list in the app you pick from — see
+              `OptionList`, and the same note on the breathwork picker, which
+              was the other list still separating its rows with a gap and
+              nothing else. Six rows is where it matters most: a gap-separated
+              stack that long has no edges to count. */}
+          <OptionList>
+            {SOMATIC_MOVEMENTS.map((movement) => (
+              <OptionCard
+                key={movement.id}
+                label={movement.title}
+                detail={movement.blurb}
+                // Six of them, which is the topic picker's count — past the
+                // point where the full size fits on a phone.
+                compact
+                onPress={() => onPick(movement.id)}
+              />
+            ))}
+          </OptionList>
         </Animated.View>
       </ScrollView>
     </Animated.View>
@@ -91,8 +99,5 @@ const styles = StyleSheet.create({
   },
   heading: {
     gap: Spacing.two,
-  },
-  list: {
-    gap: Spacing.three,
   },
 });

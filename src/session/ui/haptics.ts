@@ -16,6 +16,7 @@ import * as Haptics from 'expo-haptics';
 
 import {
   planBreathPulses,
+  type BreathCadence,
   type BreathPhase,
   type PulseStrength,
 } from '@/session/ui/breath-pulse';
@@ -43,8 +44,9 @@ const IMPACT: Record<PulseStrength, Haptics.ImpactFeedbackStyle> = {
  * inhale and falls away through an exhale.
  *
  * The schedule — how many, how far apart, how firm — is `planBreathPulses`,
- * which is where the reasoning and the convention it follows are written down.
- * This is the part that fires them.
+ * which is where the reasoning and the convention it follows are written down,
+ * including what `cadence` changes and why only the sigh passes it. This is the
+ * part that fires them.
  *
  * The first pulse is fired synchronously, so a phase's opening tap lands on the
  * boundary rather than a timer's-worth after it. Returns a cancel, and both
@@ -53,10 +55,14 @@ const IMPACT: Record<PulseStrength, Haptics.ImpactFeedbackStyle> = {
  * which on a screen someone is following with their eyes shut is worse than no
  * tap at all.
  */
-export function pulseBreath(phase: BreathPhase, ms: number): () => void {
+export function pulseBreath(
+  phase: BreathPhase,
+  ms: number,
+  cadence: BreathCadence = 'paced',
+): () => void {
   const timers: ReturnType<typeof setTimeout>[] = [];
 
-  for (const pulse of planBreathPulses(phase, ms)) {
+  for (const pulse of planBreathPulses(phase, ms, cadence)) {
     if (pulse.at <= 0) {
       void Haptics.impactAsync(IMPACT[pulse.strength]).catch(() => {});
       continue;

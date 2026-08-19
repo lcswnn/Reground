@@ -28,6 +28,25 @@
  *     startle. `medium` is the ceiling here, and it lands at most once per
  *     inhale — at the top, where the breath is full.
  *
+ * ## The sigh's inhales run faster than that
+ *
+ * `cadence` is the exception, and it exists because the two screens that pace a
+ * breath are not pacing the same kind of thing. The breathwork patterns are a
+ * *rate* — four seconds in, six out, held for a minute and a half — and a tap
+ * about every second is the whole instruction: you are on time, stay on time.
+ * The physiological sigh is a *shape*, and its inhales are the shape: a brisk
+ * 1.4-second fill and then a 600ms snatch on top of it. At a pulse a second
+ * that fill got two taps and the top-up got one, which is enough to mark the
+ * phases and not enough to say what to do inside them.
+ *
+ * Under `'sigh'` the inhales run at roughly three taps a second instead. It
+ * still builds, it still peaks at the top, and it still never goes above
+ * `medium` — what changes is the density, which is the part that reads as
+ * *keep going up* rather than *a phase started*. The exhale is untouched in
+ * both cadences: it is the long half and the half that is meant to be doing
+ * nothing, and a fast train through it would be the contradiction rule 3
+ * warns about.
+ *
  * ## Why this is its own file
  *
  * `haptics.ts` imports the native module, so anything in it is untestable off a
@@ -51,6 +70,12 @@ export interface BreathPulse {
 }
 
 /**
+ * Which of the two things this phase belongs to — a pace to hold, or the sigh's
+ * stacked inhales. Only the inhale reads it; see the note above.
+ */
+export type BreathCadence = 'paced' | 'sigh';
+
+/**
  * About one pulse a second, which is the rate the guides converge on. Faster
  * reads as a stutter; slower stops being something a breath can be held to.
  */
@@ -65,16 +90,35 @@ const MIN_PULSES = 2;
 const MAX_PULSES = 5;
 
 /**
- * The closest two pulses may ever land, and the rule that decides whether a
- * phase gets a train at all.
+ * The closest two pulses may ever land at this cadence, and the rule that
+ * decides whether a phase gets a train at all.
  *
- * The sigh's top-up is 600ms and is meant to be snatched. Two pulses inside it
- * would land a third of a second apart, which is not a rate anybody can breathe
- * to — it is a double tap, and a double tap means something else. The same is
- * true of any short phase, so the floor is expressed as the gap rather than as
- * a phase length: a phase that cannot hold two pulses this far apart gets one.
+ * A phase that cannot hold two pulses this far apart gets one instead. The
+ * floor is expressed as a gap rather than as a phase length because that is the
+ * thing that actually goes wrong: two taps a third of a second apart are not a
+ * rate anybody can breathe to, whatever phase they are inside.
  */
 const MIN_GAP_MS = 650;
+
+/**
+ * The sigh's inhales, which run about three times as often.
+ *
+ * The floor is what decides the top-up. At 600ms it now holds two taps rather
+ * than one — a light one as the second breath starts and a firm one as it
+ * tops out, 300ms apart. That is a double tap, which the paced cadence
+ * deliberately avoids because there it would mean something else; inside a
+ * train already running at this rate it reads as the last two of the train.
+ * Raise this above 300 and the top-up goes back to a single firm tap without
+ * anything else moving.
+ */
+const SIGH_TARGET_MS = 320;
+const SIGH_MIN_GAP_MS = 260;
+/**
+ * A ceiling that only the pacer's phases could reach — the sigh's own longest
+ * inhale is 1.4s and comes out at four. It is here so that a future phase
+ * lengthened past two seconds cannot quietly turn into a buzz.
+ */
+const SIGH_MAX_PULSES = 6;
 
 /** Where in a rising phase the firmest tap starts. The top of the breath. */
 const PEAK_FROM = 0.75;
@@ -86,15 +130,26 @@ const PEAK_FROM = 0.75;
  * next phase opens with its own pulse at zero, and two haptics in the same
  * frame are one haptic that feels wrong.
  */
-export function planBreathPulses(phase: BreathPhase, ms: number): BreathPulse[] {
+export function planBreathPulses(
+  phase: BreathPhase,
+  ms: number,
+  cadence: BreathCadence = 'paced',
+): BreathPulse[] {
   if (ms <= 0) return [];
 
+  // Only a rising phase runs quick. An exhale is the same long, unhurried thing
+  // whichever screen is drawing it.
+  const quick = cadence === 'sigh' && phase === 'inhale';
+  const target = quick ? SIGH_TARGET_MS : PULSE_TARGET_MS;
+  const gapFloor = quick ? SIGH_MIN_GAP_MS : MIN_GAP_MS;
+  const ceiling = quick ? SIGH_MAX_PULSES : MAX_PULSES;
+
   const count = Math.min(
-    MAX_PULSES,
+    ceiling,
     // What the phase has room for at the floor, which is what stops a short one
     // from being handed a rate nobody could breathe at.
-    Math.floor(ms / MIN_GAP_MS),
-    Math.max(MIN_PULSES, Math.round(ms / PULSE_TARGET_MS)),
+    Math.floor(ms / gapFloor),
+    Math.max(MIN_PULSES, Math.round(ms / target)),
   );
 
   // One tap, and it is the phase's own character rather than a neutral tick:

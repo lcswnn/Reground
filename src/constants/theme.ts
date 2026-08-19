@@ -37,13 +37,55 @@
  * under 7:1 there, and the paper stops reading as paper and starts reading as
  * beige.
  *
- * Semantic tokens (`positive`, `decline`, `info`, `accent`) still exist and are
- * still used at their call sites, but they all resolve to ink for now — the
- * *meaning* is carried by the label and the arrow, not by colour. When a real
- * accent hue is chosen, this is the only file that changes.
+ * ## There is now a third colour, and only just
  *
- * Dark mode is the same two colours swapped: ink page, paper text. It is not a
- * second palette, and deliberately so — one ramp, read from either end.
+ * An accent hue exists: `accent`, `accentStrong`, `accentSoft`, and `info`,
+ * which points at the same hue because the thing `info` colours is the breath.
+ * Everything else — body copy, headings, buttons, cards, game pieces, the whole
+ * of the two ramps above — is still paper and ink. That is the deal the accent
+ * is admitted under: it marks a handful of things the *app* says, and never
+ * anything the user typed, tapped or is playing with.
+ *
+ * Where it appears, and why those three:
+ *
+ *  - **The breath.** `info` is the breathing circle on the opening sigh, its
+ *    miniature in the example, and the breathwork pacer. It is the one thing in
+ *    the app you are asked to watch for half a minute, and the one place a
+ *    colour does something an ink circle cannot: it is warm, so the circle
+ *    reads as something lit rather than something drawn.
+ *  - **The mark.** `Rule` — the stroke under the opening line, under the
+ *    breath's heading, under "That's all.", and standing beside the parting
+ *    suggestion. It is the app's own punctuation and the least functional thing
+ *    on any screen it appears on, which is exactly what an accent is for.
+ *  - **Progress.** The filled dots in the chrome row, which are the app
+ *    reporting on itself.
+ *
+ * `positive` and `decline` are deliberately *not* on it. Direction in this app
+ * is carried by the label and the arrow — see the note those two tokens carry —
+ * and a green/red pair would be the first colour here that means something,
+ * which is a much larger decision than a warm circle.
+ *
+ * ## The accent is the one thing that changes hue with the scheme
+ *
+ * Light mode's accent is a dusty terracotta; dark mode's is a soft slate blue.
+ * Not the same hue at two lightnesses — a different colour entirely, which is a
+ * deliberate exception to everything above.
+ *
+ * The reason is that the two schemes are two different rooms rather than two
+ * renderings of one. The light scheme is paper in daylight, and the paper is
+ * warm: a warm mark belongs to it, the way a red pencil belongs on a page. The
+ * dark scheme is a lit screen in an unlit room, and warmth there reads as heat
+ * — an orange circle glowing on a dark page at night is a notification, not a
+ * breath. Cool blue is what a screen in the dark is allowed to be.
+ *
+ * Both are chosen against their own page rather than against each other:
+ * #A9603A is 3.99:1 on paper and #A6C0D9 is 4.51:1 on ink, so each clears 3:1
+ * as a graphic mark with room to spare, and `accentStrong` on each side clears
+ * 4.5:1 for the day one of them has to carry a word.
+ *
+ * Dark mode is otherwise the same two colours swapped: ink page, paper text. It
+ * is not a second palette, and deliberately so — one ramp, read from either
+ * end, plus one hue that knows which end it is on.
  */
 
 import "@/global.css";
@@ -81,6 +123,15 @@ export const Colors = {
      * separate because it stops being moot the moment a real accent lands.
      */
     textOnPositive: "#F0EBDE",
+    /**
+     * On `accentStrong`, which is the fill the rating chips take when selected.
+     * The page's own paper again, and 4.99:1 on the terracotta — the numeral it
+     * carries is 17pt semibold, which is under the size where 3:1 would do, so
+     * the fill is the strong step of the accent rather than the accent itself.
+     * Its own token rather than borrowing `textOnBrand` because the two sit on
+     * different colours now and only agree by coincidence.
+     */
+    textOnAccent: "#F0EBDE",
 
     /** The paper. See the note at the top of the file for why it is this one. */
     background: "#F0EBDE",
@@ -125,15 +176,32 @@ export const Colors = {
     decline: "#4E4C50",
     declineSoft: "#D9D5CA",
 
-    /** Progress bars, the Progress tab, the refresh wheel. */
-    info: "#4E4C50",
-    infoSoft: "#E1DDD1",
+    /**
+     * The breathing circle, on all three screens that draw one, and the bounce
+     * game's ball. Points at the accent rather than at ink — see the note at
+     * the top of the file for why the breath is the one animation that gets a
+     * colour.
+     */
+    info: "#A9603A",
+    infoSoft: "#E7D9C7",
 
-    /** Humanity/people-flavoured surfaces. A wash: ink at 35%. */
-    accent: "#B7B3AC",
-    /** The same axis at 5.0:1, for when it has to carry a number. */
-    accentStrong: "#656365",
-    accentSoft: "#E8E3D7",
+    /**
+     * The accent: a dusty terracotta, warm enough to belong to the paper and
+     * dark enough to be a mark rather than a highlight. 3.99:1 on the page,
+     * which is what a 2-point rule and a 7-point dot need — both are graphics,
+     * so 3:1 is the bar and this clears it without becoming a traffic light.
+     *
+     * Saturation is the thing to be careful with if this is ever retuned. The
+     * hue can move a fair way and still read as clay; take the chroma up and it
+     * stops being a mark on a page and starts being a brand colour, which is
+     * the one thing an app that opens on somebody's worst half-hour should not
+     * have.
+     */
+    accent: "#A9603A",
+    /** The same hue at 4.99:1, for the day it has to carry a word or a number. */
+    accentStrong: "#8E5636",
+    /** The accent at about 14% over paper — a wash, for anything it fills. */
+    accentSoft: "#E7D9C7",
 
     /** Form errors. Ink — the message says what is wrong. */
     danger: "#4E4C50",
@@ -158,6 +226,8 @@ export const Colors = {
     textMuted: "#D6D3CE",
     textOnBrand: "#4E4C50",
     textOnPositive: "#4E4C50",
+    /** On `accentStrong` — ink on the slate blue, 5.23:1. See the light side. */
+    textOnAccent: "#4E4C50",
 
     /** Supplied ink. The page. */
     background: "#4E4C50",
@@ -183,12 +253,25 @@ export const Colors = {
     decline: "#F3F0E7",
     declineSoft: "#636166",
 
-    info: "#F3F0E7",
-    infoSoft: "#5D5B5F",
+    info: "#A6C0D9",
+    infoSoft: "#585A60",
 
-    accent: "#8B898B",
-    accentStrong: "#D6D3CE",
-    accentSoft: "#565459",
+    /**
+     * The accent on this side: a soft slate blue, 4.51:1 on the ink page. Not
+     * the terracotta at another lightness — see the note at the top of the file
+     * on why the two schemes get different hues rather than one hue read from
+     * both ends.
+     *
+     * Desaturated for the same reason as its counterpart, and with one more
+     * behind it: this is the colour of a circle breathing on a dark screen in a
+     * dark room, and anything brighter than this is a light source rather than
+     * a shape.
+     */
+    accent: "#A6C0D9",
+    /** The same hue at 5.23:1, for when it has to carry a word or a number. */
+    accentStrong: "#B5CEE6",
+    /** The accent at about 12% over ink. */
+    accentSoft: "#585A60",
 
     danger: "#F3F0E7",
   },

@@ -16,10 +16,17 @@
  * half of what makes a title read as placed rather than left there, and at a
  * hairline in `border` it was a rumour.
  *
- * So: ink, two points, rounded ends. Full ink means it inverts with the theme
- * on its own — ink on paper in light, paper on ink in dark — carrying the same
- * weight as the heading it belongs to in either. The rounded ends are what keep
- * a short heavy line from reading as a divider someone cropped.
+ * So: two points, rounded ends, and the accent hue. The rounded ends are what
+ * keep a short heavy line from reading as a divider someone cropped.
+ *
+ * The colour is `accent` rather than the ink it was drawn in for a long time.
+ * This mark is the least functional thing on any screen it appears on — it
+ * separates nothing and says nothing, it only says *placed* — which is what
+ * makes it the right thing to spend the app's one hue on. See the note on the
+ * accent in `constants/theme.ts` for what else is allowed to wear it. It still
+ * inverts with the scheme, just not by swapping paper and ink: terracotta on
+ * the paper page, slate blue on the ink one, each measured against its own
+ * background.
  *
  * Deliberately far shorter than the text it marks. A rule that runs the measure
  * is a divider between things, and neither screen has anything to divide.
@@ -60,7 +67,10 @@ export function Rule({ vertical = false }: RuleProps = {}) {
 
   return (
     <View
-      style={[vertical ? styles.vertical : styles.rule, { backgroundColor: theme.text }]}
+      style={[
+        vertical ? styles.vertical : styles.rule,
+        { backgroundColor: theme.accent },
+      ]}
     />
   );
 }

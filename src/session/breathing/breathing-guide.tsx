@@ -315,8 +315,11 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
       // The old train first, in case a phase was cut short — its remaining taps
       // belong to an instruction that is no longer on screen.
       stopPulses?.();
+      // `'sigh'`, which is what runs the inhales at about three taps a second
+      // instead of one — this screen paces the shape of a breath rather than a
+      // rate, and the shape is in the two inhales. See `breath-pulse.ts`.
       stopPulses = current.pulse
-        ? pulseBreath(current.pulse, current.ms)
+        ? pulseBreath(current.pulse, current.ms, 'sigh')
         : undefined;
 
       // Honouring Reduce Motion by holding the circle still, rather than by
