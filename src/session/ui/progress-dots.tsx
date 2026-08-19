@@ -26,16 +26,16 @@
  * one they are already reading something else on.
  */
 
-import { StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from "react-native";
 
-import { PROGRESS } from '@/content/strings';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
+import { Spacing } from "@/constants/theme";
+import { PROGRESS } from "@/content/strings";
+import { useTheme } from "@/hooks/use-theme";
 import {
   SESSION_STAGES,
   stageIndex,
   type SessionStage,
-} from '@/session/routing';
+} from "@/session/routing";
 
 /**
  * Small enough to be furniture. These sit in the chrome row between the back
@@ -43,7 +43,7 @@ import {
  * looked for and invisible otherwise — the same bargain both controls in it
  * already make.
  */
-const DOT = 7;
+const DOT = 8;
 
 export function ProgressDots({ stage }: { stage: SessionStage }) {
   const theme = useTheme();
@@ -57,7 +57,8 @@ export function ProgressDots({ stage }: { stage: SessionStage }) {
         PROGRESS[stage],
         current + 1,
         SESSION_STAGES.length,
-      )}>
+      )}
+    >
       {SESSION_STAGES.map((name, index) => (
         <View
           key={name}
@@ -69,7 +70,15 @@ export function ProgressDots({ stage }: { stage: SessionStage }) {
             // accent keeps everywhere else it appears. See `constants/theme.ts`.
             index <= current
               ? { backgroundColor: theme.accent, borderColor: theme.accent }
-              : { borderColor: theme.border },
+              // `barDivider` rather than `border`: ink at 35% instead of 20%,
+              // which is the app's other line weight and the one it uses where
+              // a line separates chrome from content rather than one card from
+              // the next. At 20% the ring was drawn in the faintest colour in
+              // the palette and thickening it only made a wider faint mark —
+              // an empty dot has to be legible as an outline before its weight
+              // means anything. Still short of the ink the filled ones carry,
+              // so the row reads as done and not-done at a glance.
+              : { borderColor: theme.barDivider },
           ]}
         />
       ))}
@@ -83,17 +92,30 @@ const styles = StyleSheet.create({
   // of the eye, which is the wrong shape for a thing whose whole message is
   // "there are four of these and you are on the second".
   row: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
     gap: Spacing.three,
   },
   // Hollow ones are drawn as a ring rather than as a fainter fill: a wash of
   // ink at low alpha on paper reads as a filled dot in bright light, which is
   // the one thing this row cannot afford to be ambiguous about.
+  //
+  // The ring runs twice the weight of the app's dividers. At the two hairlines
+  // it started on it was a third of a point on a 3× screen wrapped around a
+  // 7-point circle, and an empty dot that faint reads as a smudge rather than
+  // as the outline of something not filled in yet — which is half of what this
+  // row is saying. Four is about two thirds of a point, and the hole it leaves
+  // is still more than half the dot, so a filled one and an empty one are told
+  // apart by the middle rather than by how heavy the edge is.
+  //
+  // This is close to as far as it goes at this size. Much past here the ring
+  // closes up and an empty dot starts reading as a filled one seen in bad
+  // light, which is the one thing this row cannot be ambiguous about — if it
+  // still wants weight, `DOT` is the number to move, not this one.
   dot: {
     width: DOT,
     height: DOT,
     borderRadius: DOT / 2,
-    borderWidth: StyleSheet.hairlineWidth * 2,
+    borderWidth: StyleSheet.hairlineWidth * 4,
   },
 });

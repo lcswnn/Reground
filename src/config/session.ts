@@ -130,66 +130,13 @@ export const WELCOME_BREATH_MS =
  * that makes the promise wrong fails there rather than shipping.
  */
 export const BREATHING = {
-  totalMs: 24_600,
-  /**
-   * Stillness before the first inhale.
-   *
-   * The screen arrives on a fade, and an animation that starts on mount is
-   * already a third of the way into the inhale by the time the screen is fully
-   * visible — so the first thing the user sees is a circle mid-movement with
-   * no idea when it began, and they spend the first cycle catching up. This
-   * holds the circle small and empty until the transition has finished, so the
-   * breath starts where the user can see it start.
-   */
+  totalMs: 20_600,
   leadInMs: 1_400,
-  /**
-   * The first inhale — full, but taken rather than drawn out.
-   *
-   * Was 2.5s, then 1.8s, now 1.4s. 2.5 was a long time to be filling one
-   * lungful and left people arriving at the top-up already wanting to breathe
-   * out; the steps down since are the same complaint, quieter. The sigh is two
-   * inhales *stacked*, and the first one filling briskly is what leaves room for
-   * the second to be a real top-up rather than a formality.
-   *
-   * ## Two floors, and which one bites has changed
-   *
-   * `secondInhaleMs` is the obvious one: these two have to stay clearly
-   * different lengths, or the shape stops being a long inhale and a snatched one
-   * and becomes a single interrupted inhale. At 1.4s this still runs 2.3× the
-   * top-up — thinner than it was, and the reason the top-up was left alone while
-   * this came down.
-   *
-   * The other is arithmetic, and it is not obvious at all. `BREATH_CYCLES`
-   * rounds `totalMs` to whole cycles, so moving a phase moves the cycle until
-   * the rounding tips and the round count changes underneath the copy. With
-   * `totalMs` set to exactly three cycles that band is now very wide: anywhere
-   * between about **230ms** and **3,040ms** here still comes out at three
-   * rounds, so this can be tuned on how the breath feels without watching the
-   * session length.
-   */
-  firstInhaleMs: 1_400,
-  /**
-   * The top-up. Short and sharp is the point of it — it reinflates what the
-   * first inhale left collapsed, which is what makes the long exhale actually
-   * offload anything. A slow second inhale is just one long inhale with a
-   * stumble in it.
-   */
-  secondInhaleMs: 600,
-  /**
-   * The beat at the top, on a full chest. Long enough to be a rest rather than
-   * a hinge between two movements.
-   */
-  holdMs: 1_300,
-  /**
-   * The working half, and still about twice the two inhales put together —
-   * 2.3×, where 6.2s against the old 2.5s of inhale was 2.5×. Shortened with
-   * them rather than left alone: the ratio is what makes this a sigh, and an
-   * exhale held at its old length over brisker inhales would have turned the
-   * cycle into a short breath in and a long wait out.
-   */
-  exhaleMs: 4_000,
-  /** Room to land at the bottom before being asked to start again. */
-  restMs: 900,
+  firstInhaleMs: 880,
+  secondInhaleMs: 300,
+  holdMs: 1_000,
+  exhaleMs: 3_000,
+  restMs: 1_200,
 } as const;
 
 export const BREATH_CYCLE_MS =
@@ -366,7 +313,8 @@ export const SOMATIC = {
  * delay on the progress track — and a constant that drifted from the halves
  * above would put the track out of step with the clock it is measuring.
  */
-export const SOMATIC_LEAD_IN_MS = SOMATIC.setMs + SOMATIC.countFrom * SOMATIC.countMs;
+export const SOMATIC_LEAD_IN_MS =
+  SOMATIC.setMs + SOMATIC.countFrom * SOMATIC.countMs;
 
 /**
  * Progressive muscle relaxation.
