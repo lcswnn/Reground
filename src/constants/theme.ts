@@ -49,14 +49,16 @@
  * Where it appears, and why those three:
  *
  *  - **The breath.** `info` is the breathing circle on the opening sigh, its
- *    miniature in the example, and the breathwork pacer. It is the one thing in
- *    the app you are asked to watch for half a minute, and the one place a
- *    colour does something an ink circle cannot: it is warm, so the circle
- *    reads as something lit rather than something drawn.
- *  - **The mark.** `Rule` — the stroke under the opening line, under the
- *    breath's heading, under "That's all.", and standing beside the parting
- *    suggestion. It is the app's own punctuation and the least functional thing
- *    on any screen it appears on, which is exactly what an accent is for.
+ *    miniature in the example, the breathwork pacer, and the sphere that swells
+ *    slowly on the door — which is the same object seen from outside, before
+ *    anybody has been asked to breathe with it. It is the one thing in the app
+ *    you are asked to watch for half a minute, and the one place a colour does
+ *    something an ink circle cannot: it is warm, so the circle reads as
+ *    something lit rather than something drawn.
+ *  - **The mark.** `Rule` — the stroke under the breath's heading, under
+ *    "That's all.", and standing beside the parting suggestion. It is the app's
+ *    own punctuation and the least functional thing on any screen it appears
+ *    on, which is exactly what an accent is for.
  *  - **Progress.** The filled dots in the chrome row, which are the app
  *    reporting on itself.
  *

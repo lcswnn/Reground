@@ -265,7 +265,7 @@ export interface BackContext {
  *  - `/category` goes back to `/breathe-intro` for the same reason, and it is
  *    the third screen pointed there rather than at the breath. It had no target
  *    at all for a while, on the argument that everything behind the first
- *    question is either a timed line or a breath already taken, so a back button
+ *    question is either the door or a breath already taken, so a back button
  *    there costs half a minute to press. What that argument missed is that this
  *    is the first screen in the session that *asks* for something, and the first
  *    place someone can want out of an answer they have not given yet. A screen
@@ -274,9 +274,16 @@ export interface BackContext {
  *    a tap, not a minute — and skipping the breath from there is already
  *    offered on the breath itself.
  *
- * The door is the one thing nothing points back at: it moves on a timer, so any
- * button aimed at it lands on a screen that walks forward again a few seconds
- * later — the `/games` case above, with the bounce slowed down.
+ * The door is the one thing nothing points back at, and the reason changed
+ * under it. It used to move on a timer, so any button aimed at it landed on a
+ * screen that walked forward again a few seconds later — the `/games` case
+ * above, with the bounce slowed down. It waits for a Begin button now, so that
+ * bounce is gone and pointing back at it would work.
+ *
+ * It stays `null` anyway, on a smaller argument: the door's only action is the
+ * one the user took to leave it, so arriving back there offers them a screen
+ * they have already answered. Worth revisiting if the door ever grows a second
+ * thing to do on it.
  */
 export function previousRoute(
   route: SessionRoute,
@@ -285,8 +292,8 @@ export function previousRoute(
   switch (route) {
     // The door starts nothing, and the dead end has already cleared the
     // session. Neither has anything behind it worth returning to. The breath's
-    // front door joins them: the only thing behind it is the timed line, which
-    // would just walk forward again.
+    // front door joins them: the only thing behind it is the door, whose one
+    // action is the one that led here.
     case '/':
     case '/breathe-intro':
     case '/closed':

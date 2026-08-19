@@ -125,10 +125,10 @@ describe('previousRoute', () => {
   });
 
   /**
-   * Three with nothing behind them, for two reasons. The door moves on a timer,
-   * so anything pointing at it is a button that does nothing slowly, and the
-   * breath's front door has only the door behind it; the dead end has already
-   * cleared the session.
+   * Three with nothing behind them, for two reasons. The door starts nothing
+   * and its one action is the one that leaves it, so it is not a place to be
+   * sent back to — and the breath's front door has only the door behind it; the
+   * dead end has already cleared the session.
    */
   it('gives the door, the breath intro and the dead end no way back', () => {
     expect(previousRoute('/', context())).toBeNull();

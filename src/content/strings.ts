@@ -11,18 +11,33 @@
  */
 
 /**
- * The door. One line, no button — it fades in, waits, and goes.
+ * The door. One line, a sphere breathing above it, and a button — it fades in
+ * and then waits for as long as it takes.
  *
- * An instruction rather than a greeting, because it is the only thing on screen
- * and nothing is waiting on the user to answer it. "How are you today?" needed
- * a button to be a question; this needs the user to do one thing, and the
- * screen holds still long enough for them to do it.
+ * A statement of what the app is for rather than a greeting, and short enough
+ * to be taken in at a glance by somebody who opened this wound up. "How are you
+ * today?" would be a question asked before anything has been offered; this says
+ * what is about to be offered and then waits to be told to start.
  *
- * The stretched vowel is the timing, written into the word. "Take a deep
- * breath" is read at the speed of any other sentence; this one can't be.
+ * "Three easy steps" is a promise, so it has to be kept: the breath, the game,
+ * and the one last thing — which is exactly what the dots at the top of every
+ * screen count. See `SESSION_STAGES`.
  */
 export const WELCOME = {
   line: "Let's relieve that anxiety in three easy steps.",
+  /**
+   * The door has a button again, and this time it is a real one.
+   *
+   * It used to carry a large circular button labelled "I'm feeling a bit
+   * anxious right now" — a tap that cost nothing and decided nothing, which is
+   * why it went. Then the screen moved on a timer instead, which cost nothing
+   * and decided nothing *for* the user, which is worse.
+   *
+   * "Begin" is neither. It does not ask anybody to describe themselves before
+   * they are through the front door, and it does not walk off while they are
+   * still reading. One word, and it names the only thing this screen does.
+   */
+  begin: "Begin",
 } as const;
 
 /**

@@ -11,7 +11,7 @@
  *
  * The back button goes to `/breathe-intro`, not to the breath. This screen had
  * none at all for a while, on the argument that everything behind it is either
- * a timed line or a breath already taken — but this is the first screen that
+ * the door or a breath already taken — but this is the first screen that
  * asks the user for something, and a question with no way back off it reads as
  * a form. The breath's front door is a still page with a Start button, so the
  * cost of pressing back here is a tap rather than another half-minute. See

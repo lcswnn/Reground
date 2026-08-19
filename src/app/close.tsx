@@ -12,12 +12,13 @@
  * screen that says "nothing here needs you again today" handed the user the
  * opening question and waited.
  *
- * ## The sign-off is framed like the door, and ranged left
+ * ## The sign-off is marked, and ranged left
  *
- * "That's all." now takes a `Rule` under it — the same short ink stroke the
- * opening line is framed with and the breath's intro is headed with. It is the
- * app's one mark for saying *this line was placed*, and the last screen of the
- * session is the other end of the sentence the first screen opens.
+ * "That's all." takes a `Rule` under it — the same short ink stroke the breath's
+ * intro is headed with. It is the app's one mark for saying *this line was
+ * placed*, and the last screen of the session is where that is most worth
+ * saying: the door opposite it has a breathing sphere to do the same job, and
+ * this screen has only type on it.
  *
  * Left rather than centred, which is the difference between this and the door.
  * The door is one line on an empty page with nothing under it, so it is an

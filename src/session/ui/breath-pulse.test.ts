@@ -81,12 +81,11 @@ describe('planning a breath phase', () => {
    * comes out as.
    */
   describe("under the sigh's cadence", () => {
-    it('runs the first inhale about three times as often as the pacer would', () => {
-      const quick = planBreathPulses('inhale', BREATHING.firstInhaleMs, 'sigh');
-      const paced = planBreathPulses('inhale', BREATHING.firstInhaleMs);
-
-      expect(quick.length).toBeGreaterThan(paced.length);
-      expect(quick).toEqual([
+    // Against a fixed length rather than the config's, so the shape of the
+    // train is pinned even while the breath itself is being tuned — this is the
+    // assertion that would notice the cadence quietly reverting.
+    it('runs a 1.4-second inhale as four taps that build to the top', () => {
+      expect(planBreathPulses('inhale', 1_400, 'sigh')).toEqual([
         { at: 0, strength: 'light' },
         { at: 350, strength: 'light' },
         { at: 700, strength: 'light' },
@@ -94,11 +93,35 @@ describe('planning a breath phase', () => {
       ]);
     });
 
-    it('gives the top-up two taps, opening light and topping out firm', () => {
-      expect(planBreathPulses('inhale', BREATHING.secondInhaleMs, 'sigh')).toEqual([
-        { at: 0, strength: 'light' },
-        { at: 300, strength: 'medium' },
-      ]);
+    // And against the real one, which moves: whatever `firstInhaleMs` is set
+    // to, the sigh has to be getting more out of it than the pacer would.
+    it('is denser than the paced cadence on the breath the app actually runs', () => {
+      const quick = planBreathPulses('inhale', BREATHING.firstInhaleMs, 'sigh');
+      const paced = planBreathPulses('inhale', BREATHING.firstInhaleMs);
+
+      expect(quick.length).toBeGreaterThan(paced.length);
+      expect(quick[quick.length - 1].strength).toBe('medium');
+    });
+
+    /**
+     * The top-up is the phase the floor decides, and which side of it the phase
+     * falls on depends on `secondInhaleMs`: above 520ms it holds two taps, and
+     * below that it is a single firm one. Both are correct — what would not be
+     * is a gap under the floor, which is the double tap that means something
+     * else. So this asserts the rule rather than the count.
+     */
+    it('never puts two taps closer than the floor inside the top-up', () => {
+      const topUp = planBreathPulses('inhale', BREATHING.secondInhaleMs, 'sigh');
+
+      expect(topUp.length).toBeGreaterThan(0);
+      if (topUp.length === 1) {
+        expect(topUp[0]).toEqual({ at: 0, strength: 'medium' });
+      } else {
+        expect(topUp[topUp.length - 1].strength).toBe('medium');
+        topUp.slice(1).forEach((pulse, index) => {
+          expect(pulse.at - topUp[index].at).toBeGreaterThanOrEqual(260);
+        });
+      }
     });
 
     it('leaves the exhale exactly as the pacer has it', () => {

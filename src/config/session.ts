@@ -56,22 +56,28 @@ export const SPLASH = {
 } as const;
 
 /**
- * The opening line, which nobody taps through.
+ * The opening screen, which no longer runs on a clock.
  *
- * The line arrives whole and then sits there. It used to write itself out a
- * character at a time, on the argument that a sentence arriving at reading speed
- * sets the pace of the breath it is asking for — `charMs` and `charFadeMs` were
- * the pace of that hand. The typing was the only moving thing on a screen whose
- * whole point is that nothing is being asked of you yet, and a line still
- * assembling itself is a line you are waiting on rather than reading. So it is
- * simply there now, and the hold does all the work.
+ * The line arrives whole and then stays. It used to write itself out a character
+ * at a time — `charMs` and `charFadeMs` were the pace of that hand — on the
+ * argument that a sentence arriving at reading speed sets the pace of the breath
+ * it asks for. The typing was the only moving thing on a screen whose whole
+ * point is that nothing is being asked of you yet, and a line still assembling
+ * itself is a line you are waiting on rather than reading.
  *
- * `holdMs` is that work: long enough to take the breath the line asks for, short
- * enough that someone who ignored it isn't left waiting on an app that won't
- * move. It briefly absorbed the time the writing used to take, which made this
- * screen as long as it had ever been while having less on it than ever — five
- * and a half seconds is a long time to hold four words nobody can act on. The
- * hold is what came back down.
+ * ## The hold is gone, and so is the exit
+ *
+ * There used to be a `holdMs` and a `fadeOutMs` here, and a `WELCOME_BREATH_MS`
+ * that added the three together: the screen faded its line up, waited a beat,
+ * faded it out and navigated, all without anybody agreeing to any of it. It was
+ * the only screen in the app that moved on its own, and the beat it held was
+ * always a compromise — long enough to read four words, short enough that
+ * somebody who had already read them was not left watching an app think.
+ *
+ * The door has a Begin button now, so there is nothing left to time. What is
+ * left here is the fade the line comes up on and the pace of the sphere above
+ * it, and neither of them ends: the screen simply waits, like every other screen
+ * in the session.
  *
  * `fadeInMs` is not the line being written, it is the line being turned up. It
  * starts once the splash has gone rather than while it is dissolving (see
@@ -79,25 +85,22 @@ export const SPLASH = {
  * The two fades used to overlap, which read as the app talking over itself on
  * the way out of its own front door.
  *
- * Everything else in the session waits for a tap. This one doesn't, which is
- * why the total is derived here rather than being whatever the animation
- * happened to add up to.
+ * `pulseMs` is half of the sphere's cycle — one swell, or one settle. It came
+ * down from four seconds to this, which is the difference between a sphere that
+ * looks becalmed and one that is plainly alive: at four the movement was slow
+ * enough that a glance could not tell which way it was going.
+ *
+ * It stays slower than any breath the app actually paces, and that is the
+ * point: it is not a thing to breathe with, it is a thing to look at while
+ * deciding to. At the rate of a real inhale — the sigh's own is well under a
+ * second — it would read as an instruction nobody has been given yet, and
+ * somebody would start breathing to it on the doorstep. Anywhere under about
+ * two seconds is where that starts.
  */
 export const WELCOME_BREATH = {
   fadeInMs: 400,
-  holdMs: 1_850,
-  fadeOutMs: 700,
+  pulseMs: 2_700,
 } as const;
-
-/**
- * How long the whole screen lasts.
- *
- * A constant now rather than a function of the line's length — nothing here
- * scales with the number of characters any more, which is most of the point of
- * the line being solid.
- */
-export const WELCOME_BREATH_MS =
-  WELCOME_BREATH.fadeInMs + WELCOME_BREATH.holdMs + WELCOME_BREATH.fadeOutMs;
 
 /**
  * Cyclic sighing: two inhales stacked, then an exhale about twice their
@@ -196,20 +199,26 @@ export const TULLY = {
    */
   shimmerMs: 120,
   poseMs: {
-    // Five beats, still even, now 280 each — 500, then 360, then 300, then
+    // Five beats, still even, now 176 each — 500, then 360, 300, 280, then
     // this, each time because `firstInhaleMs` came down and these have to
     // re-tile it exactly or Tully drifts a little further from the circle every
     // cycle. Five and not four: `brim` is the top of the first inhale and the
     // only phase it appears in, so dropping a beat here would drop a drawing out
     // of the app entirely.
-    firstInhale: [280, 280, 280, 280, 280],
-    secondInhale: [200, 200, 200],
-    hold: [1_300],
+    //
+    // The top-up's three beats are now 100ms apart, which is inside the shimmer
+    // rate below. That is as tight as this can go: at a shorter
+    // `secondInhaleMs` the poses would change faster than the wobble they are
+    // drawn with, and Tully would read as flickering rather than moving. Cut
+    // the beat count before cutting the phase any further.
+    firstInhale: [176, 176, 176, 176, 176],
+    secondInhale: [100, 100, 100],
+    hold: [1_000],
     // Re-tiled for the shorter exhale, keeping the ramp: each beat is a little
     // longer than the one before, so the descent slows as it empties instead of
     // dropping at a constant rate. Sums to `exhaleMs` — the test is what says so.
-    exhale: [515, 550, 565, 580, 590, 595, 605],
-    rest: [900],
+    exhale: [380, 405, 420, 435, 445, 450, 465],
+    rest: [1_200],
   },
 } as const;
 

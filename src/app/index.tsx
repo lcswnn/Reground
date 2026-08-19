@@ -3,151 +3,285 @@
  *
  * Numbered 0 because it was put in front of a flow that was already numbered,
  * and moving every comment down one would cost more than it explains. Screen 1
- * is the breath, which is now what the session opens with; this one starts
- * nothing.
+ * is the breath, which is what the session opens with; this one starts nothing.
  *
- * One line, and nothing to press. It used to be a line and a large circular
- * button whose label said what the user was doing ("I'm feeling a bit anxious
- * right now") — a tap that cost nothing and decided nothing, which is exactly
- * why it went: a decision-free tap is still a thing asked of someone who opened
- * this app wound up. The line now asks for the one thing that is worth doing
- * before anything else, and the screen waits while they do it — and then hands
- * over to the breath, which asks for the same thing for half a minute.
+ * Three things on it: a sphere that breathes slowly, the line that says what
+ * the app is for, and a Begin button. Then it waits.
  *
- * That makes it the only screen in the session that moves on its own without
- * the user having agreed to it first — the breath in `breathe.tsx` runs on a
- * clock too, but `breathe-intro.tsx` exists precisely so that someone taps
- * Start before it does. The difference is length: five seconds of one sentence
- * is a beat, and a beat does not need a front door of its own.
+ * ## It used to leave on its own, and that was the problem
+ *
+ * The line faded up, held for about two seconds, faded out, and the screen
+ * navigated — no button, nothing to press. The argument for it was that a tap
+ * which costs nothing and decides nothing is still a thing asked of somebody
+ * who opened this app wound up, and that argument was right about the *old*
+ * button (a large circular one labelled "I'm feeling a bit anxious right now",
+ * which asked the user to describe themselves on the doorstep) and wrong about
+ * having any button at all.
+ *
+ * What a timed door actually does is take the one decision on the screen away
+ * from the person it belongs to. Read faster than the hold and you are waiting
+ * on an app that will not move; read slower, or look up, or be interrupted —
+ * which is the state everybody arriving here is in — and the app has already
+ * left without you. It was also the only screen in the session that moved
+ * without being told to, which made it the one place the app's own manners did
+ * not apply. Everything else waits for a tap. This does now too.
+ *
+ * ## The sphere
+ *
+ * A slow swell and settle, four seconds each way, above the line. Drawn like
+ * the breathing circle on Screen 1 — the same halo and core, the same accent —
+ * because it is the same object seen from outside: this is what the app is
+ * about to ask you to do, moving gently enough that nobody could mistake it for
+ * an instruction. It is deliberately slower than any breath the app paces. At
+ * the rate of a real inhale it would be a cue nobody has been given yet, and
+ * somebody would start breathing to it on the doorstep.
  *
  * ## The line is solid, and used to be typed
  *
- * It wrote itself out a character at a time, with every glyph its own `Text` and
- * its own slice of one shared clock. The argument for it was that a sentence
- * arriving at reading speed sets the pace of the breath it asks for. In practice
- * it was the only moving thing on a screen whose whole point is that nothing is
- * being asked of you yet, and a sentence still assembling itself is one you are
- * waiting on rather than reading. It is now simply there, in the same quiet
- * italic the last screen signs off with — see `StageDirection`, which the two
- * ends of the session share so they stay the same weight as each other.
+ * It wrote itself out a character at a time, with every glyph its own `Text`
+ * and its own slice of one shared clock. The argument for it was that a
+ * sentence arriving at reading speed sets the pace of the breath it asks for.
+ * In practice it was a sentence you were waiting on rather than reading. It is
+ * now simply there at the title tier — see `StageDirection`, which the two ends
+ * of the session share so they keep one voice.
  *
- * What is left of the animation is a fade up and a fade out, and neither is the
- * line being written: they are it being turned on and off. The time the typing
- * used to take went into `holdMs`, so the screen lasts about as long as it
- * always did.
+ * What is left of that animation is a single fade up, and it is not the line
+ * being written: it is the screen being turned on. Nothing fades out any more,
+ * because nothing leaves until Begin is pressed.
  *
  * None of it starts until the splash has gone. This screen is mounted behind it
  * — the root renders as soon as the fonts are ready, which is sooner — so the
  * fade is held back by whatever the splash has left to run *and* by the fade it
- * runs on the way out. See `splashClearsInMs`, and note that the navigation
- * timer carries the same delay: the two are one schedule, and a screen that left
- * before its own line had finished would be worse than one that started late.
+ * runs on the way out. See `splashClearsInMs`.
  *
  * No session state is touched here. Someone who opens the app and puts it down
  * has done nothing that needs clearing.
  *
- * One of the screens with no back button. Nothing has happened yet, so there is
- * nothing behind this to return to — see `previousRoute`, which is where that
- * decision is written down, and note that the two screens after it are in the
- * same position for related reasons: a back button pointing here would land on
- * a screen that immediately walks forward again.
+ * No back button: there is nothing behind the first screen. See `previousRoute`.
  */
 
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
   useReducedMotion,
   useSharedValue,
   withDelay,
-  withSequence,
+  withRepeat,
   withTiming,
 } from "react-native-reanimated";
 
-import { WELCOME_BREATH, WELCOME_BREATH_MS } from "@/config/session";
+import { Button } from "@/components/ui/button";
+import { WELCOME_BREATH } from "@/config/session";
 import { WELCOME } from "@/content/strings";
+import { Spacing } from "@/constants/theme";
+import { useTheme } from "@/hooks/use-theme";
+import { withAlpha } from "@/lib/color";
 import { splashClearsInMs } from "@/lib/splash";
 import { SessionScreen } from "@/session/ui/session-screen";
 import { StageDirection } from "@/session/ui/stage-direction";
 
+/**
+ * How far the sphere travels. A narrower band than the breathing circle's,
+ * which runs from 0.44 to 1: that one is tracing a breath and has to be
+ * unmistakably bigger at the top than at the bottom, while this one is only
+ * alive. A sphere that visibly inflates on the doorstep is a demonstration, and
+ * this screen is not demonstrating anything yet.
+ */
+const MIN_SCALE = 0.86;
+
+/**
+ * Bounded on both axes, like every other circle in the app: on a short screen a
+ * width-derived size would push the line and the button off the bottom. Smaller
+ * than Screen 1's circle on purpose — that one is the exercise, this one is a
+ * mark above a sentence.
+ */
+const DIAMETER_RATIO = 0.32;
+const DIAMETER_HEIGHT_RATIO = 0.16;
+const MAX_DIAMETER = 132;
+
 export default function WelcomeScreen() {
   const router = useRouter();
+  const theme = useTheme();
   const reducedMotion = useReducedMotion();
+  const { width, height } = useWindowDimensions();
+
+  const diameter = Math.min(
+    width * DIAMETER_RATIO,
+    height * DIAMETER_HEIGHT_RATIO,
+    MAX_DIAMETER,
+  );
 
   /**
-   * Starts up under reduced motion: the line is simply there, and the screen is
-   * a sentence and a wait. Nothing below writes to it in that case.
+   * Starts up under reduced motion: the screen is simply there. Nothing below
+   * writes to it in that case.
    */
   const opacity = useSharedValue(reducedMotion ? 1 : 0);
+  /**
+   * 0 at the bottom of the sphere's swell, 1 at the top. Parked at the top for
+   * anybody who asked the system to stop things moving — a still sphere at full
+   * size is a shape, where a still one at 0.86 is a shape that looks like it is
+   * waiting to finish.
+   */
+  const swell = useSharedValue(reducedMotion ? 1 : 0);
 
   useEffect(() => {
     /**
      * This screen mounts the moment the fonts are ready, which is before the
-     * splash comes off — so without this the line would fade up underneath an
+     * splash comes off — so without this the screen would fade up underneath an
      * opaque splash and be revealed already at full strength.
      *
      * It waits for the splash to have *finished* going: the hold, plus the fade
      * `_layout.tsx` kicks off at the end of it. The two fades used to overlap,
      * so that the line rose through the splash as it cleared, and what that
      * actually looked like was the app talking over itself while still opening.
-     * The line is the first thing this app says and it now gets a screen of its
-     * own to say it on.
      *
      * Measured here rather than passed in, because "now" at first mount is the
      * instant that hide timer is set. See `splashClearsInMs`.
      */
     const leadMs = splashClearsInMs();
 
-    if (!reducedMotion) {
-      // One sequence rather than two assignments: the second would land on the
-      // same shared value in the same frame and simply replace the first.
-      opacity.value = withDelay(
-        leadMs,
-        withSequence(
-          withTiming(1, {
-            duration: WELCOME_BREATH.fadeInMs,
-            easing: Easing.out(Easing.quad),
-          }),
-          withDelay(
-            WELCOME_BREATH.holdMs,
-            withTiming(0, {
-              duration: WELCOME_BREATH.fadeOutMs,
-              easing: Easing.in(Easing.quad),
-            }),
-          ),
-        ),
-      );
-    }
+    if (reducedMotion) return;
 
-    /**
-     * The move is a timer rather than the fade's completion callback, so that
-     * the screen takes the same time either way — under reduced motion there is
-     * nothing animating to finish, and a version of this screen that flashed
-     * past in a frame would be worse than one that never existed.
-     *
-     * It carries the same lead as the animation. Leaving it out would spend the
-     * splash's remaining time out of this screen's budget, and the line would be
-     * cut off by a navigation that had started counting first.
-     */
-    const timer = setTimeout(
-      () => router.replace("/breathe-intro"),
-      leadMs + WELCOME_BREATH_MS,
+    opacity.value = withDelay(
+      leadMs,
+      withTiming(1, {
+        duration: WELCOME_BREATH.fadeInMs,
+        easing: Easing.out(Easing.quad),
+      }),
     );
-    return () => clearTimeout(timer);
-  }, [opacity, reducedMotion, router]);
 
-  const lineStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+    // Reversing rather than looping: a repeat that snaps back to the start
+    // would be a breath in with no breath out. `-1` is forever, which is what
+    // this screen is now — there is no timer left to outlive.
+    swell.value = withDelay(
+      leadMs,
+      withRepeat(
+        withTiming(1, {
+          duration: WELCOME_BREATH.pulseMs,
+          // Sinusoidal in and out, so there is no moment where it is visibly
+          // travelling at a constant speed. Nothing in a body does.
+          easing: Easing.inOut(Easing.sin),
+        }),
+        -1,
+        true,
+      ),
+    );
+  }, [opacity, reducedMotion, swell]);
+
+  const screenStyle = useAnimatedStyle(() => ({ opacity: opacity.value }));
+
+  // The arithmetic is written out inside each worklet rather than shared
+  // through a `scale(value)` helper above them. A plain function declared in
+  // the component body is a *remote* function to the UI runtime — calling it
+  // from a worklet throws "Tried to synchronously call a Remote Function" on
+  // the first frame. Constants like `MIN_SCALE` are captured by value and are
+  // fine; functions are not, unless they carry their own `'worklet'` directive,
+  // and two lines of arithmetic are not worth a third worklet to hold them.
+  const coreStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: MIN_SCALE + (1 - MIN_SCALE) * swell.value }],
+  }));
+  // Trails the core by a fraction of the distance it has left, the same way the
+  // breathing circle's does, so the two are one object rather than a ring
+  // around a disc.
+  const haloStyle = useAnimatedStyle(() => {
+    const scale = MIN_SCALE + (1 - MIN_SCALE) * swell.value;
+
+    return {
+      transform: [{ scale: scale + (1 - scale) * 0.4 }],
+      opacity: 0.1 + swell.value * 0.06,
+    };
+  });
 
   return (
-    <SessionScreen centered>
-      <Animated.View style={lineStyle}>
-        {/* Framed: the title tier between two short rules. This is the app's
-            first impression and the only thing on the screen — see the note in
-            `StageDirection` on why the two ends of the session stopped being
-            drawn the same way. */}
-        <StageDirection framed>{WELCOME.line}</StageDirection>
+    <SessionScreen>
+      {/* One fade for the whole door: the sphere, the line and the button come
+          up together as the screen arriving, rather than as three things
+          announcing themselves in turn. */}
+      <Animated.View style={[styles.root, screenStyle]}>
+        {/* Takes all the room above the button and centres what is in it, so
+            the line still lands near the middle of the screen while the action
+            sits at the bottom where the thumb is. */}
+        <View style={styles.stage}>
+          <View
+            style={[
+              styles.sphere,
+              { width: diameter * 1.4, height: diameter * 1.4 },
+            ]}>
+            <Animated.View
+              style={[
+                styles.circle,
+                haloStyle,
+                {
+                  width: diameter,
+                  height: diameter,
+                  borderRadius: diameter / 2,
+                  backgroundColor: theme.info,
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.circle,
+                coreStyle,
+                {
+                  width: diameter,
+                  height: diameter,
+                  borderRadius: diameter / 2,
+                  backgroundColor: withAlpha(theme.info, 0.2),
+                  borderColor: theme.info,
+                },
+              ]}
+            />
+          </View>
+
+          {/* The title tier, full ink, and nothing around it — the sphere
+              above does the placing that a pair of rules used to. See the note
+              in `StageDirection` on why the two ends of the session are drawn
+              differently, and why this end lost its frame. */}
+          <StageDirection opening>{WELCOME.line}</StageDirection>
+        </View>
+
+        {/* `large`, the same size Start takes on the breath's intro. Both are
+            the single button on a screen whose only purpose is to start
+            something — see `Size` in `button.tsx`. */}
+        <View style={styles.action}>
+          <Button
+            title={WELCOME.begin}
+            size="large"
+            onPress={() => router.replace("/breathe-intro")}
+          />
+        </View>
       </Animated.View>
     </SessionScreen>
   );
 }
+
+const styles = StyleSheet.create({
+  root: {
+    flex: 1,
+  },
+  stage: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+    // The long pause, between the thing to look at and the thing to read. The
+    // sphere is not an illustration of the sentence and should not sit on top
+    // of it like one.
+    gap: Spacing.six,
+  },
+  sphere: {
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  circle: {
+    position: "absolute",
+    borderWidth: StyleSheet.hairlineWidth * 3,
+    borderColor: "transparent",
+  },
+  action: {
+    paddingBottom: Spacing.four,
+  },
+});
