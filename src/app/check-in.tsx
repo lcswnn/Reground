@@ -20,6 +20,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -73,21 +74,31 @@ export default function CheckInScreen() {
         {/* Fixed slot, as on the rating screens: answering must not shove the
             buttons out from under the thumb that just pressed one. */}
         <View style={styles.response}>
+          {/* Faded up rather than cut in: the slot is fixed so nothing moves,
+              but a line that pops into it whole reads as having been there all
+              along. Keyed on the answer so switching answers re-runs the fade —
+              the reply changed, and it should arrive like one. */}
           {answer ? (
-            <ThemedText themeColor="textSecondary">
-              {answer === 'helped' ? CHECK_IN.helpedResponse : CHECK_IN.didNotResponse}
-            </ThemedText>
+            <Animated.View
+              key={answer}
+              entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)}>
+              <ThemedText themeColor="textSecondary">
+                {answer === 'helped' ? CHECK_IN.helpedResponse : CHECK_IN.didNotResponse}
+              </ThemedText>
+            </Animated.View>
           ) : null}
 
           {/* Two things in a row have now failed to shift it, which is a better
               reason to point at a person than any single number was. */}
           {answer === 'did-not' ? (
-            <View style={[styles.support, { borderColor: theme.border }]}>
+            <Animated.View
+              entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)}
+              style={[styles.support, { borderColor: theme.border }]}>
               <ThemedText type="small">{SUPPORT_RESOURCE.line}</ThemedText>
               <ThemedText type="small" themeColor="textMuted">
                 {SUPPORT_RESOURCE.resource}
               </ThemedText>
-            </View>
+            </Animated.View>
           ) : null}
         </View>
 

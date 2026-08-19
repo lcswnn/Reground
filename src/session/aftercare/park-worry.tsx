@@ -11,6 +11,7 @@
 
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -57,7 +58,9 @@ export function ParkWorry({ onDone }: { onDone: () => void }) {
 
       <View style={styles.footer}>
         {choice ? (
-          <ThemedText themeColor="textSecondary">{PARK_WORRY.confirmation}</ThemedText>
+          <Animated.View entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)}>
+            <ThemedText themeColor="textSecondary">{PARK_WORRY.confirmation}</ThemedText>
+          </Animated.View>
         ) : null}
         <Button title={PARK_WORRY.done} disabled={!choice} onPress={onDone} />
       </View>

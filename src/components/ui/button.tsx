@@ -2,7 +2,7 @@ import { ActivityIndicator, StyleSheet, Text, type PressableProps } from 'react-
 
 import { softGlow } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { Fonts, Radius, Spacing, Type } from '@/constants/theme';
+import { Fonts, MaxFontScale, Radius, Spacing, Type } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 
 type Variant = 'primary' | 'secondary' | 'positive' | 'ghost';
@@ -64,7 +64,13 @@ export function Button({
       {loading ? (
         <ActivityIndicator color={foreground} />
       ) : (
-        <Text style={[styles.label, { color: foreground }, softGlow(foreground)]}>{title}</Text>
+        <Text
+          // The same Dynamic Type ceiling `ThemedText` applies — this is the
+          // one piece of type in the app that doesn't go through it.
+          maxFontSizeMultiplier={MaxFontScale}
+          style={[styles.label, { color: foreground }, softGlow(foreground)]}>
+          {title}
+        </Text>
       )}
     </PressableScale>
   );

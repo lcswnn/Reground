@@ -346,13 +346,18 @@ export const MaxContentWidth = 800;
  * closing suggestion, 17 in the chrome, 14 and 13 in a chart card — and no two
  * of them agreed with each other.
  *
- * The sizes step up the scale (13 · 17 · 20 · 25) by enough that two tiers next
+ * The sizes step up the scale (13 · 17 · 20 · 28) by enough that two tiers next
  * to each other read as two different things rather than as one thing that
- * wobbled. Body sits nearer the header above it than the caption below it, on
- * purpose: prose is what most of these screens are, and the caption tier is the
- * one that should have to be leaned in for. The numeral sits a further two
- * steps up — it is a clock, not a heading, and it is the only text on its
- * screen.
+ * wobbled — and each lands on a size Apple's own text styles use, so the app
+ * sits in an iPhone user's hand at the weights their other apps have taught
+ * them: caption is the footnote (13), body is the body (17), heading is
+ * title3 (20), and the screen title is title1 (28). It ran 25 for a while,
+ * which is a size no system style uses — close enough to the 20 under it to
+ * read as hierarchy going soft rather than as two ranks of heading. Body sits
+ * nearer the header above it than the caption below it, on purpose: prose is
+ * what most of these screens are, and the caption tier is the one that should
+ * have to be leaned in for. The numeral sits above the lot — it is a clock,
+ * not a heading, and it is the only text on its screen.
  *
  * Leading splits the scale in half, and this is the one real rule in it. The
  * display sizes are set tight — a heading that wraps is one phrase broken by
@@ -362,7 +367,7 @@ export const MaxContentWidth = 800;
  */
 export const Type = {
   /** The screen's title. One per screen, and the first thing read on it. */
-  title: { fontSize: 25, lineHeight: 32 },
+  title: { fontSize: 28, lineHeight: 34 },
   /**
    * The secondary header: a section's heading, a card's name, and the lead line
    * on the screens whose first line is a sentence rather than a title.
@@ -378,3 +383,19 @@ export const Type = {
   /** The clock and the countdown. Not a text tier — the one big numeral. */
   numeral: { fontSize: 40, lineHeight: 46 },
 } as const;
+
+/**
+ * How far the system's text-size setting may scale this app's type.
+ *
+ * Dynamic Type is honoured — a person who asked for bigger text gets bigger
+ * text — but not without a ceiling, because every tier here carries a fixed
+ * line height and a layout drawn around it: at the full accessibility multiple
+ * (~3×) the lines overlap, the buttons clip their labels, and the breathing
+ * screen's cue collides with its circle. 1.4 is far enough to cover the whole
+ * of the standard Dynamic Type range while keeping every screen intact, and it
+ * is the convention fixed-leading apps settle on for exactly this reason.
+ *
+ * Applied in `ThemedText` and on the button label, which between them are every
+ * piece of type in the app.
+ */
+export const MaxFontScale = 1.4;

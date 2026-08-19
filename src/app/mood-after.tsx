@@ -19,6 +19,7 @@
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
+import Animated, { FadeIn, ReduceMotion } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -69,19 +70,28 @@ export default function MoodAfterScreen() {
         {/* Fixed slot so selecting a number doesn't shove the scale up the
             screen under the user's thumb. */}
         <View style={styles.response}>
+          {/* Faded up rather than cut in, and keyed on which reply it is so a
+              changed rating re-runs the fade — same arrangement, and same
+              reasons, as `check-in.tsx`. */}
           {outcome ? (
-            <ThemedText themeColor="textSecondary">
-              {outcome.improved ? MOOD_AFTER.improved : MOOD_AFTER.unchanged}
-            </ThemedText>
+            <Animated.View
+              key={outcome.improved ? 'improved' : 'unchanged'}
+              entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)}>
+              <ThemedText themeColor="textSecondary">
+                {outcome.improved ? MOOD_AFTER.improved : MOOD_AFTER.unchanged}
+              </ThemedText>
+            </Animated.View>
           ) : null}
 
           {outcome?.stillHighDistress ? (
-            <View style={[styles.support, { borderColor: theme.border }]}>
+            <Animated.View
+              entering={FadeIn.duration(220).reduceMotion(ReduceMotion.System)}
+              style={[styles.support, { borderColor: theme.border }]}>
               <ThemedText type="small">{SUPPORT_RESOURCE.line}</ThemedText>
               <ThemedText type="small" themeColor="textMuted">
                 {SUPPORT_RESOURCE.resource}
               </ThemedText>
-            </View>
+            </Animated.View>
           ) : null}
         </View>
 

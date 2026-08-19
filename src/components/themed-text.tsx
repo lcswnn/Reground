@@ -1,6 +1,6 @@
 import { StyleSheet, Text, type TextProps } from "react-native";
 
-import { Fonts, ThemeColor, Type } from "@/constants/theme";
+import { Fonts, MaxFontScale, ThemeColor, Type } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { withAlpha } from "@/lib/color";
 
@@ -72,6 +72,10 @@ export function ThemedText({
 
   return (
     <Text
+      // Dynamic Type, to a ceiling: the layouts are drawn around these tiers'
+      // fixed leading, and text scaled past it climbs out of them. See
+      // `MaxFontScale`.
+      maxFontSizeMultiplier={MaxFontScale}
       style={[
         { color },
         styles[type],

@@ -575,8 +575,19 @@ export const NOT_YET = {
  */
 export const SUPPORT_RESOURCE = {
   line: "If it stays this bad, talking to a person helps more than an app does.",
-  /** TODO: real resource name + number/URL. */
-  resource: "TODO_SUPPORT_RESOURCE",
+  /**
+   * A real place to turn, not a placeholder — this shipped as
+   * `TODO_SUPPORT_RESOURCE` for a while, which on the two screens that show it
+   * was the app pointing a person in real distress at a string literal, and is
+   * also the kind of unfinished content App Review rejects outright.
+   *
+   * The 988 Suicide & Crisis Lifeline: US-only, which matters — call/text 988
+   * works from any US phone, and it takes anxiety and emotional-distress calls,
+   * not only crisis-of-the-worst-kind ones, which is exactly the register the
+   * line above strikes. If the app ever localises, this is the string that has
+   * to localise first.
+   */
+  resource: "In the US, you can call or text 988 — the Suicide & Crisis Lifeline — any time.",
 } as const;
 
 /**
