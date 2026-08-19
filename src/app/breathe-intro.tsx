@@ -1,10 +1,17 @@
 /**
- * Screen 3 — what's about to happen, and a Start button.
+ * Screen 1 — what's about to happen, and a Start button.
  *
  * Shares its number with `breathe.tsx`: it is the front half of the same step,
- * not a step of its own. The breath now runs directly after the rating — the
- * reactivation cue that used to sit in between has moved to the far side of it,
- * next to the game it feeds. See `reactivate.tsx`.
+ * not a step of its own.
+ *
+ * The breath is now the first thing in the session, before a single question is
+ * asked. It used to sit after the category and the rating, on the reasoning
+ * that the app should know what it was treating before it treated anything —
+ * which is a reason that serves the app rather than the person holding it.
+ * Someone who opens this wound up is in no state to categorise why, and the
+ * breath is the one step that needs no answer from them to work: it is the same
+ * half-minute whatever they would have tapped. So it runs regardless, first, and
+ * the questions are asked of somebody who has already been given something.
  *
  * It exists because the breath is the first thing in the session that runs on
  * its own clock. Every screen before it waits for a tap; this one would start
@@ -35,14 +42,16 @@ import { Spacing } from '@/constants/theme';
 import { Disclosure, DISCLOSURE_LAYOUT } from '@/session/ui/disclosure';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
-import { useSessionGuard } from '@/session/use-session-guard';
 
 export default function BreatheIntroScreen() {
   const router = useRouter();
-  const active = useSessionGuard();
+  /**
+   * No session guard, and nothing to guard: this screen now runs before
+   * anything has been chosen or rated, so there is no state it could be missing
+   * — see the note above. `useSessionBack` still answers for it, and answers
+   * `undefined`, which is what draws no back button.
+   */
   const back = useSessionBack('/breathe-intro');
-
-  if (!active) return null;
 
   return (
     <SessionScreen centered onBack={back}>

@@ -1,13 +1,17 @@
 /**
- * Screen 1 — one question, two answers. The start of the session proper, and
- * the first thing in the app that asks anything of the user.
+ * Screen 2 — one question, two answers. The first thing in the app that asks
+ * anything of the user, and the first that records anything: `begin` opens the
+ * session here.
  *
- * Still no logo and no onboarding: the screen in front of this one (`index.tsx`)
- * is a line and a timer, not a welcome, and someone arriving here has already
- * had enough happen to them today.
+ * Still no logo and no onboarding. What is in front of this one is the breath,
+ * which is deliberate and is explained in `breathe-intro.tsx`: half a minute of
+ * something that helps, given before anybody is asked to say what is wrong. So
+ * the question lands on a person who has been breathing rather than on one who
+ * has just picked the phone up.
  *
- * No back button, which is why `useSessionBack` isn't called here — the door
- * moves on its own, so a button back to it would be a wait, not a return. See
+ * No back button, which is why `useSessionBack` isn't called here — behind this
+ * is a minute-long breath that is already done, and a button that costs a
+ * minute to press is a second start button rather than a way back. See
  * `previousRoute`.
  *
  * Tapping an answer advances immediately rather than arming a Start button.

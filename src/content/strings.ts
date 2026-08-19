@@ -22,7 +22,7 @@
  * breath" is read at the speed of any other sentence; this one can't be.
  */
 export const WELCOME = {
-  line: "Let's relieve that anxiety a little in 3 steps.",
+  line: "Let's relieve that anxiety in 3 easy steps.",
 } as const;
 
 /**
@@ -150,7 +150,7 @@ export const BREATHE_INTRO = {
    * evidence behind it, and saying so is worth more than a softer line would
    * be — it tells the user this is a method, not a mood.
    */
-  body: "Okay, let's begin with some physiological sigh breathing.",
+  body: "Let's begin with some physiological sigh breathing.",
   /**
    * Behind a tap, not on the screen. Someone who already knows the technique,
    * or who just wants the minute to start, should see a title and a button —
@@ -1086,11 +1086,38 @@ export function pickUnwindIdea(): string {
 }
 
 /**
- * The last thing in the app. One line, and nothing to tap — see `closed.tsx`
- * for why it is a dead end on purpose.
+ * The last thing in the app. One line, and one quiet link under it — see
+ * `closed.tsx` for why everything else about this screen is a dead end on
+ * purpose, and why the tip jar is allowed to be the exception.
  */
 export const CLOSED = {
   line: "You may now close the app.",
+  /**
+   * The only thing in the app that asks for anything, and it is asked once, at
+   * the end, of somebody who is already done. Worded as an offer rather than a
+   * request — no "support the app", no "if this helped", neither of which a
+   * person is in a position to weigh up on the screen that just told them to
+   * put the phone down.
+   *
+   * The arrow is the same one the source links on the calibration screen carry:
+   * this leaves the app, and the label should say so before it is tapped.
+   */
+  tip: "Buy me a coffee →",
+  /**
+   * The line above it, which is what makes the link an offer rather than an
+   * ask. "Free forever" first, because it is the part that is true whatever
+   * anybody does next — the screen has to say the app is not waiting on this
+   * before it says there is a way to give anything.
+   *
+   * Ends on a colon and runs straight into the label under it: the two are one
+   * sentence, and the link is its object — which is also why they are set at
+   * the same size, a step under the sign-off above them. Weight and colour are
+   * what separate the two halves.
+   */
+  tipLead: "If you would like to support the app:",
+  /** Read out in full, because an arrow is not a word. */
+  tipLabel: "Buy me a coffee. Opens in your browser.",
+  tipUrl: "https://buymeacoffee.com/lucaswaunn",
 } as const;
 
 /**

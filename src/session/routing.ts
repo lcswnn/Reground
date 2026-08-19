@@ -128,11 +128,11 @@ export function moodOutcome(before: number, after: number): MoodOutcome {
  */
 export type SessionRoute =
   | '/'
+  | '/breathe-intro'
+  | '/breathe'
   | '/category'
   | '/topic'
   | '/mood'
-  | '/breathe-intro'
-  | '/breathe'
   | '/reactivate'
   | '/games'
   | '/game'
@@ -149,10 +149,11 @@ export type SessionRoute =
  *
  * The session is longer than three screens, so this is not a screen counter: it
  * is the answer to 'how much of this is left', which is a different and much
- * shorter list. The opening questions belong to the breath they lead into, the
- * cue and the calibration belong to the game they wrap, and the second rating
- * belongs there too — none of them is a part of the session in the sense a user
- * would count. Nobody arrives at `/topic` thinking they are two steps in.
+ * shorter list. The questions belong to the game they lead into and are the
+ * thing that decides what it is, the cue and the calibration belong to it too,
+ * and so does the second rating — none of them is a part of the session in the
+ * sense a user would count. Nobody arrives at `/topic` thinking they are two
+ * steps in.
  *
  * There is no fourth part for the end. Finishing is not a step somebody does —
  * the third dot fills when the last thing is reached and the row is simply
@@ -176,13 +177,15 @@ export type SessionStage = (typeof SESSION_STAGES)[number];
  */
 const STAGE_BY_ROUTE: Record<SessionRoute, SessionStage | null> = {
   '/': null,
-  // The three opening questions are the run-up to the breath, not parts of
-  // their own — see the note above.
-  '/category': 'breath',
-  '/topic': 'breath',
-  '/mood': 'breath',
   '/breathe-intro': 'breath',
   '/breathe': 'breath',
+  // The three questions are the run-up to the game rather than parts of their
+  // own — see the note above. They are also what the game is *made of*: the
+  // category picks the shelf, the topic picks the data, and the rating decides
+  // whether the cue is asked at all.
+  '/category': 'game',
+  '/topic': 'game',
+  '/mood': 'game',
   // The cue exists to make the game land on the right memory, and the two
   // screens after the game are still about it: what the numbers actually say,
   // and where the rating ended up.
@@ -270,26 +273,28 @@ export function previousRoute(
 ): SessionRoute | null {
   switch (route) {
     // The door starts nothing, and the dead end has already cleared the
-    // session. Neither has anything behind it worth returning to. The first
-    // question joins them: the door is now a timed line, and returning to it
-    // only means waiting to be sent here again.
+    // session. Neither has anything behind it worth returning to. Two more
+    // join them for the same reason in different words: the breath's front
+    // door has only the timed line behind it, which would just walk forward
+    // again — and the first question has only the breath, which is a minute
+    // long and already done. A back button that costs a minute to press is not
+    // a way back, it is a second start button.
     case '/':
+    case '/breathe-intro':
     case '/category':
     case '/closed':
       return null;
 
+    case '/breathe':
+      return '/breathe-intro';
     case '/topic':
       return '/category';
     case '/mood':
       return context.hasTopic ? '/topic' : '/category';
-    case '/breathe-intro':
-      return '/mood';
-    case '/breathe':
-      return '/breathe-intro';
     case '/reactivate':
-      return '/breathe-intro';
+      return '/mood';
     case '/games':
-      return reachesReactivation(context) ? '/reactivate' : '/breathe-intro';
+      return reachesReactivation(context) ? '/reactivate' : '/mood';
     case '/game':
       return '/games';
     case '/calibration':

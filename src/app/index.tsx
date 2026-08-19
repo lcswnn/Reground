@@ -3,14 +3,16 @@
  *
  * Numbered 0 because it was put in front of a flow that was already numbered,
  * and moving every comment down one would cost more than it explains. Screen 1
- * is still the question that starts the session; this one starts nothing.
+ * is the breath, which is now what the session opens with; this one starts
+ * nothing.
  *
  * One line, and nothing to press. It used to be a line and a large circular
  * button whose label said what the user was doing ("I'm feeling a bit anxious
  * right now") — a tap that cost nothing and decided nothing, which is exactly
  * why it went: a decision-free tap is still a thing asked of someone who opened
  * this app wound up. The line now asks for the one thing that is worth doing
- * before the first question, and the screen waits while they do it.
+ * before anything else, and the screen waits while they do it — and then hands
+ * over to the breath, which asks for the same thing for half a minute.
  *
  * That makes it the only screen in the session that moves on its own without
  * the user having agreed to it first — the breath in `breathe.tsx` runs on a
@@ -44,11 +46,11 @@
  * No session state is touched here. Someone who opens the app and puts it down
  * has done nothing that needs clearing.
  *
- * One of the two screens with no back button, the other being `closed.tsx`.
- * Nothing has happened yet, so there is nothing behind this to return to — see
- * `previousRoute`, which is where that decision is written down, and note that
- * `/category` is now in the same position for a different reason: a back button
- * pointing here would land on a screen that immediately walks forward again.
+ * One of the screens with no back button. Nothing has happened yet, so there is
+ * nothing behind this to return to — see `previousRoute`, which is where that
+ * decision is written down, and note that the two screens after it are in the
+ * same position for related reasons: a back button pointing here would land on
+ * a screen that immediately walks forward again.
  */
 
 import { useRouter } from "expo-router";
@@ -129,7 +131,7 @@ export default function WelcomeScreen() {
      * cut off by a navigation that had started counting first.
      */
     const timer = setTimeout(
-      () => router.replace("/category"),
+      () => router.replace("/breathe-intro"),
       leadMs + WELCOME_BREATH_MS,
     );
     return () => clearTimeout(timer);

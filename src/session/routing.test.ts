@@ -124,23 +124,27 @@ describe('previousRoute', () => {
     ...over,
   });
 
-  // The door moves on a timer, so the first question counts as a door too: a
-  // button back to a screen that walks forward again is a button that does
-  // nothing slowly.
-  it('gives the door, the first question and the dead end no way back', () => {
+  /**
+   * Four with nothing behind them, for three different reasons. The door moves
+   * on a timer, so anything pointing at it is a button that does nothing
+   * slowly; the breath's front door has only the door behind it; the first
+   * question has only the breath, which is half a minute long and already
+   * done; and the dead end has already cleared the session.
+   */
+  it('gives the door, the breath intro, the first question and the dead end no way back', () => {
     expect(previousRoute('/', context())).toBeNull();
+    expect(previousRoute('/breathe-intro', context())).toBeNull();
     expect(previousRoute('/category', context())).toBeNull();
     expect(previousRoute('/closed', context())).toBeNull();
   });
 
-  // The only three that are null. A screen added without a target would be a
+  // The only four that are null. A screen added without a target would be a
   // screen the user can be stuck on, so this is the check that catches it.
   it('gives every other screen one', () => {
     const routes: SessionRoute[] = [
+      '/breathe',
       '/topic',
       '/mood',
-      '/breathe-intro',
-      '/breathe',
       '/reactivate',
       '/games',
       '/game',
@@ -168,7 +172,7 @@ describe('previousRoute', () => {
    */
   it('skips the reactivation cue on the way back when it was skipped forward', () => {
     expect(previousRoute('/games', context({ moodBefore: HIGH_DISTRESS_MOOD }))).toBe(
-      '/breathe-intro',
+      '/mood',
     );
     expect(previousRoute('/games', context({ moodBefore: HIGH_DISTRESS_MOOD - 1 }))).toBe(
       '/reactivate',
@@ -176,28 +180,30 @@ describe('previousRoute', () => {
   });
 
   // The same bounce, from the other rule: a session with no image never saw the
-  // cue, so there is nothing behind the picker but the breath.
+  // cue, so there is nothing behind the picker but the rating.
   it('skips it on the way back for the sessions that have no image', () => {
-    expect(previousRoute('/games', context({ gameKind: 'calm' }))).toBe('/breathe-intro');
+    expect(previousRoute('/games', context({ gameKind: 'calm' }))).toBe('/mood');
     expect(previousRoute('/games', context({ gameKind: 'visuospatial' }))).toBe(
       '/reactivate',
     );
   });
 
-  // Never `/breathe`: see `previousRoute`. Restarting a minute of guided
-  // breathing is a forward move, whatever button asked for it.
-  it('returns to the breath intro rather than into the breath', () => {
-    expect(previousRoute('/reactivate', context())).toBe('/breathe-intro');
+  // Never `/breathe`: see `previousRoute`. Restarting half a minute of guided
+  // breathing is a forward move, whatever button asked for it — which is why
+  // the breath's own back button points at its front door, and why nothing
+  // downstream points at either of them.
+  it('returns the breath to its front door and nothing else to the breath', () => {
     expect(previousRoute('/breathe', context())).toBe('/breathe-intro');
+    expect(previousRoute('/category', context())).toBeNull();
   });
 
-  // The breath is the first step after the rating now, so its back button is
-  // the one that walks out of the session's timed half entirely.
-  it('returns the breath intro to the rating', () => {
-    expect(previousRoute('/breathe-intro', context({ moodBefore: HIGH_DISTRESS_MOOD }))).toBe(
+  // The cue is the first screen after the rating now, so it is the one that
+  // walks back into the questions.
+  it('returns the cue to the rating', () => {
+    expect(previousRoute('/reactivate', context({ moodBefore: HIGH_DISTRESS_MOOD }))).toBe(
       '/mood',
     );
-    expect(previousRoute('/breathe-intro', context({ moodBefore: 0 }))).toBe('/mood');
+    expect(previousRoute('/reactivate', context({ moodBefore: 0 }))).toBe('/mood');
   });
 
   it('routes the second rating past calibration for the group that never saw it', () => {
@@ -256,12 +262,18 @@ describe('stageOf', () => {
     expect(SESSION_STAGES).toEqual(['breath', 'game', 'oneMore']);
   });
 
-  it('puts the opening questions in the part they lead into', () => {
-    expect(stageOf('/category')).toBe('breath');
-    expect(stageOf('/topic')).toBe('breath');
-    expect(stageOf('/mood')).toBe('breath');
+  it('starts the count on the breath, which is what the session opens with', () => {
     expect(stageOf('/breathe-intro')).toBe('breath');
     expect(stageOf('/breathe')).toBe('breath');
+  });
+
+  // They come after the breath now and they are what the game is made of: the
+  // category picks the shelf, the topic picks the data, the rating decides
+  // whether the cue is asked.
+  it('puts the questions in the part they lead into', () => {
+    expect(stageOf('/category')).toBe('game');
+    expect(stageOf('/topic')).toBe('game');
+    expect(stageOf('/mood')).toBe('game');
   });
 
   /**

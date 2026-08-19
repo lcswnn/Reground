@@ -1,5 +1,5 @@
 /**
- * Screen 1b — which thing. GROUP A only.
+ * Screen 2b — which thing. GROUP A only.
  *
  * The screen before this establishes that it is the world rather than an image,
  * which is what the whole session branches on. This one establishes *which*

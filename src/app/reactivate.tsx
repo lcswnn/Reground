@@ -1,5 +1,5 @@
 /**
- * Screen 3b — the optional reactivation cue, between the breath and the game.
+ * Screen 3b — the optional reactivation cue, between the rating and the game.
  *
  * Bringing the image back is what gives the puzzle something to compete with,
  * so it makes the next screen work better. It is also the one moment in the
@@ -7,7 +7,7 @@
  * over: for anyone already at the top of the scale, and for any session that
  * has no image to bring back.
  *
- * That second one is why "Personal" and "Doomscrolling" go from the breath
+ * That second one is why "Personal" and "Doomscrolling" go from the rating
  * straight to the games and never see this screen. Neither of them said they
  * were picturing anything — one is a worry and the other is a feed — and this
  * screen would be handing them a cost with nothing on the other side of it.
@@ -21,12 +21,15 @@
  * to" from "was never asked". If a deliberate opt-out comes back, it needs a
  * string and a `setReactivationSkipped(true)`, not just a button.
  *
- * It used to sit before the breath, immediately after the rating, and it was
- * moved here for two reasons. The cue and the puzzle are one mechanism — the
- * reminder is what the puzzle competes with — and a minute of breathing wedged
- * between them put the whole of the calming step in the gap. And asking someone
- * to bring the thing back is easier to do having just breathed than it is cold,
- * two screens after saying how bad they feel.
+ * It once sat with a minute of breathing between it and the game, and was
+ * moved to this side of it for two reasons that both still hold. The cue and
+ * the puzzle are one mechanism — the reminder is what the puzzle competes with
+ * — and anything wedged between them puts a gap in the middle of the thing. And
+ * asking someone to bring the image back is easier to do having already
+ * breathed than it is cold. The breath now runs at the very top of the session
+ * rather than immediately before this, which lengthens the gap between the two
+ * but changes neither argument: the cue still sits directly against the game,
+ * and it is still asked of somebody who has breathed.
  *
  * There is no text input here and there never should be. Putting the thing
  * into words is a much heavier ask than holding it in mind, and it is not what

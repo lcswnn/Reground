@@ -1,5 +1,5 @@
 /**
- * Screen 2 — the rating, on its own.
+ * Screen 3 — the rating, on its own.
  *
  * `moodBefore` is the number the whole rest of the session is measured
  * against, and it also decides whether the reactivation cue is shown at all,
@@ -44,9 +44,11 @@ export default function MoodBeforeScreen() {
   const advance = () => {
     if (mood === null) return;
     setMoodBefore(mood);
-    // The breath first now. The cue that used to sit here has moved to the far
-    // side of it, next to the game it feeds — see `reactivate.tsx`.
-    router.replace('/breathe-intro');
+    // Straight to the cue, which decides for itself whether to show anything —
+    // this number is one of the two things it decides on. The breath is behind
+    // us now: it runs first, before any of these questions. See
+    // `breathe-intro.tsx`.
+    router.replace('/reactivate');
   };
 
   return (

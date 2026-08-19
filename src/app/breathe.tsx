@@ -1,5 +1,7 @@
 /**
- * Screen 3 — the breath. About a minute of cyclic sighing.
+ * Screen 1 — the breath. About half a minute of cyclic sighing, and now the
+ * first thing the session does. See `breathe-intro.tsx` for why it runs before
+ * a single question is asked.
  *
  * Arrived at from `breathe-intro.tsx`, so the animation only ever starts on a
  * tap the user has just made. Nothing here waits for a second confirmation.
@@ -21,20 +23,21 @@ import { useTheme } from '@/hooks/use-theme';
 import { BreathingGuide } from '@/session/breathing/breathing-guide';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
-import { useSessionGuard } from '@/session/use-session-guard';
 
 export default function BreatheScreen() {
   const router = useRouter();
-  const active = useSessionGuard();
+  /**
+   * No session guard, for the reason given in `breathe-intro.tsx`: this step
+   * runs before there is any session to be missing. The screens after it guard
+   * for themselves, and the first of them is where a session actually begins.
+   */
   const back = useSessionBack('/breathe');
   const theme = useTheme();
 
-  // To the cue rather than straight to the picker: it decides for itself
-  // whether to show anything, so both skips — too distressed to ask, and no
-  // image to ask about — live in one place. See `reachesReactivation`.
-  const advance = useCallback(() => router.replace('/reactivate'), [router]);
-
-  if (!active) return null;
+  // Out of the breath and into the questions — what the trouble is, and how bad
+  // it is. Both are asked of somebody who has just breathed rather than of
+  // somebody who has just opened the app.
+  const advance = useCallback(() => router.replace('/category'), [router]);
 
   return (
     <SessionScreen centered onBack={back}>

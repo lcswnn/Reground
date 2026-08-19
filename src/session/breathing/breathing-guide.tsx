@@ -1,5 +1,5 @@
 /**
- * Screen 3's animation: cyclic sighing, guided by a shape rather than a clock.
+ * Screen 1's animation: cyclic sighing, guided by a shape rather than a clock.
  *
  * The pacing lives in `@/config/session`. The structure is two inhales stacked
  * onto each other, a beat at the top, then a long exhale — the second inhale
