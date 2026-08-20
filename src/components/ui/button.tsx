@@ -122,7 +122,19 @@ const styles = StyleSheet.create({
     minWidth: 200,
     maxWidth: "100%",
     alignSelf: "center",
-    borderRadius: Radius.button,
+    // Fully round, which is where these started. They spent a while at
+    // `Radius.button` — a 10-point corner — on the argument that a pill reads
+    // as a tag or a status more than as a control. True of a small chip; not
+    // true of these, which are 52 and 62 points tall with a label centred in
+    // them, and which nothing on their screens competes with.
+    //
+    // What the corner is actually deciding is the app's temperature. A cut
+    // corner is a square that has been softened; a capsule has no corner to
+    // soften, and on a page of paper and ink with one thing to press it is the
+    // quieter of the two. See the note on `Radius` in `constants/theme.ts`,
+    // where the smaller corner still lives and is still right for the surfaces
+    // that wear it.
+    borderRadius: Radius.pill,
     alignItems: "center",
     justifyContent: "center",
     paddingVertical: Spacing.two,

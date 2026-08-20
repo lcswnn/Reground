@@ -40,14 +40,18 @@
  * unchanged and still used — the breath's intro heads with one, and the closing
  * screen takes one under its title and another beside its parting idea.
  *
- * The voice is unchanged. It is the same sentence in the same reading cut the
- * closing line is set in — see `readingCut`, which holds the tier's size and
- * hands back its weight — given the size the moment actually has.
+ * It is set in the display cut, weight and all. It spent a while in the reading
+ * cut instead — see `readingCut` — which was the right call while the display
+ * cut was a serif's 600 against a serif's 400 and the two read as different
+ * voices rather than as one voice at two weights. On a single sans they are the
+ * same letterforms with more or less ink in them, and the only thing the
+ * lighter cut bought this line was less presence than the app's other headings
+ * have.
  */
 
 import { StyleSheet, View } from "react-native";
 
-import { readingCut, ThemedText } from "@/components/themed-text";
+import { ThemedText } from "@/components/themed-text";
 import { Spacing } from "@/constants/theme";
 
 interface StageDirectionProps {
@@ -66,7 +70,7 @@ export function StageDirection({ children, opening = false }: StageDirectionProp
       <ThemedText
         type={opening ? "title" : "default"}
         themeColor={opening ? "text" : "textMuted"}
-        style={[styles.line, opening && readingCut]}>
+        style={styles.line}>
         {children}
       </ThemedText>
     </View>

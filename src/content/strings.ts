@@ -88,8 +88,8 @@ export const WELCOME = {
      */
     night: [
       "Hey, user. Let's get you back to normal.",
-      "Late one. Let's quieten this down.",
-      "Still up. Let's take the edge off it.",
+      "Late one. Let's settle this down.",
+      "Still up? Let's take the edge off it.",
       "You're here at this hour? Let's get you back on track.",
     ],
   },
@@ -178,29 +178,35 @@ export const BACK = {
 /**
  * The appearance switch, top-right on every screen.
  *
- * Both options are named and the current one is simply the one drawn in ink,
- * which is what makes it readable as a switch rather than as a label. A single
- * word — "Dark" — would have been quieter and would have had to mean two
- * different things depending on which mode you were already in, which is the
- * one thing a control in the corner of every screen cannot afford.
+ * It is one round button with a picture in it now, and the picture is the mode
+ * you are *not* in: a moon while the app is light, a sun while it is dark. That
+ * is the convention every system settings panel uses and it is the one that
+ * survives having no label — an icon of the state you are already in is a
+ * status, and a status you can press is a trap.
  *
- * Sentence case, not caps. This is chrome, and the app has exactly one other
- * piece of it (`BACK`) that this is meant to sit opposite without shouting.
+ * It used to be two words, "Light · Dark", with the current one in ink and the
+ * other muted, and each word its own target so that tapping the mode you were
+ * already in did nothing. That idempotence is the thing being given up here,
+ * and it was not given up lightly: a flip control can be mis-tapped, and a
+ * mis-tap on this one changes the colour of every screen under somebody's
+ * thumb. What makes it acceptable is that the button is its own undo — same
+ * place, same size, and the icon has already changed to say what pressing it
+ * again would do.
+ *
+ * Nothing here is text, so nothing here needs copy except what a screen reader
+ * is handed. That is `switchTo`, and it names the destination rather than the
+ * state, for the same reason the icon does.
  */
 export const APPEARANCE = {
-  light: "Light",
-  dark: "Dark",
-  /** Between the two. A divider, not a bullet — nothing is being listed. */
-  separator: "·",
-  /** Read out in place of the words, which are only half a sentence each. */
-  label: (mode: "light" | "dark") =>
-    mode === "dark" ? "Dark appearance" : "Light appearance",
+  /**
+   * What the button does, not what the app currently is. "Dark appearance" was
+   * the old label and it was ambiguous the moment there was one control instead
+   * of two — it could as easily have been reading out the setting.
+   */
+  switchTo: (mode: "light" | "dark") =>
+    mode === "dark" ? "Switch to dark appearance" : "Switch to light appearance",
 } as const;
 
-/**
- * The tap-for-more control, on the two screens that ask something of the user
- * without the reason fitting on the screen.
- */
 export const DISCLOSURE = {
   /** Points along the line when closed, down into the text when open. */
   chevron: "›",
@@ -358,83 +364,70 @@ export const BREATHE_INTRO = {
   hint: "Tap start to begin.",
   start: "Start",
   /**
-   * The tap that shows the breath instead of describing it — see
-   * `SIGH_EXAMPLE` and `sigh-example-modal.tsx`.
+   * The second button on the screen, under Start — see `SIGH_EXAMPLE` for what
+   * it opens.
    *
-   * "See" rather than "What does it look like?", which is the question form the
-   * disclosures on the picker screens use. Those hide prose, and a question is
-   * what makes reading more of it worth the tap. This one opens a picture of
-   * the thing numbered directly above it, and the shortest true label is the
-   * one that gets pressed.
+   * It was an underlined line of small text for a while, on the argument that a
+   * screen with one real action should not carry two things that look like
+   * buttons. What that missed is who presses it: somebody who has just read
+   * three numbered steps and is not sure they can follow them, which is exactly
+   * the person least likely to hunt for a link. It is a ghost button now — an
+   * outline rather than a fill, so Start is still plainly the action and this is
+   * plainly the other one.
+   *
+   * "Watch" rather than "See": it names what the next screen asks of you, which
+   * is half a minute of watching rather than a page to read.
    */
-  example: "See example",
+  example: "Watch an example first",
 } as const;
 
 /**
- * The example itself: what a physiological sigh is, and the three steps as the
- * miniature circle runs them.
+ * The example run: its own screen, reached from the breath's intro and left by
+ * a single button.
  *
- * Held apart from `BREATHE_INTRO` for the reason `BREATHING_COPY` is — this is
- * the component's own copy, read by `sigh-example.tsx` and the modal around it,
- * not the screen's. The intro screen owns the line you press to open it and
- * nothing else.
+ * It was a modal over that screen for a while, and before that a disclosure
+ * inside it. Both were the same mistake in different sizes — the thing being
+ * shown is a breath, a breath takes half a minute of somebody's attention, and
+ * a panel is what you put a paragraph in. A screen can give the circle the room
+ * to be watched, and a screen is also a thing you leave, which is what the
+ * intro wants: you come back to it and press Start, having seen the thing you
+ * are about to be asked to do.
  *
- * ## Why it says it all again
- *
- * `BREATHE_INTRO.method` numbers the same three steps on the screen underneath.
- * That is not an oversight: the modal covers the screen, so anything it leaves
- * out is not "still visible above" — it is gone for as long as the modal is up.
- * A panel that says "see the steps behind me" would be the worst of both. So
- * these steps are written to stand alone, and they are longer than the screen's
- * because they have the room and because they are read one at a time, at the
- * moment the circle is doing the thing they name.
- *
- * They keep the nose and the mouth, which is the half of the technique the
- * animation cannot show — a circle growing twice and shrinking once is the
- * shape of the breath, and nose-nose-mouth is what makes it a sigh.
+ * The copy here is only what the screen cannot show. The circle demonstrates
+ * the shape of the breath; these say where the air goes, which is the half no
+ * animation can carry — a circle growing twice and shrinking once is the rhythm
+ * of a sigh, and nose-nose-mouth is what makes it one.
  */
 export const SIGH_EXAMPLE = {
-  /** Names it, plainly. The screen behind says "physiological sigh breathing"
-      and someone who tapped for a picture has already met the term. */
-  title: "The physiological sigh",
+  /** Names what is being watched, and says it is not the real thing yet. */
+  title: "An example run",
   /**
-   * What it is, before how to do it.
+   * The three steps, numbered on screen rather than in the copy — the numbers
+   * are the component's, so a step cannot be written out of order or a number
+   * repeated. Each lights as the circle reaches it.
    *
-   * Written under `CALIBRATION_COPY`'s rule, the same one `breathwork.ts`'s
-   * `evidence` lines are held to: a claim earns its place only if the reader
-   * could go and check it and find it holds. So it says what the trial actually
-   * compared and over what period, rather than "proven to reduce anxiety" —
-   * and it names the thing the body already does on its own, because that is
-   * the honest reason this works rather than a mechanism anybody has to take on
-   * faith.
+   * Deliberately close to `BREATHE_INTRO.method`, which numbers the same three
+   * on the screen behind. That is not duplication to be tidied away: this
+   * screen replaces that one while it is up, so anything it leaves out is gone
+   * rather than "still visible above".
    */
-  what: "Your body already does this by itself — the double breath you take before a sigh, or after crying. The first inhale fills your lungs, the second reinflates the small sacs that have collapsed, and the long exhale out of your mouth is the part that slows your heart down. In a Stanford trial, five minutes a day of it lowered anxiety and lifted mood more than mindfulness meditation did over the same month.",
   steps: [
     "In through your nose, filling your lungs.",
     "A second, sharper breath in through your nose, on top of the first.",
     "A long, slow breath out through your mouth, all the way down.",
   ],
   /**
-   * Under the miniature, muted. It says the two things the loop cannot say for
+   * Under the steps, muted. It says the two things the loop cannot say for
    * itself: that it repeats, and that this is the same breath at the same pace
-   * the next screen will ask for — the example is not a sped-up illustration.
+   * the real screen runs — the example is not a sped-up illustration.
    */
-  caption: "Repeats while you watch, at the pace the breath itself runs.",
+  caption: "This loops for as long as you watch it, at the pace the breath itself runs.",
   /**
-   * The way out, and it is a real button rather than a corner glyph.
-   *
-   * Tapping the dimmed page behind also closes it, which is what most people
-   * will do — but a modal whose only stated exit is "tap somewhere else" is a
-   * guess, and this screen is the first thing the app does. "Got it" rather
-   * than "Close" because it is the answer to what the panel just did.
+   * The way out, and the only action on the screen. "Got it" rather than
+   * "Back": it is the answer to what the screen just showed, and what it
+   * returns to is the screen that offered it — where Start is waiting.
    */
-  close: "Got it",
-  /**
-   * The dimmed page behind the card, for a screen reader — it is a tap target
-   * with nothing in it to read out, and unlabelled it announces as a bare
-   * button of unknown purpose sitting over the whole screen.
-   */
-  dismiss: "Close the example",
+  done: "Got it",
 } as const;
 
 export const BREATHING_COPY = {
@@ -1384,7 +1377,7 @@ export const CLOSED = {
 } as const;
 
 /**
- * The dots at the top of every session screen, in words.
+ * The progress row at the top of every session screen, in words.
  *
  * Nothing here is drawn — the indicator is three dots and no labels, because a
  * row of captions at the top of a screen that is asking someone how anxious

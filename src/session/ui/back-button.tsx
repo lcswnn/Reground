@@ -1,7 +1,7 @@
 /**
  * One of the two controls that sit in the same place on every screen — this one
  * top-left, and the appearance switch in `theme-toggle.tsx` opposite it. They
- * share a row, drawn by `SessionScreen`, and are deliberately drawn alike.
+ * share a row, drawn by `SessionScreen`.
  *
  * Quiet on purpose — small, unchromed, and tucked into a corner. It is a way
  * out of a mis-tap, not a step in the session, and it should never compete with
@@ -11,18 +11,19 @@
  *
  * ## Why this is ink and not muted
  *
- * The two ends of the row are the same tier and always have been — the body
- * one, no overrides, the same face, every glyph present in it — and they still
- * read as two different sizes when this was muted and the switch opposite had a
- * word in full ink. Type of the same size in higher contrast reads as larger and
- * heavier; that is all the difference was. The switch cannot give its ink up,
- * because ink-versus-muted is the whole of how it says which mode you are in,
- * so the fix belongs on this side.
+ * It was muted for a long time, back when the control opposite was also two
+ * words — one of them in full ink — and the pair read as two different sizes
+ * because of it. Type of the same size in higher contrast reads as larger and
+ * heavier; that was the whole of the difference. Full ink settled it.
+ *
+ * The switch has since become a round button with a picture in it, so the two
+ * ends of the row are no longer the same kind of object at all. This stays in
+ * ink regardless: it is the only *word* in the chrome now, and a muted word
+ * beside a bordered button reads as the disabled half of something.
  *
  * What keeps it quiet is everything else about it: the corner it sits in, the
  * size, the absence of a border or a fill, and a row no taller than the words
- * on it. Colour was never doing that job alone, and it was costing the pair
- * their symmetry.
+ * on it. Colour was never doing that job alone.
  *
  * The glyph is a text arrow rather than an icon, for the same reason the
  * calibration screen's trend arrows are — there is no icon set in this app, and
@@ -51,9 +52,7 @@ export function BackButton({ onPress }: { onPress: () => void }) {
         {/* The body tier, not the caption one: these are the only tappable
             words on most screens and they sit in a corner the eye is not
             looking at, so set as a caption they read as a footnote to hunt for.
-            The same tier the switch opposite reads off, so the two corners are
-            the same size, and full ink to match the mode in use on it — see the
-            note above on why the pair looked mismatched without it. */}
+            Full ink — see the note above on why. */}
         <ThemedText>
           {BACK.arrow} {BACK.label}
         </ThemedText>

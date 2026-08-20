@@ -141,6 +141,7 @@ describe('previousRoute', () => {
   it('gives every other screen one', () => {
     const routes: SessionRoute[] = [
       '/breathe',
+      '/example',
       '/category',
       '/topic',
       '/mood',

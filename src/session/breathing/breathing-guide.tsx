@@ -25,6 +25,20 @@
  * Tully is currently switched off — see `SHOW_TULLY`. Everything above is still
  * true of the code and stops being true of the screen only while that flag is
  * false.
+ *
+ * ## The glow
+ *
+ * The circle sits inside a `BreathGlow` — rings of the accent at low alpha that
+ * scale with it, so the breath gives off light as it fills rather than only
+ * getting bigger. It is the same component the door's sphere wears, and the
+ * pairing is deliberate: that sphere is this circle seen from outside, before
+ * anybody has been asked to breathe with it, and the two should be recognisably
+ * the same object.
+ *
+ * `GLOW_REACH` is much tighter here than there, and it has to be. This circle
+ * is up to 300 points across and nearly fills the screen it is on, where the
+ * door's is 132 with a page around it; the same multiplier would put the
+ * outermost ring off both edges of the phone.
  */
 
 import { useEffect, useRef, useState } from 'react';
@@ -48,6 +62,11 @@ import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
 import { BreathingTully } from '@/session/breathing/breathing-tully';
 import { LEAD_IN_POSE, STILL_POSE, TULLY_CYCLE } from '@/session/breathing/tully-cycle';
+import {
+  breathGlowSize,
+  BreathGlow,
+  GlowStage,
+} from '@/session/ui/breath-glow';
 import { type BreathPhase } from '@/session/ui/breath-pulse';
 import { pulseBreath } from '@/session/ui/haptics';
 
@@ -75,6 +94,18 @@ const SHOW_TULLY: boolean = false;
 const MIN_SCALE = 0.44;
 /** Where the first inhale stops, leaving the second one somewhere to go. */
 const MID_SCALE = 0.82;
+
+/**
+ * How far the glow reaches past the circle, as a multiplier on its diameter.
+ *
+ * Small, because the circle is not. At the solo size on a narrow phone the
+ * stage is already 60% of the shorter side, so every point of reach is spent
+ * against a margin that is not there — 1.45 puts the outermost ring inside the
+ * screen at every size the circle can take, and the glow's job here is to soften
+ * the edge rather than to fill the room. The door's sphere runs 2.15 because it
+ * has room to.
+ */
+const GLOW_REACH = 1.45;
 
 /**
  * The circle used to own the screen. It now has the bottom half of it, so it
@@ -423,7 +454,17 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
           ) : null}
         </View>
 
-        <View style={[styles.stage, { width: diameter * 1.3, height: diameter * 1.3 }]}>
+        {/* Sized to the glow rather than to the circle — see `breathGlowSize`.
+            A stage cut to the circle alone clips the rings on Android. */}
+        <GlowStage size={breathGlowSize(diameter, GLOW_REACH)}>
+          <BreathGlow
+            scale={scale}
+            minScale={MIN_SCALE}
+            diameter={diameter}
+            reach={GLOW_REACH}
+            color={theme.info}
+          />
+
           <Animated.View
             style={[
               styles.circle,
@@ -440,7 +481,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
               { backgroundColor: withAlpha(theme.info, 0.2), borderColor: theme.info },
             ]}
           />
-        </View>
+        </GlowStage>
 
         {/* The only indication of time left, and it is a hairline at a third
             opacity — visible if you look for it, invisible if you don't. A
@@ -500,10 +541,6 @@ const styles = StyleSheet.create({
   cueText: {
     letterSpacing: 2,
     textAlign: 'center',
-  },
-  stage: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   circle: {
     position: 'absolute',

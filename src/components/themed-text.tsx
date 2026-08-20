@@ -47,16 +47,22 @@ export function softGlow(color: string) {
 /**
  * The reading cut, at whatever size the tier it is applied to carries.
  *
- * The one sanctioned override of a tier's own face, and it exists for a shape
- * that turns up twice: a single line, large, alone on a page — the app's
- * opening title card, and the heading on the breath's intro. The display cut is
- * drawn for headings that have copy underneath them to outweigh. A line with
- * nothing under it does not need outweighing, and set in 600 at those sizes it
- * reads as the app raising its voice at somebody who opened it wound up.
+ * The one sanctioned override of a tier's own face. It had three callers — the
+ * door's line, the breath's intro heading, and the parting suggestion on the
+ * closing screen — on the argument that a large line alone on a page does not
+ * need the display weight as well as the size.
  *
- * Exported rather than copied into each screen so the two cannot drift, and so
- * that anywhere a third one appears has to come past this note first. Size and
- * leading still come from the tier; this changes the face and nothing else.
+ * The two headings have given it up. That argument was written when the display
+ * cut was a serif's 600 against a serif's 400, which is a difference in voice;
+ * the app now runs one sans in two weights, so on a heading the reading cut
+ * bought nothing except less ink. Titles are titles again, in the cut drawn for
+ * them.
+ *
+ * What is left is the caller it was always most right for: a whole paragraph
+ * set at the heading tier — see `close.tsx` — where the size is doing the work
+ * of drawing the eye and the weight would turn a suggestion into a second
+ * heading. Size and leading still come from the tier; this changes the face and
+ * nothing else.
  */
 export const readingCut = { fontFamily: Fonts.body } as const;
 
@@ -104,7 +110,7 @@ export function ThemedText({
 }
 
 // `fontWeight` is absent throughout: naming a weight rather than the family
-// drops the text back to the system font on iOS. Literata ships a real 600, so
+// drops the text back to the system font on iOS. The family ships a real 600, so
 // `defaultSemiBold` resolves to it via `Fonts.semibold`, and the remaining
 // tiers are separated by size, colour and caps — see the note on `Fonts` in
 // `constants/theme.ts`.

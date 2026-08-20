@@ -28,13 +28,22 @@
  *
  * ## The sphere
  *
- * A slow swell and settle, four seconds each way, above the line. Drawn like
- * the breathing circle on Screen 1 — the same halo and core, the same accent —
+ * A slow swell and settle above the line, wrapped in a glow that breathes with
+ * it. Drawn like the breathing circle on Screen 1 — the same halo and core, the
+ * same accent —
  * because it is the same object seen from outside: this is what the app is
  * about to ask you to do, moving gently enough that nobody could mistake it for
  * an instruction. It is deliberately slower than any breath the app paces. At
  * the rate of a real inhale it would be a cue nobody has been given yet, and
  * somebody would start breathing to it on the doorstep.
+ *
+ * The glow is three concentric circles at low alpha rather than a gradient —
+ * see `GLOW_RINGS`. Nothing in the tree draws a radial gradient (there is no
+ * SVG here, and `expo-linear-gradient` is linear only), and three steps of
+ * falloff at these alphas is indistinguishable from a smooth one once the grain
+ * is over it. They breathe with the core rather than sitting still behind it,
+ * which is the whole point: a static halo is a shape with a shadow, and a halo
+ * that swells is something giving off light.
  *
  * ## The line is a different one each time
  *
@@ -70,10 +79,11 @@
 
 import { useRouter } from "expo-router";
 import { useEffect, useState } from "react";
-import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
+  useDerivedValue,
   useReducedMotion,
   useSharedValue,
   withDelay,
@@ -89,6 +99,11 @@ import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { withAlpha } from "@/lib/color";
 import { splashClearsInMs } from "@/lib/splash";
+import {
+  breathGlowSize,
+  BreathGlow,
+  GlowStage,
+} from "@/session/ui/breath-glow";
 import { SessionScreen } from "@/session/ui/session-screen";
 import { StageDirection } from "@/session/ui/stage-direction";
 
@@ -100,6 +115,17 @@ import { StageDirection } from "@/session/ui/stage-direction";
  * this screen is not demonstrating anything yet.
  */
 const MIN_SCALE = 0.86;
+
+/**
+ * How far the glow reaches past the sphere, as a multiplier on its diameter —
+ * see `BreathGlow`, which the breathing circle on screen 1 wears as well.
+ *
+ * Far, and it can be: this sphere is 132 points at most with a whole page
+ * around it, where the circle on the breathing screen nearly fills its own and
+ * runs a much tighter reach. Here the glow has room to be the largest thing on
+ * the screen without touching anything.
+ */
+const GLOW_REACH = 2.15;
 
 /**
  * Bounded on both axes, like every other circle in the app: on a short screen a
@@ -196,123 +222,136 @@ export default function WelcomeScreen() {
   // the first frame. Constants like `MIN_SCALE` are captured by value and are
   // fine; functions are not, unless they carry their own `'worklet'` directive,
   // and two lines of arithmetic are not worth a third worklet to hold them.
+  /**
+   * The scale the core is actually drawn at, as its own value.
+   *
+   * `swell` runs 0 to 1 because that is what a repeating animation is easiest
+   * to write against; the circle is drawn from `MIN_SCALE` to 1. The glow needs
+   * the second of those — it multiplies the core's scale — so the conversion
+   * happens once here rather than being repeated inside every ring's worklet.
+   */
+  const coreScale = useDerivedValue(
+    () => MIN_SCALE + (1 - MIN_SCALE) * swell.value,
+  );
+
   const coreStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: MIN_SCALE + (1 - MIN_SCALE) * swell.value }],
+    transform: [{ scale: coreScale.value }],
   }));
   // Trails the core by a fraction of the distance it has left, the same way the
   // breathing circle's does, so the two are one object rather than a ring
   // around a disc.
-  const haloStyle = useAnimatedStyle(() => {
-    const scale = MIN_SCALE + (1 - MIN_SCALE) * swell.value;
-
-    return {
-      transform: [{ scale: scale + (1 - scale) * 0.4 }],
-      opacity: 0.1 + swell.value * 0.06,
-    };
-  });
+  const haloStyle = useAnimatedStyle(() => ({
+    transform: [
+      { scale: coreScale.value + (1 - coreScale.value) * 0.4 },
+    ],
+    opacity: 0.1 + swell.value * 0.06,
+  }));
 
   return (
     <SessionScreen>
-      {/* The same scroll container the breath's intro uses, with the same
-          padding, wrapping the same shape: a block that takes the room above
-          the actions and centres its content, and an actions block under it.
+      {/* No scroll container, on either this screen or the one after it. Both
+          are laid out as plain flex columns with the same padding, which is the
+          only arrangement that cannot be dragged: a scroll view whose content
+          is a hair taller than its frame is genuinely scrollable by a hair, and
+          `flexGrow: 1` produces exactly that whenever a float lands a fraction
+          over. Measuring and disabling the gesture got most of the way there
+          and still left the page able to jiggle.
 
-          The door's content always fits, so nothing here ever actually
-          scrolls. It is structural: these two screens run back to back, and
-          the only way to guarantee Begin and Start land on the same height is
-          for the boxes under them to be the same boxes rather than two
-          arrangements that agree on paper. They did agree on paper, and the
-          button still moved. */}
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}>
-        {/* One fade for the whole door: the sphere, the line and the button
+          What this costs is the safety valve. At the top of the Dynamic Type
+          range on a short phone there is no scroll to reach anything that does
+          not fit — see the note on `stage`, which is the part that gives. */}        {/* One fade for the whole door: the sphere, the line and the button
             come up together as the screen arriving, rather than as three things
             announcing themselves in turn. */}
-        <Animated.View style={[styles.root, screenStyle]}>
-          {/* Takes all the room above the button and centres what is in it, so
-              the line still lands near the middle of the screen while the action
-              sits at the bottom where the thumb is. */}
-          <View style={styles.stage}>
-            <View
-              style={[
-                styles.sphere,
-                { width: diameter * 1.4, height: diameter * 1.4 },
-              ]}>
-              <Animated.View
-                style={[
-                  styles.circle,
-                  haloStyle,
-                  {
-                    width: diameter,
-                    height: diameter,
-                    borderRadius: diameter / 2,
-                    backgroundColor: theme.info,
-                  },
-                ]}
-              />
-              <Animated.View
-                style={[
-                  styles.circle,
-                  coreStyle,
-                  {
-                    width: diameter,
-                    height: diameter,
-                    borderRadius: diameter / 2,
-                    backgroundColor: withAlpha(theme.info, 0.2),
-                    borderColor: theme.info,
-                  },
-                ]}
-              />
-            </View>
-
-            {/* The title tier, full ink, and nothing around it — the sphere
-                above does the placing that a pair of rules used to. See the note
-                in `StageDirection` on why the two ends of the session are drawn
-                differently, and why this end lost its frame. */}
-            <StageDirection opening>{line}</StageDirection>
-          </View>
-
-          {/* `large`, the same size Start takes on the breath's intro. Both are
-              the single button on a screen whose only purpose is to start
-              something — see `Size` in `button.tsx`. */}
-          <View style={styles.action}>
-            <Button
-              title={WELCOME.begin}
-              size="large"
-              onPress={() => router.replace("/breathe-intro")}
+      <Animated.View style={[styles.root, screenStyle]}>
+        {/* Takes all the room above the button and centres what is in it, so
+            the line still lands near the middle of the screen while the action
+            sits at the bottom where the thumb is. */}
+        <View style={styles.stage}>
+          {/* Sized to the outermost ring rather than to the sphere: the
+              glow is drawn at up to `GLOW_REACH` times the diameter and would
+              be clipped by a box drawn for the circle alone. */}
+          <GlowStage size={breathGlowSize(diameter, GLOW_REACH)}>
+            <BreathGlow
+              scale={coreScale}
+              minScale={MIN_SCALE}
+              diameter={diameter}
+              reach={GLOW_REACH}
+              color={theme.info}
             />
-            {/* Set exactly as the hint under Start on the next screen — small,
-                muted, centred — because the two are the same slot: the line under
-                the one button on a screen whose only job is to start something.
-                Matching them is what keeps the two buttons on the same height, so
-                Begin and Start do not jump as the app moves between them.
 
-                It was the eyebrow tier for a moment, which is caps and tracked
-                and the nearest thing this app has to a wordmark. That is the same
-                13 points and the same leading, so it cost nothing in height — but
-                a name set as a label reads as a heading over the empty space
-                below it, where this should read as the quiet end of the screen.
-                The eyebrow is one word away if the wordmark is wanted back. */}
-            <ThemedText type="small" themeColor="textMuted" style={styles.name}>
-              {WELCOME.name}
-            </ThemedText>
-          </View>
-        </Animated.View>
-      </ScrollView>
+            <Animated.View
+              style={[
+                styles.circle,
+                haloStyle,
+                {
+                  width: diameter,
+                  height: diameter,
+                  borderRadius: diameter / 2,
+                  backgroundColor: theme.info,
+                },
+              ]}
+            />
+            <Animated.View
+              style={[
+                styles.circle,
+                coreStyle,
+                {
+                  width: diameter,
+                  height: diameter,
+                  borderRadius: diameter / 2,
+                  backgroundColor: withAlpha(theme.info, 0.2),
+                  borderColor: theme.info,
+                },
+              ]}
+            />
+          </GlowStage>
+
+          {/* The title tier, full ink, and nothing around it — the sphere
+              above does the placing that a pair of rules used to. See the note
+              in `StageDirection` on why the two ends of the session are drawn
+              differently, and why this end lost its frame. */}
+          <StageDirection opening>{line}</StageDirection>
+        </View>
+
+        {/* `large`, the same size Start takes on the breath's intro. Both are
+            the single button on a screen whose only purpose is to start
+            something — see `Size` in `button.tsx`. */}
+        <View style={styles.action}>
+          <Button
+            title={WELCOME.begin}
+            size="large"
+            onPress={() => router.replace("/breathe-intro")}
+          />
+          {/* Set exactly as the hint under Start on the next screen — small,
+              muted, centred — because the two are the same slot: the line under
+              the one button on a screen whose only job is to start something.
+              Matching them is what keeps the two buttons on the same height, so
+              Begin and Start do not jump as the app moves between them.
+
+              It was the eyebrow tier for a moment, which is caps and tracked
+              and the nearest thing this app has to a wordmark. That is the same
+              13 points and the same leading, so it cost nothing in height — but
+              a name set as a label reads as a heading over the empty space
+              below it, where this should read as the quiet end of the screen.
+              The eyebrow is one word away if the wordmark is wanted back. */}
+          <ThemedText type="small" themeColor="textMuted" style={styles.name}>
+            {WELCOME.name}
+          </ThemedText>
+        </View>
+      </Animated.View>
     </SessionScreen>
   );
 }
 
 const styles = StyleSheet.create({
   // Every number in this block is `breathe-intro.tsx`'s, and has to stay that
-  // way: the two screens are the same layout with different things in it.
-  scroll: {
-    flexGrow: 1,
-    paddingVertical: Spacing.four,
-  },
+  // way: the two screens are the same layout with different things in it, and
+  // Begin and Start have to land on the same height. The padding that used to
+  // sit on a scroll container lives here now, which is the same distance in the
+  // same place with nothing to drag.
   root: {
     flex: 1,
+    paddingVertical: Spacing.four,
     // The long pause between the reading and the doing, which is also what
     // lifts the pair above the true centre: the box they are centred in is
     // shorter than the screen by this much, so its middle sits half of it
@@ -330,10 +369,6 @@ const styles = StyleSheet.create({
     // is not an illustration of the sentence and should not sit on top of it
     // like one.
     gap: Spacing.six,
-  },
-  sphere: {
-    alignItems: "center",
-    justifyContent: "center",
   },
   circle: {
     position: "absolute",

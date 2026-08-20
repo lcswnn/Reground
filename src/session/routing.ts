@@ -129,6 +129,7 @@ export function moodOutcome(before: number, after: number): MoodOutcome {
 export type SessionRoute =
   | '/'
   | '/breathe-intro'
+  | '/example'
   | '/breathe'
   | '/category'
   | '/topic'
@@ -178,6 +179,10 @@ export type SessionStage = (typeof SESSION_STAGES)[number];
 const STAGE_BY_ROUTE: Record<SessionRoute, SessionStage | null> = {
   '/': null,
   '/breathe-intro': 'breath',
+  // The example run belongs to the breath it demonstrates. It is not a step of
+  // its own — nothing is recorded on it and the session does not advance — so
+  // the dots do not move while somebody is watching it.
+  '/example': 'breath',
   '/breathe': 'breath',
   // The three questions are the run-up to the game rather than parts of their
   // own — see the note above. They are also what the game is *made of*: the
@@ -299,10 +304,13 @@ export function previousRoute(
     case '/closed':
       return null;
 
-    // Both back to the breath's front door rather than to the breath — see
-    // above. It is the step's own still page, and it is a tap away from either
-    // starting the breath again or leaving it alone.
+    // All three back to the breath's front door rather than to the breath —
+    // see above. It is the step's own still page, and it is a tap away from
+    // either starting the breath again or leaving it alone. The example run is
+    // the plainest case of the three: it is reached from there, and its own
+    // button goes to the same place this does.
     case '/breathe':
+    case '/example':
     case '/category':
       return '/breathe-intro';
     case '/topic':

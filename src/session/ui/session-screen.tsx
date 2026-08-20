@@ -11,7 +11,8 @@
  * whole point: a control that moves between screens is a control that has to be
  * found again each time.
  *
- * The dots are the one thing here that is not chrome — see `progress-dots.tsx`
+ * The progress row is the one thing here that is not chrome — see
+ * `progress-lines.tsx`
  * for why a session this long needs to say how much of it is left, and
  * `stageOf` in `routing.ts` for which screen counts as which part.
  *
@@ -31,7 +32,7 @@ import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { stageOfPath } from "@/session/routing";
 import { BackButton } from "@/session/ui/back-button";
-import { ProgressDots } from "@/session/ui/progress-dots";
+import { ProgressLines } from "@/session/ui/progress-lines";
 import { ThemeToggle } from "@/session/ui/theme-toggle";
 
 interface SessionScreenProps extends ViewProps {
@@ -85,14 +86,15 @@ export function SessionScreen({
           <ThemeToggle />
 
           {/* Centred on the screen rather than laid out between the two
-              controls: the back button is a word wide and the switch is three,
-              so a dot row in the flow would sit off-centre by the difference
-              and move again on the screens with no back button. Absolute keeps
-              it on the middle of the page, which is where a progress indicator
-              has to stay to read as one thing that is not moving. */}
+              controls: the back button is two words wide and the switch is a
+              34-point circle, so a row in the flow would sit off-centre by the
+              difference and move again on the screens with no back button.
+              Absolute keeps it on the middle of the page, which is where a
+              progress indicator has to stay to read as one thing that is not
+              moving. */}
           {stage ? (
             <View style={styles.progress} pointerEvents="none">
-              <ProgressDots stage={stage} />
+              <ProgressLines stage={stage} />
             </View>
           ) : null}
         </View>

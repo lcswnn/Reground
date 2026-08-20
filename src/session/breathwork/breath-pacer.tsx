@@ -61,6 +61,11 @@ import { BREATHWORK_COPY } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
+import {
+  breathGlowSize,
+  BreathGlow,
+  GlowStage,
+} from '@/session/ui/breath-glow';
 import { pulseBreath, tickBreath } from '@/session/ui/haptics';
 
 /**
@@ -68,6 +73,15 @@ import { pulseBreath, tickBreath } from '@/session/ui/haptics';
  * as the bottom of a breath. Same value, same reason, as the sigh's.
  */
 const MIN_SCALE = 0.44;
+
+/**
+ * How far the glow reaches past the circle. The same number the opening sigh
+ * runs at, for the same reason — see `GLOW_REACH` in `breathing-guide.tsx`, and
+ * `BreathGlow` for what it is reaching with. These two circles are drawn at the
+ * same size on the same kind of screen, so a different reach here would be two
+ * breathing screens giving off different amounts of light.
+ */
+const GLOW_REACH = 1.45;
 
 /** The sigh's solo sizing — one ratio against the shorter side, and a cap. */
 const DIAMETER_RATIO = 0.6;
@@ -279,7 +293,19 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
           ) : null}
         </View>
 
-        <View style={[styles.stage, { width: diameter * 1.3, height: diameter * 1.3 }]}>
+        {/* Sized to the glow rather than to the circle — see `breathGlowSize`.
+            The same rings the opening sigh and the door's sphere wear, at the
+            sigh's tighter reach: this circle is the same size as that one and
+            has the same amount of screen around it. */}
+        <GlowStage size={breathGlowSize(diameter, GLOW_REACH)}>
+          <BreathGlow
+            scale={scale}
+            minScale={MIN_SCALE}
+            diameter={diameter}
+            reach={GLOW_REACH}
+            color={theme.info}
+          />
+
           <Animated.View
             style={[
               styles.circle,
@@ -296,7 +322,7 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
               { backgroundColor: withAlpha(theme.info, 0.2), borderColor: theme.info },
             ]}
           />
-        </View>
+        </GlowStage>
 
         {/* The only indication of how far through this is, and it is a hairline
             at a third opacity. A round counter here would be something to watch
@@ -356,10 +382,6 @@ const styles = StyleSheet.create({
   cueText: {
     letterSpacing: 2,
     textAlign: 'center',
-  },
-  stage: {
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   circle: {
     position: 'absolute',

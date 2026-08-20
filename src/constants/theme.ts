@@ -3,7 +3,7 @@
  *
  * The app is a place to land after the news, not another surface competing for
  * attention. Right now that is taken about as far as it goes: the whole app is
- * drawn from two colours — #F0EBDE paper and #4E4C50 ink — and every token below
+ * drawn from two colours — #EDE6D6 paper and #4E4C50 ink — and every token below
  * is one of them, or a blend of the two along the line between them. No third
  * hue, so nothing on screen can shout.
  *
@@ -20,7 +20,7 @@
  * paper the page was no longer using, so every ratio in these comments was
  * quietly describing a palette that wasn't on screen.
  *
- * The page is now #F0EBDE: the supplied paper warmed slightly and dropped about
+ * The page is now #EDE6D6: the supplied paper warmed slightly and dropped about
  * three points of L*. That costs 7.7:1 → 7.13:1 against ink, still AAA for body
  * copy, and buys back roughly a quarter of the light the screen emits.
  *
@@ -59,7 +59,7 @@
  *    "That's all.", and standing beside the parting suggestion. It is the app's
  *    own punctuation and the least functional thing on any screen it appears
  *    on, which is exactly what an accent is for.
- *  - **Progress.** The filled dots in the chrome row, which are the app
+ *  - **Progress.** The filled segments in the chrome row, which are the app
  *    reporting on itself.
  *
  * `positive` and `decline` are deliberately *not* on it. Direction in this app
@@ -118,13 +118,13 @@ export const Colors = {
      * and reversed type is better off a shade down anyway, since light-on-dark
      * letterforms bloom rather than thin.
      */
-    textOnBrand: "#F0EBDE",
+    textOnBrand: "#EDE6D6",
     /**
      * On `positive`. Same value as `textOnBrand` while every fill is ink — the
      * light/dark split this token existed to solve is currently moot. Kept
      * separate because it stops being moot the moment a real accent lands.
      */
-    textOnPositive: "#F0EBDE",
+    textOnPositive: "#EDE6D6",
     /**
      * On `accentStrong`, which is the fill the rating chips take when selected.
      * The page's own paper again, and 4.99:1 on the terracotta — the numeral it
@@ -133,10 +133,10 @@ export const Colors = {
      * Its own token rather than borrowing `textOnBrand` because the two sit on
      * different colours now and only agree by coincidence.
      */
-    textOnAccent: "#F0EBDE",
+    textOnAccent: "#EDE6D6",
 
     /** The paper. See the note at the top of the file for why it is this one. */
-    background: "#F0EBDE",
+    background: "#EDE6D6",
     /** Ink at 5% — pills, inset rows, anything pressed into the page. */
     backgroundElement: "#E8E3D7",
     /** Ink at 9%, one step further in, for the pressed state of the above. */
@@ -216,7 +216,7 @@ export const Colors = {
    * Body contrast is no longer identical: this side still runs the supplied
    * #F3F0E7 at 7.5:1, where light mode now sits at 7.13:1 having moved its paper
    * down. The two were matched on purpose and could be matched again by bringing
-   * this paper to #F0EBDE as well — which would also take a little glare off
+   * this paper to #EDE6D6 as well — which would also take a little glare off
    * reversed type in a dark room. Left alone for now because the brief was the
    * light scheme, and changing the dark one is its own decision to make on a
    * device rather than a side effect of this one.
@@ -286,50 +286,102 @@ export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
  * strings everywhere else, so a missing load shows up as system fallback text
  * rather than a crash.
  *
- * Literata throughout: a text serif drawn for Google Play Books, which is to
- * say it was built for exactly this — long, unhurried reading on a screen
- * rather than a display face pressed into service for body copy. Landing here
- * as part of leaning the whole app toward an e-reader's page rather than an
- * app's; see `Colors` above for the paper-and-ink half of that and
- * `ScreenFilm` for the matte half.
+ * Elms Sans throughout, and it is on trial — the eighth face this app has worn,
+ * after Literata, Google Sans Flex, Raleway, Jost, Cormorant Infant, Quicksand
+ * and Newsreader.
  *
- * ## Two cuts
+ * What all of them are judged against is the same thing: the app is a warm page
+ * and soft ink at deliberately low contrast (see `Colors`), under a matte grain
+ * (`ScreenFilm`), read by somebody who is wound up. Elms Sans is a neutral sans
+ * with a moderate x-height — measured, not guessed: 0.48 of the em against
+ * Quicksand's 0.503, Literata's 0.507 and Newsreader's 0.426, with caps at
+ * 0.70. That puts it just below the two faces the type scale reads best under
+ * and well above the serif it replaces.
  *
- * Literata ships eight weights (200–900) plus italics, and two are loaded:
- * `400Regular` and `600SemiBold`, so `semibold` is a real semibold rather
- * than an alias. That carries emphasis on button labels and the
- * `defaultSemiBold` tier, which have nothing else to carry it with.
+ * ## Weights, and why they are where they are
+ *
+ * Nine weights ship (100–900) with an italic of each. Two are loaded, the
+ * **500 and the 700**, and they are staying there for this swap because the
+ * thing being asked of this face is small-text legibility.
+ *
+ * Weight is the lever that matters for that, more than size is. Small type
+ * fails on a page like this one by *disappearing* rather than by being too
+ * small to resolve: the ink is 5.0:1 at `textMuted`, the paper is warm rather
+ * than white, and there is a grain overlay on top of both, so a 400 at 13pt has
+ * very little to hold onto. A 500 at 13pt has the same letterforms with enough
+ * stroke to survive all three. That is why the app went to 500/700 in the first
+ * place and why a lighter pair would undo the thing that was asked for.
+ *
+ * What the extra weight buys, if it works, is exactly the freedom to set
+ * smaller: a 500 reads at a size where a 400 would have to be a point or two
+ * bigger. The sizes themselves are `Type` below — if the caption tier holds up
+ * here, that is the number to bring down, not this one.
+ *
+ * Two hundred units apart is what keeps emphasis reading as emphasis, so if one
+ * moves the other moves with it: 400/600 or 500/700, not a mixture. This family
+ * goes to 900, so unlike Quicksand there is headroom above the pair.
+ *
+ * Four things to look at on a device, in this order:
+ *
+ *  1. **The caption tier.** 13pt muted on warm paper under the grain — every
+ *     hint, legend, end label and the chrome. This swap is being judged on it.
+ *  2. **The long screens.** The breath's intro and the breathwork evidence
+ *     paragraphs, which is where a face that is fine in short bursts starts to
+ *     tire.
+ *  3. **The numerals.** The mood readout, the somatic clock, the rating row's
+ *     `5`.
+ *  4. **The register.** The copy is plain and unsentimental; a neutral sans
+ *     should leave it alone, which is a good outcome rather than a dull one.
+ *
+ * Reverting is two imports in `app/_layout.tsx` and the two constants below.
+ * Every family tried so far is still installed for exactly that reason.
  *
  * `fontWeight` does not appear anywhere: naming a weight rather than the file
  * drops iOS back to the system font. The weight is selected by loading
- * `Literata_600SemiBold` as its own family and asking for it by name, which is
- * why both cuts are registered in the root layout.
+ * `ElmsSans_700Bold` as its own family and asking for it by name, which is why
+ * both cuts are registered in the root layout.
  *
- * `display` uses the 600 as well — a heading wants the extra weight more than
- * it wants the extra points.
+ * `display` uses the emphasis cut as well — a heading wants the extra weight
+ * more than it wants the extra points.
  *
  * ## The type scale is no longer inherited
  *
  * Every size in `themed-text.tsx` used to sit ~10% above where it ran before
  * Playpen Sans, bought at the time to give that handwriting face's irregular
  * letterforms room to be read. Neither Fredoka nor Literata needed the room,
- * and the bump rode through both swaps untouched because a type scale is its
+ * and the bump rode through those swaps untouched because a type scale is its
  * own decision and worth making on a device rather than folded into a family
  * change. It has since been made: 2pt came off every tier. The line heights
  * stayed where they were, so the leading is looser than it was drawn for —
  * see the note above `styles` in `themed-text.tsx`.
+ *
+ * Elms Sans sits at 0.48 of the em on x-height, a couple of points under the
+ * faces this scale was last comfortable with, so expect the copy to read very
+ * slightly smaller than the numbers say — nothing like the drop Cormorant
+ * caused, and inside what the loose line heights already absorb.
+ *
+ * If the 500 does what it is here to do, the interesting move is the other way:
+ * bring the tiers *down* a point or two and let the weight carry them. That is
+ * `Type` in this file — sizes and leading together, once, rather than a
+ * per-screen override.
  */
-export const LiterataRegular = "Literata_400Regular";
-export const LiterataSemiBold = "Literata_600SemiBold";
+/**
+ * Named for the job rather than for the weight, because the weight moves. These
+ * two are "the one everything is set in" and "the one emphasis is set in"; what
+ * numbers they resolve to is the decision documented above, and it has been 400
+ * and 600 in the past.
+ */
+export const AppFontText = "ElmsSans_500Medium";
+export const AppFontEmphasis = "ElmsSans_700Bold";
 
 export const Fonts = Platform.select({
   ios: {
     /** Headings. The 600 cut — see above. */
-    display: LiterataSemiBold,
+    display: AppFontEmphasis,
     /** Emphasis inside body copy, and the smaller headings. */
-    semibold: LiterataSemiBold,
+    semibold: AppFontEmphasis,
     /** Everything that isn't a heading. */
-    body: LiterataRegular,
+    body: AppFontText,
     /** iOS `UIFontDescriptorSystemDesignDefault` */
     sans: "system-ui",
     /** iOS `UIFontDescriptorSystemDesignSerif` */
@@ -338,15 +390,15 @@ export const Fonts = Platform.select({
     rounded: "ui-rounded",
     /**
      * iOS `UIFontDescriptorSystemDesignMonospaced`. Stays a system face:
-     * Literata has no monospaced cut, and the one thing `code` has to do is
-     * line digits up.
+     * neither family has a monospaced cut, and the one thing `code` has to do
+     * is line digits up.
      */
     mono: "ui-monospace",
   },
   default: {
-    display: LiterataSemiBold,
-    semibold: LiterataSemiBold,
-    body: LiterataRegular,
+    display: AppFontEmphasis,
+    semibold: AppFontEmphasis,
+    body: AppFontText,
     sans: "normal",
     serif: "serif",
     rounded: "normal",
@@ -356,9 +408,9 @@ export const Fonts = Platform.select({
     // All three on the regular cut, as they were before the face changed. The
     // stack falls through to `--font-display` in `global.css`, which names the
     // family for a browser that already has it.
-    display: `${LiterataRegular}, var(--font-display)`,
-    semibold: `${LiterataRegular}, var(--font-display)`,
-    body: `${LiterataRegular}, var(--font-display)`,
+    display: `${AppFontText}, var(--font-display)`,
+    semibold: `${AppFontText}, var(--font-display)`,
+    body: `${AppFontText}, var(--font-display)`,
     sans: "var(--font-display)",
     serif: "var(--font-serif)",
     rounded: "var(--font-rounded)",
@@ -400,18 +452,23 @@ export const Radius = {
   xl: 30,
   pill: 999,
   /**
-   * What anything you can press is rounded by, from the primary buttons down to
-   * the numbers on the mood scale. Squarer than the pill these used to be: a
-   * fully rounded end reads as a tag or a status more than as a control.
+   * The corner on a pressable *surface*: the puzzle tiles, the game trials, the
+   * worry options, the silhouette targets.
    *
-   * It came down twice — 999 to 14, then 14 to 10 — and 10 is where it stops
-   * being worth touching again. The corner is still plainly a corner, which is
-   * the whole requirement; a step further and the small controls (the mood
-   * chips, the glyph buttons) start reading as cut squares, because a fixed
-   * radius is a larger share of a 46-point box than of a 52-point one.
+   * It used to be the corner on everything pressable, the buttons included, and
+   * it came down twice to get here — 999 to 14, then 14 to 10 — on the argument
+   * that a fully rounded end reads as a tag or a status more than as a control,
+   * and that a step further would leave the small controls reading as cut
+   * squares, since a fixed radius is a larger share of a 46-point box than of a
+   * 52-point one.
    *
-   * Cards keep `md` — a pressable surface is allowed to be a touch rounder than
-   * the button sitting on it.
+   * The buttons have since gone back to `pill`, and that second half is exactly
+   * why this token did not follow them: what is true of a 46-point square in a
+   * game is not true of a 52-point capsule with a centred label — see the note
+   * in `button.tsx`. Two corners, two jobs, each written down where it is
+   * decided.
+   *
+   * Cards keep `md`, a touch rounder than the surfaces sitting on them.
    */
   button: 10,
 } as const;

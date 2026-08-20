@@ -78,6 +78,13 @@ export default function CalibrationScreen() {
       <ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
+        // No rubber-band and no stretch glow. This screen scrolls when its
+        // content is taller than the screen and does not move at all when it
+        // is not — a page that springs under a finger while having nowhere to
+        // go reads as content hiding below the fold. See `breathe-intro.tsx`,
+        // which went further and dropped its scroll view entirely.
+        bounces={false}
+        overScrollMode="never"
         showsVerticalScrollIndicator={false}>
         <ThemedText type="title">{CALIBRATION_COPY.title}</ThemedText>
 

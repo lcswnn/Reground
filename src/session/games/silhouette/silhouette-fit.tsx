@@ -447,6 +447,11 @@ export function SilhouetteFit() {
             edge on the five-piece puzzle. */}
         <ScrollView
           horizontal
+          // Scrolls when the tray has more pieces than fit and sits still when
+          // it does not — a tray that springs sideways under a finger looks
+          // like it is hiding a piece.
+          bounces={false}
+          overScrollMode="never"
           showsHorizontalScrollIndicator={false}
           style={styles.trayScroll}
           contentContainerStyle={styles.tray}>

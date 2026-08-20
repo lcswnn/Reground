@@ -304,9 +304,11 @@ const styles = StyleSheet.create({
   },
   clock: {
     textAlign: 'center',
-    // Literata's digits are not fixed-width, and without this the clock
-    // visibly breathes as the numbers change under it — which on a screen
-    // asking for stillness is the one thing it cannot do.
+    // Proportional digits are the default in both faces this app has worn,
+    // and without this the clock visibly breathes as the numbers change under
+    // it — which on a screen asking for stillness is the one thing it cannot
+    // do. Kept whatever the family is: it costs nothing when the digits are
+    // already tabular.
     fontVariant: ['tabular-nums'],
   },
   // Tall enough for the `hero` digits, which are the tallest thing that lands

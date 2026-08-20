@@ -1,8 +1,8 @@
 // Imported per weight rather than from the package root. The root re-exports
-// every cut in the family, and Metro follows all of them into the bundle —
-// megabytes of fonts for the two the app actually asks for.
-import { Literata_400Regular } from '@expo-google-fonts/literata/400Regular';
-import { Literata_600SemiBold } from '@expo-google-fonts/literata/600SemiBold';
+// every cut in the family — nine of them here — and Metro follows all of them
+// into the bundle, which is megabytes of fonts for the two the app asks for.
+import { ElmsSans_500Medium } from '@expo-google-fonts/elms-sans/500Medium';
+import { ElmsSans_700Bold } from '@expo-google-fonts/elms-sans/700Bold';
 import { useFonts } from 'expo-font';
 import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -90,11 +90,13 @@ function RootNavigator() {
   // Loaded at runtime rather than through the expo-font config plugin, which
   // would need a native rebuild to pick up.
   //
-  // Two cuts of Literata, which ships far more — see the note on `Fonts` in
-  // `constants/theme.ts` for why each is registered as its own family.
+  // Two cuts of Elms Sans, which ships nine weights and an italic of each.
+  // Which two is a decision, not a default — see the note on `Fonts` in
+  // `constants/theme.ts`, which is also where the reason each is registered as
+  // its own family lives.
   const [fontsLoaded, fontError] = useFonts({
-    Literata_400Regular,
-    Literata_600SemiBold,
+    ElmsSans_500Medium,
+    ElmsSans_700Bold,
   });
 
   // A font that fails to decode shouldn't hold the app hostage — fall through
@@ -113,7 +115,7 @@ function RootNavigator() {
    *
    * The fonts are still what gates it, for the same reason as ever — nothing
    * renders until they settle, so the first screen never reflows out of the
-   * system face into Literata, and the veil the native splash gives way to is
+   * system face into the app's own, and the veil the native splash gives way to is
    * already in the tree when it goes.
    *
    * `index.tsx` schedules its line off the far end of all this, and none of

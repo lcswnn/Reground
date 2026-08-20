@@ -39,38 +39,42 @@
  * title. They are two sentences; the cost of having them on the page is far
  * lower than the cost of the tap, and nobody has to read them to press Start.
  *
- * ## The example is behind a tap, and for the opposite reason
+ * ## The example is a screen of its own now
  *
- * "See example" opens `SighExampleModal`: the breath in miniature, looping,
- * with its three steps lit one at a time. That is not the arrangement the
- * paragraph above argues against — what was wrong with the collapsed
- * explanation was hiding the *instructions*, and those are now on the page.
- * This hides a demonstration, which is a different thing to owe somebody.
+ * "Watch an example first" is the second button here, and it goes to
+ * `example.tsx`: the sigh running on a loop with its three steps numbered under
+ * it. It has been a disclosure inside this screen and then a modal over it, and
+ * both were the same mistake at different sizes — a breath is watched rather
+ * than read, and it wants the room to be watched in.
  *
- * It has to be a tap because of what this screen is for. Nothing here starts on
- * its own — that is the whole reason the screen exists, ahead of `breathe.tsx`
- * — and a circle already breathing when the screen fades in would take that
- * back before the Start button could offer it. Someone who reads the steps and
- * knows what a sigh is presses Start against a still page; someone who doesn't
- * asks to be shown, and is.
+ * It is still behind a press, and that has not changed for the reason it never
+ * changes: this screen exists to be still. Nothing here starts on its own —
+ * that is the whole point of it sitting ahead of `breathe.tsx` — and a circle
+ * already breathing when the screen fades in would take that back before the
+ * Start button could offer it.
  *
- * A panel over the screen rather than a block inside it, for the reason written
- * out in `sigh-example-modal.tsx`: an example that pushed the Start button down
- * the page while it played would be paying for a look with the layout of the
- * one screen in the app that is meant to sit still.
+ * The example is a ghost button rather than the underlined line of small text
+ * it was, because of who presses it: somebody who has read three numbered steps
+ * and is not sure they can follow them, which is exactly the person least
+ * likely to go hunting for a link. An outline says "this is a control" without
+ * a fill, so Start is still plainly the action on the screen and this is
+ * plainly the other one.
+ *
+ * It sits *above* Start, which is the order the two are met in rather than the
+ * order of their importance. The doubt comes before the commitment: a way out
+ * offered underneath the button that commits you is a way out found after the
+ * fact. It also leaves Start where it has always been — last, above its own
+ * hint, hard against the foot of the screen and level with Begin on the door.
  */
 
-import { useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { readingCut, ThemedText } from '@/components/themed-text';
+import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
-import { PressableScale } from '@/components/ui/pressable-scale';
 import { BREATH_CYCLES } from '@/config/session';
 import { BREATHE_INTRO } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
-import { SighExampleModal } from '@/session/breathing/sigh-example-modal';
 import { Rule } from '@/session/ui/rule';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { useSessionBack } from '@/session/use-session-back';
@@ -84,118 +88,110 @@ export default function BreatheIntroScreen() {
    * `undefined`, which is what draws no back button.
    */
   const back = useSessionBack('/breathe-intro');
-  /**
-   * The example, and the whole of what this screen remembers. Closed on
-   * arrival and never remembered between visits — the same rule `Disclosure`
-   * holds itself to, and for the same reason: a screen that opens something
-   * because of what you did last time is a screen deciding for you.
-   */
-  const [example, setExample] = useState(false);
 
   return (
     <SessionScreen onBack={back}>
-      {/* Scrolls, but only when it has to. `centered` on the screen would have
-          done the centring and nothing else — it is a flex child with no scroll
-          in it, so the numbered method plus a large type setting pushes the
-          Start button off the bottom of a small phone rather than making it
-          reachable. `flexGrow: 1` fills the screen while the content fits, and
-          scrolls the moment it doesn't.
+      {/* No scroll container at all, and that is the fix rather than a smaller
+          one. Disabling the gesture unless the content measurably overflowed
+          got most of the way there and still left the page able to jiggle by
+          the fraction of a point `flexGrow: 1` produces whenever a float lands
+          over. A plain column cannot be dragged.
 
-          The centring moved off this container and onto the reading block
-          inside it, so that the actions can sit at the foot of the screen
-          rather than wherever the copy happens to end. That is what the door
-          does with Begin, and the two screens run back to back: with the same
-          gap, the same hint line and the same bottom padding under both, Start
-          lands on exactly the height Begin was at and the button does not jump
-          as the app moves between them. */}
-      <ScrollView
-        contentContainerStyle={styles.scroll}
-        showsVerticalScrollIndicator={false}>
-        <View style={styles.root}>
-          {/* Takes all the room above the actions and centres the reading in
-              it — the same shape the door has, with the sphere and the line in
-              place of this. */}
-          <View style={styles.stage}>
-            {/* One block: the title, the mark under it, and the lines that say
-                what the minute holds. */}
-            <View style={styles.intro}>
-              {/* The title tier's size in the reading cut — see `readingCut`. The
-                  same treatment the opening title card takes, and for the same
-                  reason: one large line with nothing above it to compete with does
-                  not need the display weight as well as the size. */}
-              <ThemedText type="title" style={readingCut}>
-                {BREATHE_INTRO.body}
-              </ThemedText>
+          What it costs is the safety valve. At the top of the Dynamic Type
+          range on a short phone there is now nothing to scroll, so the content
+          has to fit by construction — which is what `root`'s gap below is
+          holding, and what the copy on this screen has to keep clearing. The
+          door is laid out identically, for the same reason and to the same
+          numbers, so Start and Begin stay on one height. */}
+      <View style={styles.root}>
+        {/* Takes all the room above the actions and centres the reading in
+            it — the same shape the door has, with the sphere and the line in
+            place of this. */}
+        <View style={styles.stage}>
+          {/* One block: the title, the mark under it, and the lines that say
+              what the minute holds. */}
+          <View style={styles.intro}>
+            {/* The title tier, plain: size and weight both. It carried
+                `readingCut` for a long time — the same treatment the door's
+                line took — on the argument that a large line alone on a page
+                does not need the display weight as well as the size. That
+                argument was written when the display cut was a serif's 600
+                against a serif's 400, which is a real difference in voice.
+                The app is on one sans now and the two cuts differ only in
+                weight, so all the reading cut bought here was a lighter
+                heading. See `readingCut`, which still has one caller. */}
+            <ThemedText type="title">
+              {BREATHE_INTRO.body}
+            </ThemedText>
 
-              {/* Left, because the column is — `Rule` takes its alignment from
-                  whatever holds it, and the title card at the door centres the same
-                  mark. It is what separates the heading from its explanation
-                  without spending a line of copy on a subheading. */}
-              <Rule />
+            {/* Left, because the column is — `Rule` takes its alignment from
+                whatever holds it, and the title card at the door centres the same
+                mark. It is what separates the heading from its explanation
+                without spending a line of copy on a subheading. */}
+            <Rule />
 
-              <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
-              <ThemedText themeColor="textSecondary">
-                {BREATHE_INTRO.shape(BREATH_CYCLES)}
-              </ThemedText>
-              {/* Last in the block, so it sits between the reading and the doing
-                  — the thing you reach for having read the steps and wanted to
-                  see them rather than be told them.
-
-                  Underlined small text rather than a second button: the screen
-                  has one action on it and this is not it. The underline is what
-                  says "tappable" without a word of explanation — the same three
-                  quiet steps the tip link at the end of the session takes, one
-                  rank quieter, because down there the link is the only offer on
-                  the screen and up here it sits beside the Start button. */}
-              <PressableScale
-                accessibilityRole="button"
-                accessibilityLabel={BREATHE_INTRO.example}
-                depth="text"
-                hitSlop={Spacing.three}
-                onPress={() => setExample(true)}
-                style={({ pressed }) => [styles.example, pressed && styles.pressed]}>
-                <ThemedText type="small" themeColor="textSecondary" style={styles.underline}>
-                  {BREATHE_INTRO.example}
-                </ThemedText>
-              </PressableScale>
-            </View>
-          </View>
-
-          <View style={styles.actions}>
-            {/* `large` — see `Size` in `button.tsx`. This screen has a single
-                action on it and it is the action that decides whether the
-                session happens at all. The door's Begin is the other one, and
-                the pair are deliberately identical: same size, same block, same
-                height off the bottom of the screen. */}
-            <Button
-              title={BREATHE_INTRO.start}
-              size="large"
-              onPress={() => router.replace('/breathe')}
-            />
-            <ThemedText type="small" themeColor="textMuted" style={styles.hint}>
-              {BREATHE_INTRO.hint}
+            <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
+            <ThemedText themeColor="textSecondary">
+              {BREATHE_INTRO.shape(BREATH_CYCLES)}
             </ThemedText>
           </View>
         </View>
-      </ScrollView>
 
-      <SighExampleModal visible={example} onClose={() => setExample(false)} />
+        <View style={styles.actions}>
+          {/* Above Start rather than below it, which is the order the two are
+              actually met in: somebody who is not sure they can follow the
+              steps needs the way out of that *before* they reach the button
+              that commits them, not after. It also puts Start last, next to
+              its own hint and hard against the bottom of the screen, which is
+              where a thumb already is.
+
+              Ghost, so the outline says control while the fill below it stays
+              the action. The two never compete: this one is regular size and
+              unfilled, that one is `large` and solid. */}
+          <Button
+            title={BREATHE_INTRO.example}
+            variant="ghost"
+            onPress={() => router.replace('/example')}
+          />
+          {/* `large` — see `Size` in `button.tsx`. This screen has a single
+              action on it and it is the action that decides whether the
+              session happens at all. The door's Begin is the other one, and
+              the pair are deliberately identical: same size, same block, same
+              height off the bottom of the screen. */}
+          <Button
+            title={BREATHE_INTRO.start}
+            size="large"
+            onPress={() => router.replace('/breathe')}
+          />
+          <ThemedText type="small" themeColor="textMuted" style={styles.hint}>
+            {BREATHE_INTRO.hint}
+          </ThemedText>
+        </View>
+      </View>
     </SessionScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  // No `justifyContent` here any more: the centring belongs to `stage` below,
-  // which is what leaves the actions at the foot of the screen. The bottom half
-  // of this padding is the same step the door puts under Begin, and the two
-  // have to stay equal — see the note above the `ScrollView`.
-  scroll: {
-    flexGrow: 1,
-    paddingVertical: Spacing.four,
-  },
+  // The long pause between the reading and the doing, one step down from the
+  // `six` the door uses and the one place this screen buys back the height it
+  // needs to fit without scrolling.
+  //
+  // The two screens are otherwise laid out identically, and this is the honest
+  // asymmetry between them: the door holds one sentence and a sphere, where
+  // this holds a title, a rule, four numbered steps, a line about the length,
+  // and a link. At `six` that came to more than a small phone has, and the pause
+  // was both the largest single item on the screen and the only one that is not
+  // content. Thirty-two points is still a clear break between what you read and
+  // what you press — it is the step the ramp gives a screen's run-out — and it
+  // is what the numbers below have to keep clearing.
   root: {
     flex: 1,
-    gap: Spacing.six,
+    // The padding that used to sit on the scroll container. Same distance, same
+    // place, nothing to drag — and equal to the door's, which is what keeps
+    // Start and Begin on one height.
+    paddingVertical: Spacing.four,
+    gap: Spacing.five,
   },
   // The reading, centred in everything the actions do not use.
   stage: {
@@ -213,19 +209,5 @@ const styles = StyleSheet.create({
   },
   hint: {
     textAlign: 'center',
-  },
-  // Sized to its own words rather than stretched across the column, like the
-  // disclosure trigger it replaced: a full-width target on a screen with one
-  // real button reads as a second button.
-  example: {
-    alignSelf: 'flex-start',
-    paddingVertical: Spacing.one,
-  },
-  underline: {
-    textDecorationLine: 'underline',
-  },
-  // The same shallow dim every other small text control takes.
-  pressed: {
-    opacity: 0.75,
   },
 });
