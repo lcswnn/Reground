@@ -14,6 +14,21 @@
  * The session state was already cleared on the way in, so nothing entered is
  * still in memory behind this.
  *
+ * ## Tully, asleep, above the line
+ *
+ * The one drawing on this screen and one of the few in the app — see
+ * `SHOW_TULLY` in `breathing-guide.tsx` for the other, which is currently
+ * switched off. It is here rather than anywhere else because this is the only
+ * screen with nothing to do on it: a picture on a screen that is asking for
+ * something competes with the asking, and a picture on a screen that has
+ * finished asking is just the last thing you see.
+ *
+ * Asleep specifically, and that is the whole of why it earns its place. The
+ * sentence under it tells the user to put the phone down; a character doing
+ * exactly that says the same thing in the register the sentence cannot reach,
+ * and nobody has to read it. It is the app going quiet rather than the app
+ * waving goodbye.
+ *
  * ## The one link
  *
  * There is a tip jar under the line, and it is the only thing in the app that
@@ -42,6 +57,7 @@
 
 import { useEffect } from 'react';
 import { AppState, Linking, StyleSheet, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 
 import { ThemedText } from '@/components/themed-text';
@@ -50,6 +66,13 @@ import { CLOSED } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { SessionScreen } from '@/session/ui/session-screen';
 import { StageDirection } from '@/session/ui/stage-direction';
+
+/**
+ * The drawing, and how big it is allowed to be. See the note at the top of the
+ * file for why it is on this screen and no other.
+ */
+const sleeping = require('../../assets/Sleeping-Tully.png');
+const TULLY_SIZE = 140;
 
 export default function ClosedScreen() {
   const router = useRouter();
@@ -78,6 +101,21 @@ export default function ClosedScreen() {
   return (
     <SessionScreen centered>
       <View style={styles.root}>
+        {/* Above the line and in the flow, so the sign-off keeps its place on
+            the screen and the drawing sits over it. `contain` rather than a
+            fixed height: the asset is square with a lot of air in it, and
+            letting it fit the box is what keeps Tully the size they look. */}
+        <Image
+          source={sleeping}
+          style={styles.tully}
+          contentFit="contain"
+          // Nothing is announced. It is a picture of the thing the sentence
+          // under it already says, and a screen reader that stops to describe
+          // a sleeping character on the way to "you may now close the app" is
+          // reading out the decoration and delaying the point.
+          accessible={false}
+        />
+
         <StageDirection>{CLOSED.line}</StageDirection>
 
         <View style={styles.tip}>
@@ -133,6 +171,18 @@ export default function ClosedScreen() {
 const styles = StyleSheet.create({
   root: {
     alignItems: 'center',
+  },
+  // Sized as a square and given a line's worth of air under it — the drawing
+  // and the sentence are one object, so they sit at the gap the app puts
+  // between the lines of a block rather than between two blocks.
+  //
+  // 140 points is small enough that the screen is still mostly empty, which is
+  // the point of it. A larger Tully turns the last screen of the session into a
+  // picture with a caption.
+  tully: {
+    width: TULLY_SIZE,
+    height: TULLY_SIZE,
+    marginBottom: Spacing.two,
   },
   // A block's worth of space below the sign-off rather than a line's worth: it
   // and the offer are two separate things, and the gap is what keeps the second
