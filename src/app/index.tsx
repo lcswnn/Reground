@@ -259,9 +259,11 @@ export default function WelcomeScreen() {
 
           What this costs is the safety valve. At the top of the Dynamic Type
           range on a short phone there is no scroll to reach anything that does
-          not fit — see the note on `stage`, which is the part that gives. */}        {/* One fade for the whole door: the sphere, the line and the button
-            come up together as the screen arriving, rather than as three things
-            announcing themselves in turn. */}
+          not fit — see the note on `stage`, which is the part that gives. */}
+
+      {/* One fade for the whole door: the sphere, the line and the button come
+          up together as the screen arriving, rather than as three things
+          announcing themselves in turn. */}
       <Animated.View style={[styles.root, screenStyle]}>
         {/* Takes all the room above the button and centres what is in it, so
             the line still lands near the middle of the screen while the action
