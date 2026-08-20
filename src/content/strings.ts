@@ -641,8 +641,19 @@ export const MERGE_TILES = {
  * with its neighbours.
  */
 export const MATCH_THREE = {
-  prompt: "Tap two neighbours to swap them. Three in a line clears.",
+  /**
+   * Two ways to play it, and the drag goes first because it is the one most
+   * people will reach for without being told. The tap stays in the sentence
+   * anyway: it is the only one of the two that works with a screen reader, and
+   * it is what somebody falls back to when a drag has just been read as a tap.
+   */
+  prompt: "Drag a shape onto its neighbour, or tap the two. Three in a line clears.",
   stuck: "Nothing left to line up. The board deals itself out again.",
+  /**
+   * The spoken version, and it deliberately says only the tap. Dragging is a
+   * gesture VoiceOver has already taken for its own navigation, so a label
+   * offering it would be describing something that cannot be done.
+   */
   boardLabel: "A grid of shapes. Tap two neighbouring shapes to swap them.",
   cellHint: "Swaps with the shape you tap next.",
   empty: "Empty",

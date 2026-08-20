@@ -545,6 +545,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.four,
+    // Padding at the foot of the box the circle is centred in, which lifts it
+    // by half of that — the same trick the door uses on its sphere. Two things
+    // want it a little above the true centre: the progress bar sits under the
+    // circle and is part of the same object, so the pair's centre is lower than
+    // the circle's; and a shape somebody is looking at for half a minute reads
+    // as sitting low when it is measured dead centre.
+    paddingBottom: Spacing.five,
   },
   // Pinned to the top of the screen rather than stacked above the circle, and
   // that is what puts the circle in the middle: a cue in the flow pushes
