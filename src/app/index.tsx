@@ -74,6 +74,19 @@
  * No session state is touched here. Someone who opens the app and puts it down
  * has done nothing that needs clearing.
  *
+ * ## The one question, asked once
+ *
+ * On the very first launch a `RegionPicker` arrives over this screen and asks
+ * which country the user is in, so that the crisis sheet has real numbers in it
+ * rather than four American ones and a hope. It is shown here rather than
+ * anywhere else because it has to be answered before the app is any use in the
+ * situation it is for, and because the door is the only screen in the session
+ * that is not in the middle of something.
+ *
+ * It appears when `region` is `null` — never asked — and not when it is
+ * `elsewhere`, which is an answer. See `region-preference.tsx`, which is where
+ * that distinction is kept and why.
+ *
  * No back button: there is nothing behind the first screen. See `previousRoute`.
  */
 
@@ -98,12 +111,14 @@ import { pickWelcomeLine, WELCOME } from "@/content/strings";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { withAlpha } from "@/lib/color";
+import { useRegionPreference } from "@/lib/region-preference";
 import { splashClearsInMs } from "@/lib/splash";
 import {
   breathGlowSize,
   BreathGlow,
   GlowStage,
 } from "@/session/ui/breath-glow";
+import { RegionPicker } from "@/session/ui/region-picker";
 import { SessionScreen } from "@/session/ui/session-screen";
 import { StageDirection } from "@/session/ui/stage-direction";
 
@@ -149,6 +164,21 @@ export default function WelcomeScreen() {
    * its parting idea the same way.
    */
   const [line] = useState(pickWelcomeLine);
+  const { region } = useRegionPreference();
+  /**
+   * Whether the question has been put away for this launch.
+   *
+   * The picker closes itself by being answered — `region` stops being `null`
+   * and the modal's own `visible` goes false. This covers the other exit:
+   * Android's back gesture, which dismisses without an answer. Without it the
+   * modal would reopen on the same frame it closed, which is a trap on the
+   * first screen of the app.
+   *
+   * Nothing is written when that happens, so the question is asked again next
+   * launch. That is the right outcome — a dismissal is not an answer — and it
+   * is the only thing this screen remembers, for as long as it is open.
+   */
+  const [askedThisLaunch, setAskedThisLaunch] = useState(false);
 
   const diameter = Math.min(
     width * DIAMETER_RATIO,
@@ -341,6 +371,14 @@ export default function WelcomeScreen() {
           </ThemedText>
         </View>
       </Animated.View>
+
+      {/* Asked once, on the first launch, and dismissed by answering it. It is
+          not part of the door's fade: the screen behind it should be finished
+          arriving before anything is asked of anybody. */}
+      <RegionPicker
+        visible={region === null && !askedThisLaunch}
+        onDone={() => setAskedThisLaunch(true)}
+      />
     </SessionScreen>
   );
 }

@@ -4,9 +4,9 @@
  *
  * No header beyond one thin row of chrome: a back button top-left on the
  * screens that have somewhere to go back to — see `previousRoute` for which do
- * and where each one lands — the appearance switch top-right on all of them
- * without exception, and between the two, three dots saying which part of the
- * session this is. All of it is drawn here rather than by each screen so that
+ * and where each one lands — a pair of round buttons top-right on all of them
+ * without exception (the crisis numbers, and the appearance switch), and
+ * between the two ends, three marks saying which part of the session this is. All of it is drawn here rather than by each screen so that
  * they are in exactly the same place on every one, which for the switch is the
  * whole point: a control that moves between screens is a control that has to be
  * found again each time.
@@ -33,6 +33,7 @@ import { useTheme } from "@/hooks/use-theme";
 import { stageOfPath } from "@/session/routing";
 import { BackButton } from "@/session/ui/back-button";
 import { ProgressLines } from "@/session/ui/progress-lines";
+import { SupportButton } from "@/session/ui/support-access";
 import { ThemeToggle } from "@/session/ui/theme-toggle";
 
 interface SessionScreenProps extends ViewProps {
@@ -83,11 +84,21 @@ export function SessionScreen({
         <View style={styles.chrome}>
           {onBack ? <BackButton onPress={onBack} /> : null}
           <View style={styles.spacer} />
-          <ThemeToggle />
 
-          {/* Centred on the screen rather than laid out between the two
-              controls: the back button is two words wide and the switch is a
-              34-point circle, so a row in the flow would sit off-centre by the
+          {/* Two round buttons, in this order: the numbers first, the
+              appearance second. Reading order is left to right and the pair are
+              not equals — one changes how the app looks and one is how you
+              reach a person. The switch keeps the outside edge because it is
+              the one that has always been there and the corner is where a
+              thumb goes for it. */}
+          <View style={styles.corner}>
+            <SupportButton />
+            <ThemeToggle />
+          </View>
+
+          {/* Centred on the screen rather than laid out between the controls:
+              the back button is two words wide and the pair opposite are two
+              34-point circles, so a row in the flow would sit off-centre by the
               difference and move again on the screens with no back button.
               Absolute keeps it on the middle of the page, which is where a
               progress indicator has to stay to read as one thing that is not
@@ -127,6 +138,14 @@ const styles = StyleSheet.create({
   },
   spacer: {
     flex: 1,
+  },
+  // The two round controls, at the gap the app puts between the lines of one
+  // block. Close enough to read as a pair rather than as two things that
+  // happen to be in the same corner.
+  corner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: Spacing.two,
   },
   // Pinned to all four edges of the row so the dots sit on the same line as
   // the two controls rather than at the top of whatever height the row ended

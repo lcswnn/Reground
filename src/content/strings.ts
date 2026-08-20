@@ -204,7 +204,9 @@ export const APPEARANCE = {
    * of two — it could as easily have been reading out the setting.
    */
   switchTo: (mode: "light" | "dark") =>
-    mode === "dark" ? "Switch to dark appearance" : "Switch to light appearance",
+    mode === "dark"
+      ? "Switch to dark appearance"
+      : "Switch to light appearance",
 } as const;
 
 export const DISCLOSURE = {
@@ -421,7 +423,8 @@ export const SIGH_EXAMPLE = {
    * itself: that it repeats, and that this is the same breath at the same pace
    * the real screen runs — the example is not a sped-up illustration.
    */
-  caption: "This loops for as long as you watch it, at the pace the breath itself runs.",
+  caption:
+    "This loops for as long as you watch it, at the pace the breath itself runs.",
   /**
    * The way out, and the only action on the screen. "Got it" rather than
    * "Back": it is the answer to what the screen just showed, and what it
@@ -799,6 +802,126 @@ export const NOT_YET = {
   body: "This one isn't in the app yet — it's on the list. Pick something else, or call it here.",
   back: "Pick something else",
   done: "Finish up",
+} as const;
+
+/**
+ * Crisis routing: the numbers, and the words around them.
+ *
+ * This is the one part of the app that is not about anxiety management at all.
+ * Everything else here is built on the claim that a bad half-hour can be
+ * interrupted; this is the admission that some of them cannot be, and that when
+ * that is the case the right thing for an app to do is hand the person to
+ * somebody real as fast as possible.
+ *
+ * ## Rules these were written under
+ *
+ * 1. **Every option is a number you could dial from a landline.** No accounts,
+ *    no apps, no "learn more" pages. The row's own label carries the number, so
+ *    a device that cannot open `tel:` — an iPad, a locked-down phone — still
+ *    leaves the reader looking at something they can use.
+ * 2. **Nothing here asks the user to characterise themselves.** No "if you are
+ *    in crisis", no "if you are having thoughts of". Somebody deciding whether
+ *    they are bad enough to call is somebody the app has just given a test to
+ *    fail. The lines say what each number is and leave the decision alone.
+ * 3. **It says what it does not know.** All four numbers are US ones and the
+ *    app has no idea where anybody is — that is the last line, and it is a link
+ *    to the directory rather than a shrug.
+ *
+ * ## `regions`, and what has to change when this ships elsewhere
+ *
+ * These are hard-coded for the US because that is where this ships. That is a
+ * decision with an expiry date on it: the moment the app is available anywhere
+ * else, showing 988 to somebody in Manchester is worse than showing nothing,
+ * because it is a wrong answer delivered with confidence. `note` is doing the
+ * work of covering that gap today and it is not a substitute for localising.
+ */
+export const CRISIS = {
+  /**
+   * The line that opens the sheet, and it took several tries. "Get help" is
+   * what a support page says; "Emergency" is a word that raises the heart rate
+   * of the person reading it. This names the thing on offer — a person, now —
+   * and it is the same phrase whether the sheet is opened from a rating of 3 or
+   * a rating of 10.
+   */
+  trigger: "Need help immediately? Talk to someone now.",
+  title: "Talk to someone now",
+  /**
+   * Two sentences, and the second one is the important one: it is there to stop
+   * the reader deciding they are not bad enough. Lifelines take distress calls,
+   * not only emergencies, and people who need them routinely believe otherwise.
+   */
+  lead: "These are free, open all night, and answered by people. You do not have to be in danger to use one.",
+  /**
+   * Under the numbers, and the whole of the sheet for anybody who answered
+   * "somewhere else" — see `CRISIS_REGIONS`. A directory maintained by people
+   * whose job that is beats a number this app half-remembers.
+   */
+  directory: "findahelpline.com lists a line for almost every country.",
+  /** Shown with the above when the app has no numbers for the chosen country. */
+  directoryOnly:
+    "This app does not carry numbers for the country you picked, and a wrong number is worse than none. This directory does carry them.",
+  /**
+   * The way back to the question the door asked once. Tapping it reopens the
+   * picker, which is the only route to changing an answer.
+   *
+   * It named the country for a while — "Numbers for Australia" — on the
+   * argument that the sheet should say whose numbers these are. Two things were
+   * wrong with that. It read as a heading rather than as a control, so the one
+   * thing on the sheet that could be changed looked like the one thing that
+   * could not; and it is a sentence about the app's state offered to somebody
+   * who is on this sheet because they need a phone number, not a status report.
+   * This says what pressing it does and nothing else.
+   */
+  region: "Change location selection",
+  /** The way out. Plain, and not "I'm fine" — nobody should have to claim that
+      to close a panel. */
+  close: "Close",
+  /**
+   * The glyph on the chrome-row button, and what a screen reader is told it is.
+   *
+   * A lowercase `i` in the app's own face rather than an icon: there is no icon
+   * set here, and the letter is the most widely understood mark for "there is
+   * information behind this" that exists. The spoken label does not say "info",
+   * because a button announced as information is a button nobody in trouble
+   * bothers with — it names what is actually inside.
+   */
+  glyph: "i",
+  buttonLabel: "Support and crisis numbers",
+} as const;
+
+/**
+ * The question asked once, on the first launch, and the sentence that says why
+ * it is being asked.
+ *
+ * ## Why ask at all
+ *
+ * Because the alternative is worse in both directions. Showing US numbers to
+ * everybody is a wrong answer delivered with confidence to most of the world;
+ * showing none is an app with no off-ramp. The country is the one fact that
+ * turns the crisis sheet from a gesture into a phone call, and it is a fact the
+ * user can give in one tap.
+ *
+ * ## Why it says why
+ *
+ * `lead` is the whole of the app's argument for asking. An app that stores
+ * nothing else about you and then wants to know where you are owes an
+ * explanation *before* the question rather than in a policy behind it — and the
+ * honest explanation happens to be reassuring: it is a country, not a location,
+ * it never leaves the phone, and the only thing it changes is which numbers are
+ * printed if you ever open that sheet.
+ *
+ * It is also the one screen in the app that mentions crisis before the user
+ * has, which is why it is written as housekeeping rather than as concern. "In
+ * case you ever need it" is doing a lot of work in that sentence: it makes the
+ * question about the app being prepared rather than about the person being
+ * fragile.
+ */
+export const REGION_PICKER = {
+  title: "Where are you?",
+  lead: "So the app knows which crisis numbers to show you, in case you ever need them. It is a country, not a location — it stays on this phone, and it changes nothing else.",
+  /** Sits under the list. The escape hatch, and a real answer rather than a skip. */
+  elsewhereNote:
+    "Pick anything now and it can be changed later, from the same sheet the numbers are on.",
 } as const;
 
 /**

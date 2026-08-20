@@ -27,6 +27,7 @@ import { MOOD_BEFORE } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { MoodScale } from '@/session/ui/mood-scale';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { SupportAccess } from '@/session/ui/support-access';
 import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
@@ -73,6 +74,12 @@ export default function MoodBeforeScreen() {
           disabled={mood === null}
           onPress={advance}
         />
+
+        {/* Under the button, and on the screen from the moment it loads rather
+            than appearing at some number — see `SupportAccess`. This is the
+            first place the app asks how bad it is, and asking is what obliges
+            the offer. */}
+        <SupportAccess />
       </View>
     </SessionScreen>
   );

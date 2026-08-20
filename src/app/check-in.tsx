@@ -28,6 +28,7 @@ import { CHECK_IN, SUPPORT_RESOURCE } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { SupportAccess } from '@/session/ui/support-access';
 import { useSessionBack } from '@/session/use-session-back';
 import { useSessionGuard } from '@/session/use-session-guard';
 
@@ -98,6 +99,12 @@ export default function CheckInScreen() {
               <ThemedText type="small" themeColor="textMuted">
                 {SUPPORT_RESOURCE.resource}
               </ThemedText>
+              {/* The line above says a person helps more than an app does, and
+                  until now that was the end of it — a sentence about calling
+                  somebody, with nothing to press. This is the same offer the
+                  two rating screens carry, and it is the numbers rather than
+                  the idea of them. */}
+              <SupportAccess />
             </Animated.View>
           ) : null}
         </View>

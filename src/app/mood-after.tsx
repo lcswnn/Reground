@@ -44,6 +44,7 @@ import { MOOD_AFTER } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
 import { MoodScale } from '@/session/ui/mood-scale';
 import { SessionScreen } from '@/session/ui/session-screen';
+import { SupportAccess } from '@/session/ui/support-access';
 import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
@@ -84,6 +85,11 @@ export default function MoodAfterScreen() {
         />
 
         <Button title={MOOD_AFTER.continue} disabled={mood === null} onPress={advance} />
+
+        {/* The same offer as on the first rating, in the same place. It matters
+            more here: this screen is where a session that did not work says so,
+            and the app has just watched a number fail to move. */}
+        <SupportAccess />
       </View>
     </SessionScreen>
   );

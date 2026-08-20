@@ -14,6 +14,7 @@ import { View } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { SPLASH } from '@/config/session';
 import { SessionFlowProvider } from '@/session/session-context';
+import { RegionPreferenceProvider } from '@/lib/region-preference';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 import { LaunchVeil } from '@/session/ui/launch-veil';
 import { ScreenFilm } from '@/session/ui/screen-film';
@@ -65,9 +66,13 @@ SplashScreen.setOptions({ fade: true, duration: SPLASH.hideMs });
 export default function RootLayout() {
   return (
     <ThemePreferenceProvider>
-      <SessionFlowProvider>
-        <RootNavigator />
-      </SessionFlowProvider>
+      {/* Above the navigator, because the door asks the question it holds on
+          the first launch and the crisis sheet reads it from every screen. */}
+      <RegionPreferenceProvider>
+        <SessionFlowProvider>
+          <RootNavigator />
+        </SessionFlowProvider>
+      </RegionPreferenceProvider>
     </ThemePreferenceProvider>
   );
 }
