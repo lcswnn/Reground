@@ -26,6 +26,15 @@
  * true of the code and stops being true of the screen only while that flag is
  * false.
  *
+ * ## Three bands, and only one of them is in the flow
+ *
+ * The cue is pinned to the top of the screen, the circle sits in the middle,
+ * and the way out sits at the bottom — that last one drawn by `breathe.tsx`
+ * rather than here. Only the circle and its progress bar are laid out normally;
+ * the cue is absolute, because a word above the circle in the flow moves the
+ * circle down by the height of a word, and the circle is the thing the eye is
+ * supposed to rest on for half a minute.
+ *
  * ## The glow
  *
  * The circle sits inside a `BreathGlow` — rings of the accent at low alpha that
@@ -57,7 +66,7 @@ import Animated, {
 import { ThemedText } from '@/components/themed-text';
 import { BREATHING, BREATH_CYCLES, BREATH_CYCLE_MS } from '@/config/session';
 import { BREATHING_COPY } from '@/content/strings';
-import { Spacing } from '@/constants/theme';
+import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
 import { BreathingTully } from '@/session/breathing/breathing-tully';
@@ -483,12 +492,24 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
           />
         </GlowStage>
 
-        {/* The only indication of time left, and it is a hairline at a third
-            opacity — visible if you look for it, invisible if you don't. A
-            countdown here would be something to watch instead of the breath. */}
-        <View style={[styles.track, { backgroundColor: theme.border }]}>
+        {/* The only indication of time left, and it is meant to be seen now.
+            It spent a long while as a hairline at a third opacity, on the
+            argument that a countdown here would be something to watch instead
+            of the breath. That is still true of a *countdown* — a number
+            ticking down is a thing you check — and it turned out not to be true
+            of a bar. Somebody half a minute into a screen with no numbers on it
+            wants to know whether they are nearly done, and a mark they cannot
+            find leaves them wondering rather than breathing.
+
+            Where it landed: four points of it, in the accent rather than the
+            strong step of it, at a shade under full. Each of those is a step
+            back from the version that first fixed the problem — that one was
+            legible from across the room, which is more than a bar tracking half
+            a minute needs to be. Still one fact, still no numbers, and still
+            the quietest thing on the screen after the circle. */}
+        <View style={[styles.track, { backgroundColor: theme.barDivider }]}>
           <Animated.View
-            style={[styles.fill, progressStyle, { backgroundColor: theme.textMuted }]}
+            style={[styles.fill, progressStyle, { backgroundColor: theme.accent }]}
           />
         </View>
       </View>
@@ -525,9 +546,25 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.four,
   },
+  // Pinned to the top of the screen rather than stacked above the circle, and
+  // that is what puts the circle in the middle: a cue in the flow pushes
+  // everything under it down by its own height, so the thing the eye is meant
+  // to sit on ends up off-centre by the width of a word.
+  //
+  // The slot keeps its height regardless, because the cue inside it is absolute
+  // and swaps one word for another — see `cue`. Without a height to swap
+  // inside, the two would have nothing to be laid out against.
   cueSlot: {
+    position: 'absolute',
+    // Down from the top edge by the app's long pause. At `0` the word sat
+    // directly under the chrome row, which read as a fourth piece of chrome
+    // rather than as the instruction for the thing in the middle of the screen.
+    // This is far enough to belong to the circle and far enough from it that
+    // the two are not one object.
+    top: Spacing.six,
+    left: 0,
+    right: 0,
     height: 34,
-    alignSelf: 'stretch',
     justifyContent: 'center',
   },
   // Absolute so an outgoing word sits on top of the incoming one instead of
@@ -547,10 +584,29 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth * 3,
     borderColor: 'transparent',
   },
+  // It went 120 points of hairline at 35% opacity → 200 of five at full →
+  // this: 180 of four, at 80%.
+  //
+  // The middle step was the useful one, because it proved the problem was
+  // findability rather than size — once the bar could be found at all, it could
+  // afford to give some of that back. Four points still reads as a shape rather
+  // than as a `Rule` that wandered down the screen, and the opacity is doing
+  // what the old 35% was trying to do without taking the thing back below the
+  // threshold of being seen.
+  //
+  // Opacity on the track rather than a lighter pair of colours, so the fill and
+  // the groove it runs in fade together and the bar stays one object. The
+  // accent underneath is the plain step now, not `accentStrong` — a bar this
+  // size does not need the contrast a numeral does.
+  //
+  // `overflow` is what makes the fill a fill: it is a full-width bar scaled
+  // from its left edge, so without this it would be drawn past the track's end
+  // for the whole run.
   track: {
-    width: 120,
-    height: StyleSheet.hairlineWidth * 2,
-    opacity: 0.35,
+    width: 180,
+    height: 4,
+    borderRadius: Radius.pill,
+    opacity: 0.8,
     overflow: 'hidden',
   },
   fill: {

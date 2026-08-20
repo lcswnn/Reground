@@ -119,7 +119,6 @@ export const WELCOME = {
    * Kept as copy rather than read out of `app.json` so it can be set in the
    * app's own voice if the store listing ever needs a longer one.
    */
-  name: "REGROUND",
 } as const;
 
 /** Which set of greetings the clock is in. See `WELCOME.lines`. */
@@ -916,6 +915,44 @@ export const CRISIS = {
  * question about the app being prepared rather than about the person being
  * fragile.
  */
+/**
+ * What this app is, and what it is not. The scope statement.
+ *
+ * ## Why it exists
+ *
+ * Everything else in this file is careful about the limits of one *exercise* —
+ * see `SOMATIC_COPY.principlesLimit`, and the two `cautionsLimit` lines, which
+ * say what a two-minute version of a twenty-minute technique can and cannot do.
+ * None of them says what the app is. That gap is the thing safety reviewers
+ * actually look for in this category, alongside crisis routing: bounded
+ * sessions, clear scope, a plain statement of what the software is not, and a
+ * way to reach a person. The first was already true of the design — one
+ * session, no account, nothing saved — and this is the sentence that says so
+ * out loud.
+ *
+ * It is also the honest thing to do independently of anybody reviewing it. This
+ * app is opened by somebody who has already decided they are not okay, and it
+ * has no way of knowing how not-okay. Saying what it is not, before it is
+ * needed, is the least an app in that position can do.
+ *
+ * ## Two versions of one sentence
+ *
+ * `full` ends by pointing at the numbers, and is only ever shown where numbers
+ * are actually on screen — the crisis sheet, directly above them. `short` is
+ * the same statement with that clause removed, for the door, where there is
+ * nothing above it to point at and the crisis numbers are a tap away in the
+ * corner instead.
+ *
+ * They are two strings rather than one built from parts because they are read
+ * in two different situations and the difference between them is a full stop in
+ * a different place, not a variable.
+ */
+export const SCOPE = {
+  full: "Reground is an app that provides daily breathing guides, mood tracking, and mindfulness exercises designed to help you manage everyday stress. The app does not cure mental health conditions or replace a doctor. If you need additional assistance, call or text the numbers below for support.",
+  short:
+    "Reground is an app that provides daily breathing guides, mood tracking, and mindfulness exercises designed to help you manage everyday stress. The app does not cure mental health conditions or replace a doctor.",
+} as const;
+
 export const REGION_PICKER = {
   title: "Where are you?",
   lead: "So the app knows which crisis numbers to show you, in case you ever need them. It is a country, not a location — it stays on this phone, and it changes nothing else.",

@@ -32,6 +32,52 @@ export function needsTopic(group: CategoryGroup): boolean {
 }
 
 /**
+ * Whether this session takes a rating at all.
+ *
+ * False for exactly one answer — "No anxiety" — and it is the single fact the
+ * whole of that branch hangs off. A session that is not measuring anything has
+ * no use for the screens that measure: no rating going in, no rating coming
+ * out, and no cue asking somebody to bring back an image they never mentioned.
+ *
+ * Written as a question about the *group* rather than as a flag on the session,
+ * for the reason the note at the top of this file gives: the flow branches on
+ * the group and nothing else, so a category added later cannot change the shape
+ * of the session by accident.
+ *
+ * Everything downstream of a rating follows from this rather than being listed
+ * again — `reachesReactivation` needs a `moodBefore` and never has one here,
+ * and `showsCalibration` is already false for any group but `world`.
+ */
+export function measuresMood(group: CategoryGroup): boolean {
+  return group !== 'relax';
+}
+
+/**
+ * Where the first question goes, which is now three answers rather than one.
+ *
+ * `world` is asked which thing; every other anxious session goes straight to
+ * the rating; and a relax session skips the whole measuring apparatus and goes
+ * to the games, which is what it came for.
+ */
+export function routeAfterCategory(group: CategoryGroup): SessionRoute {
+  if (needsTopic(group)) return '/topic';
+
+  return measuresMood(group) ? '/mood' : '/games';
+}
+
+/**
+ * Where the game hands over. Three ways out, in the order they are ruled out:
+ * the numbers for the sessions that have a topic to check them against, the
+ * second rating for every other anxious session, and — for a session with no
+ * rating to close — the offer of one last thing.
+ */
+export function routeAfterGame(group: CategoryGroup): SessionRoute {
+  if (showsCalibration(group)) return '/calibration';
+
+  return measuresMood(group) ? '/mood-after' : '/one-more';
+}
+
+/**
  * Someone at the top of the scale should not be asked to bring the image back.
  * The reactivation cue is there to make the puzzle land on the right memory;
  * it is not worth doing to a person who is already at 8.
@@ -320,6 +366,12 @@ export function previousRoute(
     case '/reactivate':
       return '/mood';
     case '/games':
+      // Three screens can be behind the picker. A relax session came straight
+      // from the first question and has no rating between the two, so pointing
+      // at `/mood` would land it on a screen it has never seen and would then
+      // walk it forward into a session it did not agree to.
+      if (context.group !== null && !measuresMood(context.group)) return '/category';
+
       return reachesReactivation(context) ? '/reactivate' : '/mood';
     case '/game':
       return '/games';
@@ -332,7 +384,11 @@ export function previousRoute(
         ? '/calibration'
         : '/game';
     case '/one-more':
-      return '/mood-after';
+      // The second rating for a session that took one, and the game itself for
+      // a session that did not.
+      return context.group !== null && !measuresMood(context.group)
+        ? '/game'
+        : '/mood-after';
     case '/check-in':
       return '/one-more';
     case '/close':

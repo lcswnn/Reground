@@ -528,6 +528,41 @@ export const Type = {
    * close the app. Everything said quietly beside something else.
    */
   caption: { fontSize: 13, lineHeight: 21 },
+  /**
+   * Below the caption, and the only tier that is genuinely small print.
+   *
+   * It exists for one role and should keep to it: the app talking about
+   * *itself* rather than to the reader — what it is, what it is not, what it
+   * cannot do. `SCOPE` on the door is the whole of that today.
+   *
+   * The rule on this file is that a tier is chosen by what the text *is*, and
+   * this is the tier that stopped a per-screen `fontSize` from being added when
+   * the scope statement wanted to sit further back than a caption.
+   *
+   * It went 13 → 11 → 10 → back to 11, and 11 is where it stays. That is
+   * Apple's own floor for anything meant to be read, and this line is meant to
+   * be read: it is the app's answer to "what is this, and what is it not", and
+   * a statement of scope that has been shrunk out of legibility is not a
+   * statement, it is a defence.
+   *
+   * The 10 lasted one build. Nothing was visibly wrong with it — which is the
+   * problem with sizes like this, since the person it fails is not the person
+   * checking it. What it cost is only visible on a device in poor light, held
+   * by somebody who is not calm, which is every reader this line has.
+   *
+   * Worth knowing that size is not the only budget being spent here: the ink is
+   * `textMuted` at 5.0:1 rather than full ink at 7.13:1. Small and quiet are the
+   * same decision made twice, and this tier has now made it once in each. If
+   * the line ever needs to sit further back again, the ink is the honest lever
+   * and this number is not.
+   *
+   * Dynamic Type carries it up from here — see `MaxFontScale`, which takes it
+   * to about 15 for anybody who has turned text up.
+   *
+   * The leading stays near 1.6, which is the reading ratio the tiers above use
+   * — small print set tight is what makes small print unreadable.
+   */
+  fine: { fontSize: 11, lineHeight: 17 },
   /** The clock and the countdown. Not a text tier — the one big numeral. */
   numeral: { fontSize: 40, lineHeight: 46 },
 } as const;

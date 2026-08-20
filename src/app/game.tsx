@@ -33,7 +33,7 @@ import { Spacing } from '@/constants/theme';
 import { findGame } from '@/session/games/catalog';
 import { GAME_VIEWS } from '@/session/games/views';
 import { SessionScreen } from '@/session/ui/session-screen';
-import { puzzleDurationMs, showsCalibration } from '@/session/routing';
+import { puzzleDurationMs, routeAfterGame } from '@/session/routing';
 import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 import { useSessionGuard } from '@/session/use-session-guard';
@@ -73,7 +73,7 @@ export default function GameScreen() {
   if (!active || !GameView) return null;
 
   const finish = () => {
-    router.replace(showsCalibration(group) ? '/calibration' : '/mood-after');
+    router.replace(routeAfterGame(group));
   };
 
   return (

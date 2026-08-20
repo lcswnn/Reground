@@ -75,6 +75,7 @@ export type ThemedTextType =
   | "eyebrow"
   | "small"
   | "smallBold"
+  | "fine"
   | "linkPrimary";
 
 export type ThemedTextProps = TextProps & {
@@ -153,6 +154,12 @@ const styles = StyleSheet.create({
   small: {
     fontFamily: Fonts.body,
     ...Type.caption,
+  },
+  // The app's only small print, and it has one caller — see `Type.fine`, where
+  // the role is written down and the size is argued for.
+  fine: {
+    fontFamily: Fonts.body,
+    ...Type.fine,
   },
   smallBold: {
     fontFamily: Fonts.semibold,

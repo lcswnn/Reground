@@ -3,8 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { HIGH_DISTRESS_MOOD, MEANINGFUL_MOOD_DROP, PUZZLE } from '@/config/session';
 import { CATEGORIES } from '@/content/categories';
 import {
+  measuresMood,
   moodOutcome,
   needsTopic,
+  routeAfterCategory,
+  routeAfterGame,
   previousRoute,
   puzzleDurationMs,
   reachesReactivation,
@@ -328,5 +331,61 @@ describe('stageOfPath', () => {
 describe('stageIndex', () => {
   it('runs from nought in flow order', () => {
     expect(SESSION_STAGES.map(stageIndex)).toEqual([0, 1, 2]);
+  });
+});
+
+/**
+ * The "No anxiety" answer is the one session that measures nothing, and the
+ * shape of it is entirely a matter of which screens it does *not* see. That is
+ * hard to notice by hand — a missed branch shows up as somebody being asked to
+ * rate a distress they said they did not have — so the whole path is walked
+ * here.
+ */
+describe('a session with no anxiety in it', () => {
+  it('is the only group that skips the rating', () => {
+    expect(measuresMood('relax')).toBe(false);
+    expect(measuresMood('world')).toBe(true);
+    expect(measuresMood('witnessed')).toBe(true);
+  });
+
+  it('goes from the first question to the games, and from the game to the offer', () => {
+    expect(routeAfterCategory('relax')).toBe('/games');
+    expect(routeAfterGame('relax')).toBe('/one-more');
+  });
+
+  // The two anxious paths are unchanged by any of it, which is the half of this
+  // that would break quietly.
+  it('leaves the anxious paths exactly as they were', () => {
+    expect(routeAfterCategory('world')).toBe('/topic');
+    expect(routeAfterCategory('witnessed')).toBe('/mood');
+    expect(routeAfterGame('world')).toBe('/calibration');
+    expect(routeAfterGame('witnessed')).toBe('/mood-after');
+  });
+
+  /**
+   * Back has to follow the same skips forward made. A relax session pointed at
+   * `/mood` would land on a screen it has never seen and be walked into a
+   * session it did not agree to.
+   */
+  // The session as it actually exists: a category, a shelf, and none of the
+  // numbers. Written out rather than taken from the helper above, because every
+  // null in it is part of what is being tested.
+  const relax: BackContext = {
+    group: 'relax',
+    hasTopic: false,
+    gameKind: 'calm',
+    moodBefore: null,
+    oneMore: null,
+  };
+
+  it('never points back at a screen it skipped', () => {
+    expect(previousRoute('/games', relax)).toBe('/category');
+    expect(previousRoute('/one-more', relax)).toBe('/game');
+  });
+
+  it('still reaches the exercises and the door out', () => {
+    expect(previousRoute('/game', relax)).toBe('/games');
+    expect(previousRoute('/close', relax)).toBe('/one-more');
+    expect(previousRoute('/check-in', relax)).toBe('/one-more');
   });
 });

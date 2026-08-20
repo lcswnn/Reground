@@ -16,15 +16,39 @@
  * group is the only thing the flow branches on, so a topic list that grows
  * cannot change the shape of the session.
  *
- * One thing does not fit the two groups: which games are offered. "Something I
- * saw" is the only answer that describes a picture, and the visuospatial games
- * only make sense against a picture — so the games are chosen per category, by
+ * One thing does not fit the groups: which games are offered. "Something I saw"
+ * is the only answer that describes a picture, and the visuospatial games only
+ * make sense against a picture — so the games are chosen per category, by
  * `games` below, and not by the group.
+ *
+ * ## The third answer is not an anxiety at all
+ *
+ * "No anxiety" is here because the honest answer to "what seemed to trigger
+ * your anxiety?" is sometimes "nothing did". Somebody who has used this app
+ * three times and liked the soundscape will open it on a fine evening, and
+ * until this existed the only way through the door was to claim a distress they
+ * did not have — which is a small lie the app was asking for and then measuring.
+ *
+ * What it costs is worth being clear about. The rest of the app is built around
+ * a number taken before and after, and this branch has neither: no rating, no
+ * reactivation cue, no calibration, and nothing to compare. That is the right
+ * trade — those screens are the machinery of interrupting a spike, and there is
+ * no spike — but it does mean a relax session is a different product inside the
+ * same app.
  */
 
 import type { GameKind } from "@/session/games/catalog";
 
-export type CategoryGroup = "world" | "witnessed";
+/**
+ * The three shapes a session can take, and the only thing the flow branches on.
+ *
+ * `world` and `witnessed` are both anxious sessions and differ only in what is
+ * offered inside them. `relax` is the odd one and is a different claim
+ * altogether: somebody who is not anxious, here for the quiet parts. It skips
+ * everything the app does to *measure* a bad half-hour — see `measuresMood` in
+ * `session/routing.ts`.
+ */
+export type CategoryGroup = "world" | "witnessed" | "relax";
 
 export interface Category {
   id: string;
@@ -71,5 +95,20 @@ export const CATEGORIES: readonly Category[] = [
       "An image or video that's stuck in your mind that you saw involuntarily.",
     group: "witnessed",
     games: "visuospatial",
+  },
+  {
+    /**
+     * Last on the list, and that placement is the whole of how it behaves. The
+     * two answers above it are what the app is for; this one is what to press
+     * when neither of them is true, and somebody who is genuinely wound up
+     * should meet it after the answer that fits them rather than before.
+     */
+    id: "relax",
+    label: "No anxiety",
+    detail: "Nothing is wrong — here for the quiet parts. The sounds, the games.",
+    group: "relax",
+    // The calm shelf, necessarily: the visuospatial games work by competing
+    // with an image somebody cannot stop seeing, and this session has no image.
+    games: "calm",
   },
 ];

@@ -32,7 +32,7 @@ import { Spacing } from '@/constants/theme';
 import { OptionCard } from '@/session/ui/option-card';
 import { OptionList } from '@/session/ui/option-list';
 import { SessionScreen } from '@/session/ui/session-screen';
-import { needsTopic } from '@/session/routing';
+import { routeAfterCategory } from '@/session/routing';
 import { useSessionBack } from '@/session/use-session-back';
 import { useSessionFlow } from '@/session/session-context';
 
@@ -45,7 +45,7 @@ export default function EntryScreen() {
     begin(category);
     // GROUP A gets one more question — which thing — before the rating. GROUP B
     // has nothing to narrow and goes straight through. See `needsTopic`.
-    router.replace(needsTopic(category.group) ? '/topic' : '/mood');
+    router.replace(routeAfterCategory(category.group));
   };
 
   return (

@@ -68,7 +68,7 @@ import {
   findRegion,
   HELPLINE_DIRECTORY,
 } from "@/content/crisis";
-import { CRISIS } from "@/content/strings";
+import { CRISIS, SCOPE } from "@/content/strings";
 import { useTheme } from "@/hooks/use-theme";
 import { useRegionPreference } from "@/lib/region-preference";
 import { useThemePreference } from "@/lib/theme-preference";
@@ -262,6 +262,14 @@ function SupportSheet({
                 </ThemedText>
               </PressableScale>
             </View>
+
+            {/* What the app is and is not, and it sits here rather than at
+                the foot of the sheet because of what is under it: the sentence
+                ends by pointing at the numbers, and pointing works downward.
+                See `SCOPE`, which is also shown on the door. */}
+            <ThemedText type="small" themeColor="textMuted">
+              {SCOPE.full}
+            </ThemedText>
 
             {/* Each row is the whole target, and the number is in the label
                 rather than in the detail line under it — the thing being tapped

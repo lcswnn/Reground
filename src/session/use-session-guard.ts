@@ -9,6 +9,7 @@
 import { useEffect } from 'react';
 import { useRouter } from 'expo-router';
 
+import { measuresMood } from '@/session/routing';
 import { useSessionFlow } from '@/session/session-context';
 
 interface GuardOptions {
@@ -22,7 +23,17 @@ interface GuardOptions {
 export function useSessionGuard({ requireMood = true }: GuardOptions = {}): boolean {
   const router = useRouter();
   const { category, moodBefore } = useSessionFlow();
-  const active = category !== null && (!requireMood || moodBefore !== null);
+  /**
+   * A rating is only missing if the session was ever going to take one.
+   *
+   * "No anxiety" sessions never visit the rating screens — see `measuresMood` —
+   * so every screen after the first question would otherwise fail this guard
+   * and bounce the user to the door on arrival. The category is still required:
+   * that is the thing a reload actually loses, and it is what every screen
+   * downstream is drawn from.
+   */
+  const rated = !requireMood || !measuresMood(category?.group ?? 'relax') || moodBefore !== null;
+  const active = category !== null && rated;
 
   useEffect(() => {
     if (!active) router.replace('/');

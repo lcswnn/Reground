@@ -107,7 +107,7 @@ import Animated, {
 import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { WELCOME_BREATH } from "@/config/session";
-import { pickWelcomeLine, WELCOME } from "@/content/strings";
+import { pickWelcomeLine, SCOPE, WELCOME } from "@/content/strings";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { withAlpha } from "@/lib/color";
@@ -354,20 +354,22 @@ export default function WelcomeScreen() {
             size="large"
             onPress={() => router.replace("/breathe-intro")}
           />
-          {/* Set exactly as the hint under Start on the next screen — small,
-              muted, centred — because the two are the same slot: the line under
-              the one button on a screen whose only job is to start something.
-              Matching them is what keeps the two buttons on the same height, so
-              Begin and Start do not jump as the app moves between them.
+          {/* What the app is and is not — see `SCOPE`. The short version: the
+              full one ends by pointing at crisis numbers, and there are none on
+              this screen. They are a tap away in the corner instead.
 
-              It was the eyebrow tier for a moment, which is caps and tracked
-              and the nearest thing this app has to a wordmark. That is the same
-              13 points and the same leading, so it cost nothing in height — but
-              a name set as a label reads as a heading over the empty space
-              below it, where this should read as the quiet end of the screen.
-              The eyebrow is one word away if the wordmark is wanted back. */}
-          <ThemedText type="small" themeColor="textMuted" style={styles.name}>
-            {WELCOME.name}
+              Under the button rather than above it, and that placement is the
+              whole of how it stays out of the way. Everything above Begin is
+              what the app is offering; everything below it is the app
+              describing itself, which is a different voice and a different
+              moment. Nobody has to read this to press Begin, and it is there
+              for the person who wants to know what they have opened.
+
+              It also stands where the app's name stood until recently, which is
+              the same corner of the screen and the same job — this says what
+              Reground is, which is more use than saying that it is Reground. */}
+          <ThemedText type="fine" themeColor="textMuted" style={styles.scope}>
+            {SCOPE.short}
           </ThemedText>
         </View>
       </Animated.View>
@@ -417,12 +419,20 @@ const styles = StyleSheet.create({
   },
   // The bottom padding that used to sit here belongs to `scroll` now, which is
   // where the other screen keeps it. Same distance, one owner.
+  // Tighter than the `three` an actions block usually takes — the gap between
+  // Start and its hint on the breath's intro. What sits under this button is
+  // not a hint about it: it is the app's small print, and small print belongs
+  // close to the thing it is printed on. At `three` it floated in the space
+  // below Begin as a fourth element on the screen.
   action: {
-    // The gap the app puts inside an actions block — the same one between Start
-    // and the hint under it on the breath's intro.
-    gap: Spacing.three,
+    gap: Spacing.two,
   },
-  name: {
+  // Centred like the name above it, and held short of the column's full width:
+  // three or four short lines read as a note, where the same words set to the
+  // measure read as a paragraph the screen is asking you to get through.
+  scope: {
     textAlign: "center",
+    maxWidth: 320,
+    alignSelf: "center",
   },
 });
