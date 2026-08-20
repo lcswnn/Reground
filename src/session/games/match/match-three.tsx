@@ -69,11 +69,12 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { MATCH_THREE } from '@/content/strings';
+import { MATCH_THREE, SCORE } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { useThemePreference } from '@/lib/theme-preference';
 import { mix } from '@/lib/color';
+import { ScoreBar } from '@/session/games/ui/score-bar';
 import { tickDissolve, tickPlacement, tickSelection } from '@/session/ui/haptics';
 import {
   SIZE,
@@ -126,6 +127,8 @@ interface Settling {
   setPhase: (phase: 'swap' | 'fall') => void;
   setStuck: (stuck: boolean) => void;
   setBusy: (busy: boolean) => void;
+  /** The optional score — see `ScoreBar`. Called once per line, with its size. */
+  setCleared: (update: (count: number) => number) => void;
 }
 
 /**
@@ -146,6 +149,10 @@ function settleBoard(current: Piece[], run: Settling): void {
 
   if (matched.size > 0) {
     run.setClearing(matched);
+    // Here rather than in an effect watching `clearing`: this is the one place
+    // that knows a clear is a clear, and every piece of every cascade passes
+    // through it exactly once.
+    run.setCleared((count) => count + matched.size);
     tickDissolve();
 
     run.after(CLEAR_MS, () => {
@@ -215,13 +222,33 @@ export function MatchThree() {
     [],
   );
 
+  /**
+   * Pieces cleared this visit.
+   *
+   * Counted where the clear is decided rather than in an effect watching
+   * `clearing`: an effect that sets state from state is a cascading render, and
+   * this one would also double-count under React's development double-invoke.
+   * `settleBoard` is a module function with no component state in it, so the
+   * count is handed to it the same way everything else is — through the `run`
+   * object it already takes.
+   */
+  const [cleared, setCleared] = useState(0);
+
   const board = Math.min(box.width, box.height, MAX_BOARD);
   const cell = Math.max(0, (board - GAP * (SIZE + 1)) / SIZE);
   const step = cell + GAP;
 
   const settle = useCallback(
     (current: Piece[]) => {
-      settleBoard(current, { after, setPieces, setClearing, setPhase, setStuck, setBusy });
+      settleBoard(current, {
+        after,
+        setPieces,
+        setClearing,
+        setPhase,
+        setStuck,
+        setBusy,
+        setCleared,
+      });
     },
     [after],
   );
@@ -346,9 +373,7 @@ export function MatchThree() {
 
   return (
     <View style={styles.root}>
-      <ThemedText type="small" themeColor="textMuted" style={styles.line}>
-        {MATCH_THREE.prompt}
-      </ThemedText>
+      <ScoreBar score={SCORE.cleared(cleared)} hint={MATCH_THREE.prompt} />
 
       <View
         style={styles.stage}

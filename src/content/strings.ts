@@ -640,6 +640,64 @@ export const MERGE_TILES = {
  * shape first, before the coordinates, because that is the part being compared
  * with its neighbours.
  */
+/**
+ * The optional score, and the word that turns it on.
+ *
+ * Every phrase here is a count of something *done* rather than a total to beat:
+ * bounces, balls, flowers, cleared pieces. That is the difference between a
+ * score this app can carry and one it cannot — see `score-preference.tsx`, and
+ * the notes at the top of each game, all of which explain why none of them
+ * shipped with a number in the first place.
+ *
+ * Two rules the wording is held to. Nothing says "best", "high" or "record",
+ * because none of those exist and inventing one would give a person something
+ * to lose. And every line reads the same at zero as it does at forty: "0
+ * bounces" is a fact about a round that has just started, where "you missed"
+ * would be a verdict on it.
+ */
+/**
+ * Keep it in the air, in words.
+ *
+ * The two lines were written into the component when it was the only game with
+ * nothing to say — they are here now because the score row reads the hint, and
+ * a hint that lives in a JSX literal cannot be read by anything.
+ */
+export const BOUNCE_GAME = {
+  prompt: "Keep it in the air.",
+  start: "Start",
+  boardLabel:
+    "Bouncing ball game. Drag to move the paddle and keep the ball in the air.",
+} as const;
+
+export const SCORE = {
+  /** The control, in both directions. A word to press, not a switch to read. */
+  show: "Show score",
+  hide: "Hide score",
+  /** Keep it in the air: how many times the ball has come off the paddle. */
+  bounces: (count: number) => `${count} ${count === 1 ? "bounce" : "bounces"}`,
+  /**
+   * Knock the pegs out: both halves, because either alone is misleading — pegs
+   * without balls is a number with no cost attached, and balls without pegs is
+   * a count of attempts.
+   */
+  pegs: (balls: number, knocked: number) =>
+    `${balls} ${balls === 1 ? "ball" : "balls"} · ${knocked} ${knocked === 1 ? "peg" : "pegs"}`,
+  /** Open the flowers: how many have opened, across however many fields. */
+  flowers: (count: number) =>
+    `${count} ${count === 1 ? "flower" : "flowers"} opened`,
+  /**
+   * Join the numbers: the largest tile on the board, which is the only number
+   * this game was ever really about.
+   */
+  highest: (value: number) => `Highest tile: ${value}`,
+  /**
+   * Line up three: pieces cleared. Not lines — a chain that clears seven in one
+   * move should read as a bigger thing than one that clears three, and lines
+   * would flatten that to "two".
+   */
+  cleared: (count: number) => `${count} cleared`,
+} as const;
+
 export const MATCH_THREE = {
   /**
    * Two ways to play it, and the drag goes first because it is the one most

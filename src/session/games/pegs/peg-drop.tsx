@@ -50,11 +50,11 @@ import Animated, {
   type SharedValue,
 } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/themed-text';
-import { PEG_DROP } from '@/content/strings';
+import { PEG_DROP, SCORE } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { mix, withAlpha } from '@/lib/color';
+import { ScoreBar } from '@/session/games/ui/score-bar';
 import { tickDissolve, tickPlacement } from '@/session/ui/haptics';
 import {
   bounceOff,
@@ -240,6 +240,15 @@ export function PegDrop() {
   }, [box.height, box.width, pegs]);
 
   /** A peg knocked out, named by the id the frame loop read out of `pegIds`. */
+  /**
+   * The two halves of this game's count, and they are counted across fields
+   * rather than within one — `out` is the field on screen and is emptied with
+   * it. Neither is worth much alone: pegs with no ball count is a number with
+   * no cost attached, and balls with no pegs is a tally of attempts.
+   */
+  const [balls, setBalls] = useState(0);
+  const [knocked, setKnocked] = useState(0);
+
   const knock = useCallback((id: number) => {
     if (outIds.current.has(id)) return;
 
@@ -247,6 +256,9 @@ export function PegDrop() {
     next.add(id);
     outIds.current = next;
     setOut(next);
+    // Outside the state updater, next to the haptic: React may call an updater
+    // twice, and a peg counted twice is a score that drifts from the board.
+    setKnocked((count) => count + 1);
     tickPlacement();
   }, []);
 
@@ -333,6 +345,10 @@ export function PegDrop() {
     vy.value = Math.cos(aim.value) * speed;
 
     flying.value = true;
+    // One ball, counted as it leaves rather than as it lands: a ball that
+    // finishes down a gutter having hit nothing is still a ball thrown, and a
+    // count that ignored it would flatter the player.
+    setBalls((count) => count + 1);
     setStatus('live');
   };
 
@@ -435,9 +451,7 @@ export function PegDrop() {
 
   return (
     <View style={styles.root}>
-      <ThemedText type="small" themeColor="textMuted" style={styles.line}>
-        {PEG_DROP.prompt}
-      </ThemedText>
+      <ScoreBar score={SCORE.pegs(balls, knocked)} hint={PEG_DROP.prompt} />
 
       <View
         style={[

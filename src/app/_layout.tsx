@@ -15,6 +15,7 @@ import { Colors } from '@/constants/theme';
 import { SPLASH } from '@/config/session';
 import { SessionFlowProvider } from '@/session/session-context';
 import { RegionPreferenceProvider } from '@/lib/region-preference';
+import { ScorePreferenceProvider } from '@/lib/score-preference';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 import { LaunchVeil } from '@/session/ui/launch-veil';
 import { ScreenFilm } from '@/session/ui/screen-film';
@@ -69,9 +70,12 @@ export default function RootLayout() {
       {/* Above the navigator, because the door asks the question it holds on
           the first launch and the crisis sheet reads it from every screen. */}
       <RegionPreferenceProvider>
-        <SessionFlowProvider>
-          <RootNavigator />
-        </SessionFlowProvider>
+        {/* Read by every game on the shelf, and by nothing else. */}
+        <ScorePreferenceProvider>
+          <SessionFlowProvider>
+            <RootNavigator />
+          </SessionFlowProvider>
+        </ScorePreferenceProvider>
       </RegionPreferenceProvider>
     </ThemePreferenceProvider>
   );

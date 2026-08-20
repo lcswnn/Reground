@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import {
   GestureResponderEvent,
   LayoutChangeEvent,
@@ -15,11 +15,27 @@ import Animated, {
 } from "react-native-reanimated";
 
 import { ThemedText } from "@/components/themed-text";
+import { BOUNCE_GAME, SCORE } from "@/content/strings";
+import { ScoreBar } from "@/session/games/ui/score-bar";
 import { Radius, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
 /**
  * Keep the ball in the air. That is the whole game.
+ *
+ * ## There is no way to play this by not playing it
+ *
+ * A ball hit dead centre on a symmetrical paddle leaves straight up and comes
+ * straight back down onto the same spot, which is a rally that runs forever
+ * with nobody touching the screen. Curving the paddle shrank that sweet spot
+ * and could not remove it: the crown of any arc is still flat at exactly one
+ * point, and gravity is very good at finding it.
+ *
+ * So every return leaves with at least a small lean, and the lean carries a
+ * little noise — see `MIN_LEAN` and `LEAN_NOISE`. Neither makes the game
+ * harder to play well; between them they make it impossible to play by leaving
+ * the phone on the table, because the ball walks across the board and the
+ * paddle has to go and meet it.
  *
  * No score, no high score, no lives, no bricks. Those are all the same feature —
  * a reason to have done better — and this sits one tab away from a breathing
@@ -111,6 +127,47 @@ const APEX_RATIO = 0.62;
 const SERVE_HEIGHT = 0.18;
 
 /**
+ * The smallest angle a ball may leave the paddle at, as the sideways share of
+ * the contact normal — see the collision below, where `nx` is that share.
+ *
+ * ## Why the game needs one at all
+ *
+ * Without it there is a way to play this game by not playing it. A ball struck
+ * dead centre on a symmetrical paddle leaves straight up, falls straight back
+ * down, and is struck dead centre again — a stable loop that runs forever with
+ * nobody's hand on the glass. Curving the paddle made the sweet spot smaller
+ * and did not remove it, because the crown is still a flat tangent at exactly
+ * one point and gravity keeps returning the ball to it.
+ *
+ * 0.16 is about a nine-degree lean, which is the interesting size. Over a
+ * single bounce it is barely visible; over three it walks the ball far enough
+ * that the paddle has to go and meet it. So the game is not made harder — a
+ * clean return is still a clean return — it just stops having a fixed point.
+ *
+ * `PADDLE_CURVE` is the other end of the same dial and was already here: it
+ * caps how far a tip hit can throw the ball off vertical, so a clip cannot fire
+ * it sideways. This is the floor under the easiest return, where that is the
+ * ceiling on the hardest.
+ */
+const MIN_LEAN = 0.16;
+
+/**
+ * How much of that lean is decided by chance rather than by where the ball
+ * landed, as a share of `MIN_LEAN`.
+ *
+ * A fixed minimum has a loop of its own, one orbit larger: leave every centred
+ * hit at exactly nine degrees and the ball traces the same path across the
+ * board and back, and a parked paddle catches it again every second circuit.
+ * A little noise on each departure means the pattern never closes.
+ *
+ * Deliberately small. It is under the resolution of anything a player could
+ * blame for a miss — nobody can tell nine degrees from ten — and it is applied
+ * to every hit rather than only to centred ones, so there is no band of the
+ * paddle that behaves differently from the rest of it.
+ */
+const LEAN_NOISE = 0.35;
+
+/**
  * Ceiling on fall speed, in points per second.
  *
  * The physics is stable without it — the apex is bounded, so the impact speed
@@ -139,6 +196,17 @@ export function BounceGame() {
   const boardW = useSharedValue(0);
   const boardH = useSharedValue(0);
   const [hasSize, setHasSize] = useState(false);
+  /**
+   * How many times the ball has come off the paddle this round.
+   *
+   * Bumped from the frame callback through `runOnJS`, which is the same route
+   * the miss already takes — the collision is detected on the UI thread and
+   * there is no counting to be done there. It resets with the round rather than
+   * accumulating across them: this game has an end, and a count that survived
+   * it would be a high score, which is the one thing the shelf does not keep.
+   */
+  const [bounces, setBounces] = useState(0);
+  const bounce = useCallback(() => setBounces((count) => count + 1), []);
 
   const ballX = useSharedValue(0);
   const ballY = useSharedValue(0);
@@ -170,6 +238,7 @@ export function BounceGame() {
   };
 
   const start = () => {
+    setBounces(0);
     const width = boardW.value;
     const height = boardH.value;
     if (width <= 0 || height <= 0) return;
@@ -258,16 +327,33 @@ export function BounceGame() {
       // The contact normal, which for a ball resting on a dome is the line
       // between the two centres — so the sideways component is the horizontal
       // miss over the sum of the radii, and the rest is vertical. Hit the crown
-      // and the ball goes straight up; catch it further out and the face is
-      // tilted there, so it leaves leaning, up to a clip off the very tip.
-      // This is the entire skill in the game.
+      // and the ball goes very nearly straight up; catch it further out and the
+      // face is tilted there, so it leaves leaning, up to a clip off the very
+      // tip. This is the entire skill in the game.
+      //
+      // "Very nearly", because dead centre is no longer a return of its own —
+      // see `MIN_LEAN` below, which is what stops a parked paddle rallying with
+      // itself forever.
       //
       // The sum of the radii, rather than the arc's alone, is what makes a clip
       // behave: the ball touches the side of the dome at that point, not a
       // surface directly beneath its centre.
       const contactRadius = PADDLE_ARC_RADIUS + BALL_RADIUS;
       const offset = x - paddleX.value;
-      const nx = Math.max(-1, Math.min(1, offset / contactRadius));
+      const landed = Math.max(-1, Math.min(1, offset / contactRadius));
+
+      // The floor under a centred hit, plus a little noise — see `MIN_LEAN`.
+      // Both are about the same thing: this game must not have a way to be won
+      // by leaving the phone on a table.
+      //
+      // The lean is pushed the way the ball was already going when it arrived
+      // dead centre, so a ball drifting right keeps drifting right rather than
+      // reversing on a hit that looked clean. Only a serve has no direction to
+      // inherit, and that one is sent by the noise alone.
+      const drift = vx.value !== 0 ? Math.sign(vx.value) : Math.sign(Math.random() - 0.5) || 1;
+      const floor = MIN_LEAN * (1 + (Math.random() - 0.5) * LEAN_NOISE);
+      const nx =
+        Math.abs(landed) < floor ? floor * drift : landed;
       const ny = Math.sqrt(1 - nx * nx);
 
       // Solved from the apex we want rather than set as a fixed impulse, so a
@@ -282,6 +368,11 @@ export function BounceGame() {
       // an edge hit is not teleported up to the height of the crown. Straight
       // out along the normal from the arc's centre.
       y = paddleTop + PADDLE_ARC_RADIUS - contactRadius * ny;
+
+      // The one thing this collision has to tell the JS side. Scheduled rather
+      // than called, like the miss below: the frame callback is a worklet and
+      // the counter is React state.
+      runOnJS(bounce)();
     }
 
     ballX.value = x;
@@ -311,6 +402,9 @@ export function BounceGame() {
   }));
 
   return (
+    <View style={styles.root}>
+      <ScoreBar score={SCORE.bounces(bounces)} hint={BOUNCE_GAME.prompt} />
+
     <View
       style={[
         styles.board,
@@ -326,7 +420,7 @@ export function BounceGame() {
       onResponderTerminationRequest={() => false}
       onResponderGrant={movePaddle}
       onResponderMove={movePaddle}
-      accessibilityLabel="Bouncing ball game. Drag to move the paddle and keep the ball in the air."
+      accessibilityLabel={BOUNCE_GAME.boardLabel}
     >
       {/* `pointerEvents="none"` for the same reason as the slider's track:
           `locationX` is measured against whichever view the touch lands on, so
@@ -358,7 +452,7 @@ export function BounceGame() {
       {status === "ready" ? (
         <Animated.View entering={FadeIn.duration(300)} style={styles.overlay}>
           <ThemedText type="small" themeColor="textMuted" style={styles.hint}>
-            Keep it in the air.
+            {BOUNCE_GAME.prompt}
           </ThemedText>
 
           <Pressable
@@ -367,7 +461,7 @@ export function BounceGame() {
             // against a zero-sized board would serve into nowhere.
             disabled={!hasSize}
             accessibilityRole="button"
-            accessibilityLabel="Start"
+            accessibilityLabel={BOUNCE_GAME.start}
             style={({ pressed }) => [
               styles.start,
               { backgroundColor: theme.brand },
@@ -375,16 +469,24 @@ export function BounceGame() {
             ]}
           >
             <ThemedText type="smallBold" style={{ color: theme.textOnBrand }}>
-              Start
+              {BOUNCE_GAME.start}
             </ThemedText>
           </Pressable>
         </Animated.View>
       ) : null}
+      </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
+  // The column the score row and the board share. The board was the root until
+  // the row arrived above it — see `ScoreBar`.
+  root: {
+    flex: 1,
+    alignSelf: "stretch",
+    gap: Spacing.three,
+  },
   board: {
     flex: 1,
     width: "100%",

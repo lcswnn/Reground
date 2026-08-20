@@ -55,11 +55,11 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 
-import { ThemedText } from '@/components/themed-text';
-import { BLOOM_FIELD } from '@/content/strings';
+import { BLOOM_FIELD, SCORE } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { mix, withAlpha } from '@/lib/color';
+import { ScoreBar } from '@/session/games/ui/score-bar';
 import { tickSelection } from '@/session/ui/haptics';
 import { REACH, sowField, within, type Bud } from '@/session/games/bloom/field';
 
@@ -116,6 +116,16 @@ export function BloomField() {
   const [box, setBox] = useState({ width: 0, height: 0 });
   const [buds, setBuds] = useState<Bud[]>([]);
   const [open, setOpen] = useState<ReadonlySet<number>>(() => new Set());
+  /**
+   * Every bud that has opened this visit, across however many fields have
+   * drifted through — which is what makes it a score rather than a progress
+   * bar. `open` is the current field alone and is reset with it.
+   *
+   * Counted whether or not anybody is looking: the number is cheap, and a
+   * counter that only starts when the score is switched on would hand somebody
+   * a zero for a field they had already finished.
+   */
+  const [opened, setOpened] = useState(0);
 
   const aspect = box.width > 0 ? box.height / box.width : ASSUMED_ASPECT;
 
@@ -182,6 +192,10 @@ export function BloomField() {
     next.add(id);
     openIds.current = next;
     setOpen(next);
+    // Outside the state updater, alongside the haptic and for the same reason:
+    // React may call an updater twice, and a flower counted twice is a score
+    // that quietly runs ahead of the field.
+    setOpened((count) => count + 1);
     tickSelection();
   }, []);
 
@@ -244,9 +258,7 @@ export function BloomField() {
 
   return (
     <View style={styles.root}>
-      <ThemedText type="small" themeColor="textMuted" style={styles.line}>
-        {BLOOM_FIELD.prompt}
-      </ThemedText>
+      <ScoreBar score={SCORE.flowers(opened)} hint={BLOOM_FIELD.prompt} />
 
       <View
         style={[

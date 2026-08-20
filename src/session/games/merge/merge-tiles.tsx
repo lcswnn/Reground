@@ -58,10 +58,11 @@ import Animated, {
 } from 'react-native-reanimated';
 
 import { ThemedText } from '@/components/themed-text';
-import { MERGE_TILES } from '@/content/strings';
+import { MERGE_TILES, SCORE } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { mix } from '@/lib/color';
+import { ScoreBar } from '@/session/games/ui/score-bar';
 import { tickDissolve, tickPlacement, tickSelection } from '@/session/ui/haptics';
 import {
   SIZE,
@@ -195,11 +196,20 @@ export function MergeTiles() {
 
   const drawn = [...leaving, ...tiles];
 
+  /**
+   * The largest tile on the board, read off the board rather than tracked
+   * alongside it.
+   *
+   * Derived on purpose: a counter kept in state would have to be updated at
+   * every merge, every undo of a refused move and every reshuffle, and the
+   * first one missed would leave a number that quietly disagrees with what is
+   * on screen. The board is the truth and this is a question asked of it.
+   */
+  const highest = tiles.reduce((most, tile) => Math.max(most, tile.value), 0);
+
   return (
     <View style={styles.root}>
-      <ThemedText type="small" themeColor="textMuted" style={styles.line}>
-        {MERGE_TILES.prompt}
-      </ThemedText>
+      <ScoreBar score={SCORE.highest(highest)} hint={MERGE_TILES.prompt} />
 
       <View
         style={styles.stage}
