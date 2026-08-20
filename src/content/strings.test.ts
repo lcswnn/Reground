@@ -1,7 +1,15 @@
 import { describe, expect, it } from 'vitest';
 
 import { BREATHING, BREATH_CYCLES, BREATH_CYCLE_MS } from '@/config/session';
-import { BREATHE_INTRO, CLOSE, GROUNDING, pickUnwindIdea } from '@/content/strings';
+import {
+  BREATHE_INTRO,
+  CLOSE,
+  GROUNDING,
+  pickUnwindIdea,
+  pickWelcomeLine,
+  timeOfDay,
+  WELCOME,
+} from '@/content/strings';
 
 /**
  * Also worth a test, for a different reason: this copy makes two checkable
@@ -84,5 +92,63 @@ describe('the unwind idea', () => {
     const seen = new Set<string>();
     for (let i = 0; i < 500; i += 1) seen.add(pickUnwindIdea());
     expect(seen.size).toBe(CLOSE.ideas.length);
+  });
+});
+
+/**
+ * The door's greeting is the one piece of copy in the app that is chosen at
+ * runtime rather than written into a screen, and the failure modes are both
+ * silent: an hour that falls through every bucket renders an empty line, and a
+ * set that is accidentally emptied renders `undefined`. Neither throws, and
+ * both would ship.
+ */
+describe('the door greeting', () => {
+  it('has a set for every hour of the day', () => {
+    for (let hour = 0; hour < 24; hour += 1) {
+      const set = WELCOME.lines[timeOfDay(hour)];
+
+      expect(set.length).toBeGreaterThan(0);
+    }
+  });
+
+  it('divides the day into four parts, in order and without gaps', () => {
+    const buckets = Array.from({ length: 24 }, (_, hour) => timeOfDay(hour));
+
+    // Night wraps around midnight, so it is the first and the last; the other
+    // three appear once each, in the order the day runs.
+    expect(buckets[0]).toBe('night');
+    expect(buckets[23]).toBe('night');
+    expect(buckets[5]).toBe('morning');
+    expect(buckets[12]).toBe('afternoon');
+    expect(buckets[17]).toBe('evening');
+    expect(buckets[22]).toBe('night');
+  });
+
+  it('answers with a line from the set the clock is in', () => {
+    // Every hour, many times over: the picker is random, so one call per hour
+    // would pass with three of four lines missing from a set.
+    for (let hour = 0; hour < 24; hour += 1) {
+      const set: readonly string[] = WELCOME.lines[timeOfDay(hour)];
+      const at = new Date(2026, 0, 1, hour, 30);
+
+      for (let attempt = 0; attempt < 40; attempt += 1) {
+        expect(set).toContain(pickWelcomeLine(at));
+      }
+    }
+  });
+
+  /**
+   * Not a style rule for its own sake: these are drawn at the title tier on an
+   * otherwise empty screen, and a line long enough to wrap three times turns
+   * the door into a paragraph. The longest one written is comfortably inside
+   * this, so it is a ceiling rather than a target.
+   */
+  it('keeps every greeting short enough to be read at a glance', () => {
+    for (const set of Object.values(WELCOME.lines)) {
+      for (const line of set) {
+        expect(line.length).toBeGreaterThan(0);
+        expect(line.length).toBeLessThanOrEqual(64);
+      }
+    }
   });
 });

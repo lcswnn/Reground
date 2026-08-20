@@ -36,6 +36,14 @@
  * the rate of a real inhale it would be a cue nobody has been given yet, and
  * somebody would start breathing to it on the doorstep.
  *
+ * ## The line is a different one each time
+ *
+ * It is picked from a set chosen by the hour — see `WELCOME.lines` and
+ * `pickWelcomeLine`, where the reasoning lives. What matters here is only that
+ * it is picked once, into state, and never again while the screen is up: a
+ * greeting that changed under somebody mid-read would be worse than no greeting
+ * at all, and this screen re-renders on every rotation and every window change.
+ *
  * ## The line is solid, and used to be typed
  *
  * It wrote itself out a character at a time, with every glyph its own `Text`
@@ -61,8 +69,8 @@
  */
 
 import { useRouter } from "expo-router";
-import { useEffect } from "react";
-import { StyleSheet, View, useWindowDimensions } from "react-native";
+import { useEffect, useState } from "react";
+import { ScrollView, StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, {
   Easing,
   useAnimatedStyle,
@@ -73,9 +81,10 @@ import Animated, {
   withTiming,
 } from "react-native-reanimated";
 
+import { ThemedText } from "@/components/themed-text";
 import { Button } from "@/components/ui/button";
 import { WELCOME_BREATH } from "@/config/session";
-import { WELCOME } from "@/content/strings";
+import { pickWelcomeLine, WELCOME } from "@/content/strings";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { withAlpha } from "@/lib/color";
@@ -107,6 +116,13 @@ export default function WelcomeScreen() {
   const theme = useTheme();
   const reducedMotion = useReducedMotion();
   const { width, height } = useWindowDimensions();
+  /**
+   * Lazy initial state: one greeting for the life of the screen. Calling the
+   * picker in the body would hand the user a different sentence on every render
+   * — and this screen re-renders whenever the window does. `close.tsx` holds
+   * its parting idea the same way.
+   */
+  const [line] = useState(pickWelcomeLine);
 
   const diameter = Math.min(
     width * DIAMETER_RATIO,
@@ -197,79 +213,122 @@ export default function WelcomeScreen() {
 
   return (
     <SessionScreen>
-      {/* One fade for the whole door: the sphere, the line and the button come
-          up together as the screen arriving, rather than as three things
-          announcing themselves in turn. */}
-      <Animated.View style={[styles.root, screenStyle]}>
-        {/* Takes all the room above the button and centres what is in it, so
-            the line still lands near the middle of the screen while the action
-            sits at the bottom where the thumb is. */}
-        <View style={styles.stage}>
-          <View
-            style={[
-              styles.sphere,
-              { width: diameter * 1.4, height: diameter * 1.4 },
-            ]}>
-            <Animated.View
+      {/* The same scroll container the breath's intro uses, with the same
+          padding, wrapping the same shape: a block that takes the room above
+          the actions and centres its content, and an actions block under it.
+
+          The door's content always fits, so nothing here ever actually
+          scrolls. It is structural: these two screens run back to back, and
+          the only way to guarantee Begin and Start land on the same height is
+          for the boxes under them to be the same boxes rather than two
+          arrangements that agree on paper. They did agree on paper, and the
+          button still moved. */}
+      <ScrollView
+        contentContainerStyle={styles.scroll}
+        showsVerticalScrollIndicator={false}>
+        {/* One fade for the whole door: the sphere, the line and the button
+            come up together as the screen arriving, rather than as three things
+            announcing themselves in turn. */}
+        <Animated.View style={[styles.root, screenStyle]}>
+          {/* Takes all the room above the button and centres what is in it, so
+              the line still lands near the middle of the screen while the action
+              sits at the bottom where the thumb is. */}
+          <View style={styles.stage}>
+            <View
               style={[
-                styles.circle,
-                haloStyle,
-                {
-                  width: diameter,
-                  height: diameter,
-                  borderRadius: diameter / 2,
-                  backgroundColor: theme.info,
-                },
-              ]}
-            />
-            <Animated.View
-              style={[
-                styles.circle,
-                coreStyle,
-                {
-                  width: diameter,
-                  height: diameter,
-                  borderRadius: diameter / 2,
-                  backgroundColor: withAlpha(theme.info, 0.2),
-                  borderColor: theme.info,
-                },
-              ]}
-            />
+                styles.sphere,
+                { width: diameter * 1.4, height: diameter * 1.4 },
+              ]}>
+              <Animated.View
+                style={[
+                  styles.circle,
+                  haloStyle,
+                  {
+                    width: diameter,
+                    height: diameter,
+                    borderRadius: diameter / 2,
+                    backgroundColor: theme.info,
+                  },
+                ]}
+              />
+              <Animated.View
+                style={[
+                  styles.circle,
+                  coreStyle,
+                  {
+                    width: diameter,
+                    height: diameter,
+                    borderRadius: diameter / 2,
+                    backgroundColor: withAlpha(theme.info, 0.2),
+                    borderColor: theme.info,
+                  },
+                ]}
+              />
+            </View>
+
+            {/* The title tier, full ink, and nothing around it — the sphere
+                above does the placing that a pair of rules used to. See the note
+                in `StageDirection` on why the two ends of the session are drawn
+                differently, and why this end lost its frame. */}
+            <StageDirection opening>{line}</StageDirection>
           </View>
 
-          {/* The title tier, full ink, and nothing around it — the sphere
-              above does the placing that a pair of rules used to. See the note
-              in `StageDirection` on why the two ends of the session are drawn
-              differently, and why this end lost its frame. */}
-          <StageDirection opening>{WELCOME.line}</StageDirection>
-        </View>
+          {/* `large`, the same size Start takes on the breath's intro. Both are
+              the single button on a screen whose only purpose is to start
+              something — see `Size` in `button.tsx`. */}
+          <View style={styles.action}>
+            <Button
+              title={WELCOME.begin}
+              size="large"
+              onPress={() => router.replace("/breathe-intro")}
+            />
+            {/* Set exactly as the hint under Start on the next screen — small,
+                muted, centred — because the two are the same slot: the line under
+                the one button on a screen whose only job is to start something.
+                Matching them is what keeps the two buttons on the same height, so
+                Begin and Start do not jump as the app moves between them.
 
-        {/* `large`, the same size Start takes on the breath's intro. Both are
-            the single button on a screen whose only purpose is to start
-            something — see `Size` in `button.tsx`. */}
-        <View style={styles.action}>
-          <Button
-            title={WELCOME.begin}
-            size="large"
-            onPress={() => router.replace("/breathe-intro")}
-          />
-        </View>
-      </Animated.View>
+                It was the eyebrow tier for a moment, which is caps and tracked
+                and the nearest thing this app has to a wordmark. That is the same
+                13 points and the same leading, so it cost nothing in height — but
+                a name set as a label reads as a heading over the empty space
+                below it, where this should read as the quiet end of the screen.
+                The eyebrow is one word away if the wordmark is wanted back. */}
+            <ThemedText type="small" themeColor="textMuted" style={styles.name}>
+              {WELCOME.name}
+            </ThemedText>
+          </View>
+        </Animated.View>
+      </ScrollView>
     </SessionScreen>
   );
 }
 
 const styles = StyleSheet.create({
+  // Every number in this block is `breathe-intro.tsx`'s, and has to stay that
+  // way: the two screens are the same layout with different things in it.
+  scroll: {
+    flexGrow: 1,
+    paddingVertical: Spacing.four,
+  },
   root: {
     flex: 1,
+    // The long pause between the reading and the doing, which is also what
+    // lifts the pair above the true centre: the box they are centred in is
+    // shorter than the screen by this much, so its middle sits half of it
+    // higher. That is the correction the screen wants anyway — a column whose
+    // weight is all in its top half, a filled circle over two lines of type,
+    // reads as lower than it measures — and it is now the same gap, in the same
+    // place, as the one on the screen after this.
+    gap: Spacing.six,
   },
   stage: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    // The long pause, between the thing to look at and the thing to read. The
-    // sphere is not an illustration of the sentence and should not sit on top
-    // of it like one.
+    // The pause between the thing to look at and the thing to read. The sphere
+    // is not an illustration of the sentence and should not sit on top of it
+    // like one.
     gap: Spacing.six,
   },
   sphere: {
@@ -281,7 +340,14 @@ const styles = StyleSheet.create({
     borderWidth: StyleSheet.hairlineWidth * 3,
     borderColor: "transparent",
   },
+  // The bottom padding that used to sit here belongs to `scroll` now, which is
+  // where the other screen keeps it. Same distance, one owner.
   action: {
-    paddingBottom: Spacing.four,
+    // The gap the app puts inside an actions block — the same one between Start
+    // and the hint under it on the breath's intro.
+    gap: Spacing.three,
+  },
+  name: {
+    textAlign: "center",
   },
 });

@@ -98,62 +98,75 @@ export default function BreatheIntroScreen() {
           done the centring and nothing else — it is a flex child with no scroll
           in it, so the numbered method plus a large type setting pushes the
           Start button off the bottom of a small phone rather than making it
-          reachable. `flexGrow: 1` with `justifyContent: 'center'` is the same
-          centred column while the content fits, and a scroll the moment it
-          doesn't. */}
+          reachable. `flexGrow: 1` fills the screen while the content fits, and
+          scrolls the moment it doesn't.
+
+          The centring moved off this container and onto the reading block
+          inside it, so that the actions can sit at the foot of the screen
+          rather than wherever the copy happens to end. That is what the door
+          does with Begin, and the two screens run back to back: with the same
+          gap, the same hint line and the same bottom padding under both, Start
+          lands on exactly the height Begin was at and the button does not jump
+          as the app moves between them. */}
       <ScrollView
         contentContainerStyle={styles.scroll}
         showsVerticalScrollIndicator={false}>
         <View style={styles.root}>
-          {/* One block: the title, the mark under it, and the two lines that say
-              what the minute holds. The big gap on this screen belongs between
-              the reading and the doing, and there is only one of it. */}
-          <View style={styles.intro}>
-            {/* The title tier's size in the reading cut — see `readingCut`. The
-                same treatment the opening title card takes, and for the same
-                reason: one large line with nothing above it to compete with does
-                not need the display weight as well as the size. */}
-            <ThemedText type="title" style={readingCut}>
-              {BREATHE_INTRO.body}
-            </ThemedText>
-
-            {/* Left, because the column is — `Rule` takes its alignment from
-                whatever holds it, and the title card at the door centres the same
-                mark. It is what separates the heading from its explanation
-                without spending a line of copy on a subheading. */}
-            <Rule />
-
-            <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
-            <ThemedText themeColor="textSecondary">
-              {BREATHE_INTRO.shape(BREATH_CYCLES)}
-            </ThemedText>
-            {/* Last in the block, so it sits between the reading and the doing
-                — the thing you reach for having read the steps and wanted to
-                see them rather than be told them.
-
-                Underlined small text rather than a second button: the screen
-                has one action on it and this is not it. The underline is what
-                says "tappable" without a word of explanation — the same three
-                quiet steps the tip link at the end of the session takes, one
-                rank quieter, because down there the link is the only offer on
-                the screen and up here it sits beside the Start button. */}
-            <PressableScale
-              accessibilityRole="button"
-              accessibilityLabel={BREATHE_INTRO.example}
-              depth="text"
-              hitSlop={Spacing.three}
-              onPress={() => setExample(true)}
-              style={({ pressed }) => [styles.example, pressed && styles.pressed]}>
-              <ThemedText type="small" themeColor="textSecondary" style={styles.underline}>
-                {BREATHE_INTRO.example}
+          {/* Takes all the room above the actions and centres the reading in
+              it — the same shape the door has, with the sphere and the line in
+              place of this. */}
+          <View style={styles.stage}>
+            {/* One block: the title, the mark under it, and the lines that say
+                what the minute holds. */}
+            <View style={styles.intro}>
+              {/* The title tier's size in the reading cut — see `readingCut`. The
+                  same treatment the opening title card takes, and for the same
+                  reason: one large line with nothing above it to compete with does
+                  not need the display weight as well as the size. */}
+              <ThemedText type="title" style={readingCut}>
+                {BREATHE_INTRO.body}
               </ThemedText>
-            </PressableScale>
+
+              {/* Left, because the column is — `Rule` takes its alignment from
+                  whatever holds it, and the title card at the door centres the same
+                  mark. It is what separates the heading from its explanation
+                  without spending a line of copy on a subheading. */}
+              <Rule />
+
+              <ThemedText themeColor="textSecondary">{BREATHE_INTRO.method}</ThemedText>
+              <ThemedText themeColor="textSecondary">
+                {BREATHE_INTRO.shape(BREATH_CYCLES)}
+              </ThemedText>
+              {/* Last in the block, so it sits between the reading and the doing
+                  — the thing you reach for having read the steps and wanted to
+                  see them rather than be told them.
+
+                  Underlined small text rather than a second button: the screen
+                  has one action on it and this is not it. The underline is what
+                  says "tappable" without a word of explanation — the same three
+                  quiet steps the tip link at the end of the session takes, one
+                  rank quieter, because down there the link is the only offer on
+                  the screen and up here it sits beside the Start button. */}
+              <PressableScale
+                accessibilityRole="button"
+                accessibilityLabel={BREATHE_INTRO.example}
+                depth="text"
+                hitSlop={Spacing.three}
+                onPress={() => setExample(true)}
+                style={({ pressed }) => [styles.example, pressed && styles.pressed]}>
+                <ThemedText type="small" themeColor="textSecondary" style={styles.underline}>
+                  {BREATHE_INTRO.example}
+                </ThemedText>
+              </PressableScale>
+            </View>
           </View>
 
           <View style={styles.actions}>
-            {/* The one `large` button in the app — see `Size` in `button.tsx`.
-                This screen has a single action on it and it is the action that
-                decides whether the session happens at all. */}
+            {/* `large` — see `Size` in `button.tsx`. This screen has a single
+                action on it and it is the action that decides whether the
+                session happens at all. The door's Begin is the other one, and
+                the pair are deliberately identical: same size, same block, same
+                height off the bottom of the screen. */}
             <Button
               title={BREATHE_INTRO.start}
               size="large"
@@ -172,13 +185,22 @@ export default function BreatheIntroScreen() {
 }
 
 const styles = StyleSheet.create({
+  // No `justifyContent` here any more: the centring belongs to `stage` below,
+  // which is what leaves the actions at the foot of the screen. The bottom half
+  // of this padding is the same step the door puts under Begin, and the two
+  // have to stay equal — see the note above the `ScrollView`.
   scroll: {
     flexGrow: 1,
-    justifyContent: 'center',
     paddingVertical: Spacing.four,
   },
   root: {
+    flex: 1,
     gap: Spacing.six,
+  },
+  // The reading, centred in everything the actions do not use.
+  stage: {
+    flex: 1,
+    justifyContent: 'center',
   },
   // One gap throughout, so the mark sits the same distance from the title above
   // it as from the copy below: a divider closer to one side than the other

@@ -14,17 +14,85 @@
  * The door. One line, a sphere breathing above it, and a button — it fades in
  * and then waits for as long as it takes.
  *
- * A statement of what the app is for rather than a greeting, and short enough
- * to be taken in at a glance by somebody who opened this wound up. "How are you
- * today?" would be a question asked before anything has been offered; this says
- * what is about to be offered and then waits to be told to start.
+ * ## The line is different every time, and different by the hour
  *
- * "Three easy steps" is a promise, so it has to be kept: the breath, the game,
- * and the one last thing — which is exactly what the dots at the top of every
- * screen count. See `SESSION_STAGES`.
+ * It was one fixed sentence for a long while, which is the right call for copy
+ * that has to say something specific — and the wrong one for a greeting. This
+ * app is opened by the same person repeatedly, in the same state, and a door
+ * that says exactly the same words on the fortieth visit as on the first stops
+ * being addressed to anybody. Somebody who comes here twice in an evening
+ * should not feel like they have hit a wall with a sign on it.
+ *
+ * So: four sets of lines, one per part of the day, and one picked at random
+ * from the set that fits the clock. The variation is the point *and* the risk —
+ * a line that is different every time is a line nobody can rely on, so none of
+ * them carry information. Every one of them says some version of "you're here,
+ * let's start", and the thing that actually explains the session is on the next
+ * screen, where it stays put.
+ *
+ * The hour buckets are not decoration either. "Long day?" is a kind sentence at
+ * nine at night and a strange one at seven in the morning, and 2am is the one
+ * time of day worth acknowledging on its own — somebody opening an anxiety app
+ * then is having a specific kind of night, and being met with "good morning"
+ * would tell them the app is not really looking.
+ *
+ * ## Two rules these were written under
+ *
+ * The rules at the top of this file apply — plain and short, and never tell the
+ * user they are wrong to feel bad — plus one that belongs to this screen alone:
+ * nothing here may promise what the session does. "Let's fix this" is a claim
+ * the app cannot keep; "let's get you back to normal" is the user's own words
+ * for why they opened it, which is a different thing and is the register all of
+ * these are in.
+ *
+ * "User" is the name because there isn't one. Nobody signs up, nothing is
+ * stored, and the app has no way to learn what to call anybody — so the lines
+ * that address the reader do it with the plainest possible placeholder rather
+ * than inventing a familiarity that has not been earned. The moment there is a
+ * real name, this is the one place in the app that wants it.
  */
 export const WELCOME = {
-  line: "Let's relieve that anxiety in three easy steps.",
+  /**
+   * The greetings, by part of the day. `pickWelcomeLine` is what reads them.
+   *
+   * Every set has to be able to stand alone, because a session only ever sees
+   * one of them: no line may depend on another having been read, and none may
+   * assume it is the user's first visit or their fifth.
+   */
+  lines: {
+    /** 5am to noon. */
+    morning: [
+      "Hey, user. Let's get you back to normal.",
+      "Morning, user. Let's take the edge off.",
+      "You're up. Let's start the day somewhere steadier.",
+      "Hey, user. Let's sort this out before it sets the tone.",
+    ],
+    /** Noon to 5pm. */
+    afternoon: [
+      "Hey, user. Let's get you back to normal.",
+      "Afternoon, user. Let's put this down for a few minutes.",
+      "You're here. Let's get you back to steady.",
+      "Hey, user. Let's take the charge out of it.",
+    ],
+    /** 5pm to 10pm. */
+    evening: [
+      "Hey, user. Let's get you back to normal.",
+      "Evening, user. Let's calm your mind a bit.",
+      "Long day? Let's take the edge off it.",
+      "You're here. Let's settle down before the night ends.",
+    ],
+    /**
+     * 10pm to 5am. Written for somebody who is awake when they would rather not
+     * be — no "good night", nothing about sleep, and nothing that implies they
+     * have done something wrong by being up. The offer is the same offer.
+     */
+    night: [
+      "Hey, user. Let's get you back to normal.",
+      "Late one. Let's quieten this down.",
+      "Still up. Let's take the edge off it.",
+      "You're here at this hour? Let's get you back on track.",
+    ],
+  },
   /**
    * The door has a button again, and this time it is a real one.
    *
@@ -38,7 +106,62 @@ export const WELCOME = {
    * still reading. One word, and it names the only thing this screen does.
    */
   begin: "Begin",
+  /**
+   * The app's name, under the button and nowhere else in the session.
+   *
+   * There is no logo and no title card — the door opens straight onto what the
+   * app is for, which is the one thing somebody arriving wound up needs from
+   * it. But a screen with no name on it anywhere is slightly anonymous, and
+   * this is the one moment where saying so costs nothing: the reading is done,
+   * the button has been read, and anything below it is past the point of the
+   * screen.
+   *
+   * Kept as copy rather than read out of `app.json` so it can be set in the
+   * app's own voice if the store listing ever needs a longer one.
+   */
+  name: "REGROUND",
 } as const;
+
+/** Which set of greetings the clock is in. See `WELCOME.lines`. */
+export type TimeOfDay = keyof typeof WELCOME.lines;
+
+/**
+ * The part of the day a given hour belongs to.
+ *
+ * Four buckets and no gaps, which is what the test holds it to: every hour from
+ * 0 to 23 has to land somewhere, and the failure mode of getting that wrong is
+ * a door with no line on it.
+ *
+ * The boundaries are drawn where the *sentences* change rather than where a
+ * clock would put them. Morning starts at five because that is when being awake
+ * stops being a late night and starts being an early start, and night begins at
+ * ten for the same reason from the other side.
+ */
+export function timeOfDay(hour: number): TimeOfDay {
+  if (hour >= 5 && hour < 12) return "morning";
+  if (hour >= 12 && hour < 17) return "afternoon";
+  if (hour >= 17 && hour < 22) return "evening";
+
+  return "night";
+}
+
+/**
+ * The door's line: one at random from the set that fits the clock.
+ *
+ * Takes the date rather than reading it, so the buckets can be tested at every
+ * hour without moving the system clock — the same reason `moodOutcome` takes
+ * two numbers instead of reading the session.
+ *
+ * Picked once per visit, in the screen's initial state — the same arrangement
+ * `pickUnwindIdea` has at the other end of the session, and for the same
+ * reason: called during render it would hand the user a different sentence on
+ * every frame the sphere moves.
+ */
+export function pickWelcomeLine(now: Date = new Date()): string {
+  const lines = WELCOME.lines[timeOfDay(now.getHours())];
+
+  return lines[Math.floor(Math.random() * lines.length)];
+}
 
 /**
  * The back button, top-left on every screen that has somewhere to go back to.
@@ -285,8 +408,7 @@ export const SIGH_EXAMPLE = {
    * the honest reason this works rather than a mechanism anybody has to take on
    * faith.
    */
-  what:
-    "Your body already does this by itself — the double breath you take before a sigh, or after crying. The first inhale fills your lungs, the second reinflates the small sacs that have collapsed, and the long exhale out of your mouth is the part that slows your heart down. In a Stanford trial, five minutes a day of it lowered anxiety and lifted mood more than mindfulness meditation did over the same month.",
+  what: "Your body already does this by itself — the double breath you take before a sigh, or after crying. The first inhale fills your lungs, the second reinflates the small sacs that have collapsed, and the long exhale out of your mouth is the part that slows your heart down. In a Stanford trial, five minutes a day of it lowered anxiety and lifted mood more than mindfulness meditation did over the same month.",
   steps: [
     "In through your nose, filling your lungs.",
     "A second, sharper breath in through your nose, on top of the first.",
