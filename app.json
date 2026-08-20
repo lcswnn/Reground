@@ -4,12 +4,12 @@
     "slug": "Reground",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/Tully-icon-2.png",
     "scheme": "reground",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#F3F0E7",
+    "backgroundColor": "#EDE6D6",
     "ios": {
-      "icon": "./assets/icon.png",
+      "icon": "./assets/Tully-icon-2.png",
       "bundleIdentifier": "com.lucaswaunn.reground",
       "appleTeamId": "FH9MRL7638",
       "supportsTablet": true,
@@ -20,23 +20,23 @@
     "android": {
       "package": "com.lucaswaunn.reground",
       "adaptiveIcon": {
-        "backgroundColor": "#F3F0E7",
-        "foregroundImage": "./assets/icon.png"
+        "backgroundColor": "#EDE6D6",
+        "foregroundImage": "./assets/Tully-icon-2.png"
       },
       "predictiveBackGestureEnabled": false
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/icon.png"
+      "favicon": "./assets/Tully-icon-2.png"
     },
     "plugins": [
       "expo-router",
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F3F0E7",
-          "image": "./assets/icon-no-bg.png",
-          "imageWidth": 260,
+          "backgroundColor": "#EDE6D6",
+          "image": "./assets/Tully-wave.png",
+          "imageWidth": 180,
           "resizeMode": "contain"
         }
       ],

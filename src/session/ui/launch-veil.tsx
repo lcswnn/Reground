@@ -53,18 +53,37 @@ import Animated, {
 import { SPLASH } from "@/config/session";
 import { splashHoldsForMs } from "@/lib/splash";
 
-const mark = require("../../../assets/icon-no-bg.png");
+/**
+ * The same file `expo.splash.image` names in `app.json`, and it has to stay
+ * that way. This view is a copy of the native splash drawn in React so the
+ * grain can sit over it — see the note above — and the handoff between the two
+ * is only invisible while both are showing the same picture at the same size.
+ */
+const mark = require("../../../assets/Tully-wave.png");
 
 /**
- * `expo.splash.backgroundColor` in `app.json`, and not `Colors.light.background`
- * — the two are a shade apart (`#F3F0E7` against `#F0EBDE`) and it is the splash
- * this has to match, since that is what goes away onto it. The difference leaves
- * with the veil's own fade.
+ * `expo.splash.backgroundColor` in `app.json`, written out rather than read from
+ * `Colors.light.background`, because it is the *splash* this has to match — that
+ * is the thing this view is a copy of and the thing it takes over from.
+ *
+ * The two used to be a shade apart, and this was the wrong shade for a while
+ * after the page moved: it sat at `#F3F0E7`, the original paper, against a page
+ * that had gone to `#EDE6D6`. A stale value here is a visible step in colour at
+ * the handoff — the one moment in the app where two surfaces have to be
+ * indistinguishable. They are the same value today; if either moves, both move.
  */
-const BACKGROUND = "#F3F0E7";
+const BACKGROUND = "#EDE6D6";
 
-/** `expo.splash.imageWidth` in `app.json`, on a square asset. */
-const MARK_SIZE = 260;
+/**
+ * `expo.splash.imageWidth` in `app.json`, on a square asset, and the two have to
+ * be the same number: this view is a copy of the native splash and the handoff
+ * between them is only invisible while both draw the mark at one size.
+ *
+ * It came down from 260. Tully at that width filled a third of a phone and read
+ * as a character being introduced; the splash is a held breath before the app,
+ * not a title card.
+ */
+const MARK_SIZE = 180;
 
 export function LaunchVeil() {
   const [cleared, setCleared] = useState(false);
