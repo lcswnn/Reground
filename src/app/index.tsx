@@ -87,6 +87,20 @@
  * `elsewhere`, which is an answer. See `region-preference.tsx`, which is where
  * that distinction is kept and why.
  *
+ * ## And, behind it, the one notice
+ *
+ * There is a second panel now, and it is the only other one that will ever be
+ * here. It says what the app sends, shows the switch that stops it, and has one
+ * button — see `DataSharingSheet`, where the argument for putting it in front of
+ * somebody rather than leaving it in a settings row is written out.
+ *
+ * The two are chained rather than stacked: the country question first, the
+ * notice only once that has been answered. Two native modals up at once is a
+ * platform asking to hold two windows, and two panels on the doorstep is a form
+ * whichever order they arrive in — but one, then one, each a single tap, on the
+ * one screen in the app that is not in the middle of something, is a first
+ * launch that is thirty seconds longer exactly once.
+ *
  * No back button: there is nothing behind the first screen. See `previousRoute`.
  */
 
@@ -111,6 +125,7 @@ import { pickWelcomeLine, SCOPE, WELCOME } from "@/content/strings";
 import { Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 import { withAlpha } from "@/lib/color";
+import { useDataSharing } from "@/lib/analytics/consent";
 import { useRegionPreference } from "@/lib/region-preference";
 import { splashClearsInMs } from "@/lib/splash";
 import {
@@ -118,6 +133,7 @@ import {
   BreathGlow,
   GlowStage,
 } from "@/session/ui/breath-glow";
+import { DataSharingSheet } from "@/session/ui/data-sharing";
 import { RegionPicker } from "@/session/ui/region-picker";
 import { SessionScreen } from "@/session/ui/session-screen";
 import { StageDirection } from "@/session/ui/stage-direction";
@@ -165,6 +181,7 @@ export default function WelcomeScreen() {
    */
   const [line] = useState(pickWelcomeLine);
   const { region } = useRegionPreference();
+  const { acknowledged } = useDataSharing();
   /**
    * Whether the question has been put away for this launch.
    *
@@ -179,6 +196,13 @@ export default function WelcomeScreen() {
    * is the only thing this screen remembers, for as long as it is open.
    */
   const [askedThisLaunch, setAskedThisLaunch] = useState(false);
+  /**
+   * The same escape hatch for the notice behind it. It closes itself by being
+   * acknowledged, and this covers Android's back gesture — which, on a panel
+   * that is telling rather than asking, acknowledges it too. See
+   * `DataSharingSheet.onRequestClose`.
+   */
+  const [toldThisLaunch, setToldThisLaunch] = useState(false);
 
   const diameter = Math.min(
     width * DIAMETER_RATIO,
@@ -380,6 +404,15 @@ export default function WelcomeScreen() {
       <RegionPicker
         visible={region === null && !askedThisLaunch}
         onDone={() => setAskedThisLaunch(true)}
+      />
+
+      {/* Behind it, and never beside it: this waits for the country question to
+          have an answer, so the two are one after another rather than one on top
+          of the other. On every launch after the first, both conditions are
+          already false and neither modal is mounted. */}
+      <DataSharingSheet
+        visible={region !== null && !acknowledged && !toldThisLaunch}
+        onDone={() => setToldThisLaunch(true)}
       />
     </SessionScreen>
   );

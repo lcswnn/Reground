@@ -912,6 +912,64 @@ export const SCOPE = {
 } as const;
 
 /**
+ * The switch that says whether anything about a session leaves this phone, and
+ * the sentence that has to be true for the switch to be honest.
+ *
+ * ## Why there is any copy here at all
+ *
+ * Because of what the rest of the app says. The door claims the app stores
+ * nothing, the country question makes a point of the answer staying on the
+ * phone, and the session state is thrown away on the way out — three promises,
+ * all of them still true of *this device*, and all of them badly misread if the
+ * app quietly began uploading two mood ratings. An app that has made a virtue of
+ * keeping nothing owes the sentence in `detail` before it keeps anything.
+ *
+ * ## Rules these were written under
+ *
+ * The two at the top of this file, plus three of their own:
+ *
+ * 1. **Say what is sent, in the words the user would use.** Not "usage data",
+ *    not "diagnostics", not "to improve your experience". Two ratings and which
+ *    exercise — that is the whole payload, so that is the whole sentence.
+ * 2. **Say what is not sent, because that is the surprising half.** No account,
+ *    no name, nothing typed, nothing about where they are. All four are true and
+ *    none of them are guessable from "share data".
+ * 3. **Say what it is for without asking for a favour.** The answer happens to
+ *    be the thing the user wants too — it is how the app finds out which of
+ *    these actually help — so it is stated once, flatly, and not pleaded.
+ *
+ * `off` is the one that makes the switch mean something: turning it off is
+ * retroactive. See `forgetSharedData`.
+ */
+export const DATA_SHARING = {
+  /** The switch's own label, and what a screen reader reads it as. */
+  label: "Share how the sessions go",
+  /**
+   * The whole of what is sent, in one sentence, and the whole of what is not in
+   * the next. Shown under the switch wherever it appears.
+   */
+  detail:
+    "The two ratings and which exercise you did, under a random number that isn't you. No account, no name, nothing about where you are. It is how the app finds out which of these actually help.",
+  /** Under the above, and only worth saying because it is unusual. */
+  off: "Turn it off and anything already sent is deleted. Purchases stay, so they can be restored.",
+  /**
+   * The first-launch panel, which is the one moment this is put in front of
+   * somebody rather than waiting to be found.
+   *
+   * The title is a statement and not a question, because the switch under it is
+   * already on: asking "share your data?" over a control that has answered yes
+   * on the user's behalf is the worst of both — it looks like a choice and
+   * behaves like a notice. This says what the app does, shows the switch that
+   * changes it, and has one button.
+   */
+  title: "One thing the app sends",
+  /** The button. Not "OK", not "Got it" — it is a door, so it says so. */
+  done: "Continue",
+  /** Where to find it again, said once, on the panel that is leaving. */
+  later: "This is in the ⓘ menu, on every screen, if you change your mind.",
+} as const;
+
+/**
  * Crisis routing: the numbers, and the words around them.
  *
  * This is the one part of the app that is not about anxiety management at all.

@@ -14,6 +14,8 @@ import { View } from 'react-native';
 import { Colors } from '@/constants/theme';
 import { SPLASH } from '@/config/session';
 import { SessionFlowProvider } from '@/session/session-context';
+import { DataSharingProvider } from '@/lib/analytics/consent';
+import { startAnalytics } from '@/lib/analytics/start';
 import { RegionPreferenceProvider } from '@/lib/region-preference';
 import { ScorePreferenceProvider } from '@/lib/score-preference';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
@@ -48,21 +50,32 @@ SplashScreen.setOptions({ fade: true, duration: SPLASH.hideMs });
  * The session holds no identity and writes nothing to disk, so there is nothing
  * left for any of them to do.
  *
- * ## It does make exactly one network call
+ * ## It makes two network calls, and the second one is new
  *
- * That was not true for a while and is again. `/calibration` shows the real
- * series behind whatever the user said they were frightened of, and those come
- * off the published artifact — one GET of one public static file, started at
- * `/topic` and read five screens later. See `src/api/humanity.ts` for why it is
- * fetched rather than bundled, and `calibration.tsx` for the rule that keeps it
- * from costing anything when it fails.
+ * The first is the artifact. `/calibration` shows the real series behind
+ * whatever the user said they were frightened of, and those come off the
+ * published artifact — one GET of one public static file, started at `/topic`
+ * and read five screens later. See `src/api/humanity.ts` for why it is fetched
+ * rather than bundled, and `calibration.tsx` for the rule that keeps it from
+ * costing anything when it fails. It is still a single unauthenticated GET of a
+ * public URL with nothing sent.
  *
- * It stays a single unauthenticated GET of a public URL. No client, no session,
- * no key, nothing sent. If a second call ever appears here, that is the thing
- * worth arguing about.
+ * The second is the one this file used to say would be "the thing worth arguing
+ * about" if it ever appeared. It has, so here is the argument in one line: the
+ * app had no way of knowing whether it works, and `moodBefore`/`moodAfter` is
+ * the only honest measure of that. `src/lib/supabase.ts` makes the case at
+ * length, `session-context.tsx` says where the two writes happen, and
+ * `lib/analytics/consent.tsx` holds the switch that stops them. It is off the
+ * critical path in every direction — lazy client, fire-and-forget writes, every
+ * failure swallowed — so a session on a dead network is the session that
+ * shipped before any of it existed.
+ *
+ * The Supabase client is back for that and for nothing else. There is still no
+ * account, no react-query, no notifications, and nothing on the device but four
+ * small preferences and a queue of at most twelve rows waiting for signal.
  *
  * The data layer itself is untouched and still running daily — see
- * `.github/workflows/data-refresh.yml`. This app is its only consumer.
+ * `.github/workflows/data-refresh.yml`. This app is one of its two consumers.
  */
 export default function RootLayout() {
   return (
@@ -70,12 +83,17 @@ export default function RootLayout() {
       {/* Above the navigator, because the door asks the question it holds on
           the first launch and the crisis sheet reads it from every screen. */}
       <RegionPreferenceProvider>
-        {/* Read by every game on the shelf, and by nothing else. */}
-        <ScorePreferenceProvider>
-          <SessionFlowProvider>
-            <RootNavigator />
-          </SessionFlowProvider>
-        </ScorePreferenceProvider>
+        {/* Read by the door's first-launch panel and by the row in the support
+            sheet, which is on every screen — so it sits at the same height as
+            the region preference, for the same reason. */}
+        <DataSharingProvider>
+          {/* Read by every game on the shelf, and by nothing else. */}
+          <ScorePreferenceProvider>
+            <SessionFlowProvider>
+              <RootNavigator />
+            </SessionFlowProvider>
+          </ScorePreferenceProvider>
+        </DataSharingProvider>
       </RegionPreferenceProvider>
     </ThemePreferenceProvider>
   );
@@ -134,6 +152,23 @@ function RootNavigator() {
     if (!fontsSettled) return;
 
     void SplashScreen.hideAsync();
+  }, [fontsSettled]);
+
+  /**
+   * The only work this app starts on its own, and it starts it behind the
+   * splash where nothing is waiting on it: send any session rows a dead network
+   * left behind, and — once the user has actually been shown the switch — say
+   * hello. See `startAnalytics`, which is a no-op on the first launch and
+   * guards itself against a fast refresh.
+   *
+   * Gated on the fonts for no reason other than tidiness: it is the same "the
+   * app is up now" moment the splash uses, and running it a frame earlier would
+   * buy nothing.
+   */
+  useEffect(() => {
+    if (!fontsSettled) return;
+
+    startAnalytics();
   }, [fontsSettled]);
 
   if (!fontsSettled) return null;

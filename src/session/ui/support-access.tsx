@@ -71,8 +71,10 @@ import {
 import { CRISIS, SCOPE } from "@/content/strings";
 import { useTheme } from "@/hooks/use-theme";
 import { useRegionPreference } from "@/lib/region-preference";
+import { DataSharingRow } from "@/session/ui/data-sharing";
 import { useThemePreference } from "@/lib/theme-preference";
 import { RegionPicker } from "@/session/ui/region-picker";
+import { Rule } from "@/session/ui/rule";
 import { ScreenFilm } from "@/session/ui/screen-film";
 
 /**
@@ -345,6 +347,22 @@ function SupportSheet({
                 </ThemedText>
               </PressableScale>
             </View>
+
+            {/* The data-sharing switch, and this sheet is where it lives for
+                want of anywhere better — there is no settings screen in this app
+                and there is not going to be one, because a screen to navigate to
+                is an invitation to stay. What there is instead is the ⓘ, which
+                is already the place the app describes itself: what it is and is
+                not, whose crisis numbers these are, and now the one thing it
+                sends. All three are the same kind of fact.
+
+                Last, and under a rule, so that nothing about analytics ever
+                sits above a phone number on the sheet somebody opened to find
+                one. See `DataSharingRow`, and `strings.ts` for the copy. */}
+            <View style={styles.sharing}>
+              <Rule />
+              <DataSharingRow />
+            </View>
           </ScrollView>
 
           {/* Outside the scroll, so the way out is on screen from the moment
@@ -411,6 +429,11 @@ const styles = StyleSheet.create({
   },
   directory: {
     gap: Spacing.two,
+  },
+  // The rule and the row it separates, which is the only block on this sheet
+  // that is a control rather than a way out of the app.
+  sharing: {
+    gap: Spacing.three,
   },
   // Filled rows rather than ruled ones — this is the one list in the app whose
   // items are actions rather than answers, and a fill is what says so.

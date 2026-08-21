@@ -1,17 +1,35 @@
 /**
  * The one piece of state the session has.
  *
- * In memory only, and that is on purpose for this slice: nothing here is
- * written to disk and the app forgets everything on close.
+ * In memory only: nothing here is written to this phone's disk and the app
+ * forgets all of it on close. That has not changed and is not going to.
  *
- * LATER, IF EVER: `moodBefore`/`moodAfter` pairs would be the only honest
- * measure of whether the thing works, and category counts would say which
- * groups actually use it. Both would need to be local-only and opt-in — this
- * app's whole proposition is that it isn't keeping anything.
+ * ## The "later, if ever" happened
+ *
+ * This file used to end its opening note with one: `moodBefore`/`moodAfter`
+ * pairs would be the only honest measure of whether the thing works, category
+ * counts would say who actually uses it, and both would have to be opt-in.
+ *
+ * They now are. On the way past two points in the flow the session is handed to
+ * `recordSession`, which — if the user has left the switch on — sends the two
+ * numbers and the four choices to a row keyed by a random id that is not a
+ * person. See `src/lib/analytics/sessions.ts` for what is in that row and
+ * `consent.tsx` for the switch.
+ *
+ * The old note said local-only as well as opt-in, and that half was traded
+ * knowingly: kept local, the pairing can tell one user about their own sessions
+ * and can never answer "does this work", which is a question about many people
+ * and is the one worth asking. What is preserved instead is the property the
+ * local-only rule was standing in for — that nothing identifying leaves, and
+ * that turning it off takes back what already did.
+ *
+ * `startedAt` below is the only new field, and it is not read by any screen.
  */
 
 import { createContext, useCallback, useContext, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+
+import { recordSession } from '@/lib/analytics/sessions';
 
 import type { Category, CategoryGroup } from '@/content/categories';
 import type { OneMoreId } from '@/content/one-more';
@@ -19,6 +37,15 @@ import type { WorldTopic } from '@/content/topics';
 import type { GameId, GameKind } from '@/session/games/catalog';
 
 export interface SessionState {
+  /**
+   * When the session began, as an ISO string, or null before it has.
+   *
+   * Nothing on screen uses it. It exists because it is half of the key a
+   * recorded session is written under — see `app_sessions` — which makes the
+   * two writes for one session land on one row. Set by `begin` and cleared with
+   * everything else.
+   */
+  startedAt: string | null;
   category: Category | null;
   /** Duplicated from `category` because it is the actual routing signal. */
   categoryGroup: CategoryGroup | null;
@@ -62,6 +89,7 @@ export interface SessionState {
 }
 
 const EMPTY_SESSION: SessionState = {
+  startedAt: null,
   category: null,
   categoryGroup: null,
   gameKind: null,
@@ -98,6 +126,7 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
   const begin = useCallback((category: Category) => {
     setState({
       ...EMPTY_SESSION,
+      startedAt: new Date().toISOString(),
       category,
       categoryGroup: category.group,
       gameKind: category.games,
@@ -120,15 +149,55 @@ export function SessionFlowProvider({ children }: { children: ReactNode }) {
     setState((current) => ({ ...current, game }));
   }, []);
 
-  const setMoodAfter = useCallback((mood: number) => {
-    setState((current) => ({ ...current, moodAfter: mood }));
-  }, []);
+  /**
+   * The second rating, and the first of the two moments a session is recorded.
+   *
+   * Recorded here rather than from `mood-after.tsx` because this is where the
+   * complete state exists: the screen has a number and the provider has
+   * everything it happened to.
+   *
+   * The two recording callbacks are the only ones in this file that close over
+   * `state` rather than taking it from a functional update, and that is not an
+   * oversight. An updater must be pure, and sending a row is the least pure
+   * thing in the app. Both of these are one-shot actions on a screen that
+   * navigates away immediately, so there is no second call to go stale against —
+   * and `value` already re-memoises on every state change, so the extra
+   * dependency costs nothing.
+   *
+   * It is done at this point and not only at the end because this is the last
+   * place a measured session is sure to reach. The app spends its final screens
+   * telling people to put the phone down, and a good many of them do.
+   */
+  const setMoodAfter = useCallback(
+    (mood: number) => {
+      const next = { ...state, moodAfter: mood };
+
+      setState(next);
+      recordSession(next);
+    },
+    [state],
+  );
 
   const chooseOneMore = useCallback((choice: OneMoreId | null) => {
     setState((current) => ({ ...current, oneMore: choice }));
   }, []);
 
-  const reset = useCallback(() => setState(EMPTY_SESSION), []);
+  /**
+   * Clears the session, and is the second moment it is recorded — which is the
+   * only reason the recording is not a one-liner at the rating.
+   *
+   * What this write adds is everything that happens *after* the second rating:
+   * which last thing they picked off the list, or that they declined it. The
+   * row is keyed by `startedAt`, so this updates the one already sent rather
+   * than adding a second.
+   *
+   * Called from exactly one place — the button on `/close`, on the way to the
+   * dead end. A session abandoned before then keeps whatever the rating wrote.
+   */
+  const reset = useCallback(() => {
+    recordSession(state);
+    setState(EMPTY_SESSION);
+  }, [state]);
 
   const value = useMemo<SessionApi>(
     () => ({
