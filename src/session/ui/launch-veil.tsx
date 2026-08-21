@@ -79,11 +79,13 @@ const BACKGROUND = "#EDE6D6";
  * be the same number: this view is a copy of the native splash and the handoff
  * between them is only invisible while both draw the mark at one size.
  *
- * It came down from 260. Tully at that width filled a third of a phone and read
- * as a character being introduced; the splash is a held breath before the app,
- * not a title card.
+ * It came down from 260 to 180 — Tully at that width filled a third of a phone
+ * and read as a character being introduced, where the splash is a held breath
+ * before the app rather than a title card — and back up to 220, which is the
+ * middle of that argument: large enough to be a wave rather than a logo, still
+ * short of owning the screen.
  */
-const MARK_SIZE = 180;
+const MARK_SIZE = 220;
 
 export function LaunchVeil() {
   const [cleared, setCleared] = useState(false);
