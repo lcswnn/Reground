@@ -705,7 +705,8 @@ export const MATCH_THREE = {
    * anyway: it is the only one of the two that works with a screen reader, and
    * it is what somebody falls back to when a drag has just been read as a tap.
    */
-  prompt: "Drag a shape onto its neighbour, or tap the two. Three in a line clears.",
+  prompt:
+    "Drag a shape onto its neighbour, or tap the two. Three in a line clears.",
   stuck: "Nothing left to line up. The board deals itself out again.",
   /**
    * The spoken version, and it deliberately says only the tap. Dragging is a
@@ -873,6 +874,44 @@ export const NOT_YET = {
 } as const;
 
 /**
+ * What this app is, and what it is not. The scope statement.
+ *
+ * ## Why it exists
+ *
+ * Everything else in this file is careful about the limits of one *exercise* —
+ * see `SOMATIC_COPY.principlesLimit`, and the two `cautionsLimit` lines, which
+ * say what a two-minute version of a twenty-minute technique can and cannot do.
+ * None of them says what the app is. That gap is the thing safety reviewers
+ * actually look for in this category, alongside crisis routing: bounded
+ * sessions, clear scope, a plain statement of what the software is not, and a
+ * way to reach a person. The first was already true of the design — one
+ * session, no account, nothing saved — and this is the sentence that says so
+ * out loud.
+ *
+ * It is also the honest thing to do independently of anybody reviewing it. This
+ * app is opened by somebody who has already decided they are not okay, and it
+ * has no way of knowing how not-okay. Saying what it is not, before it is
+ * needed, is the least an app in that position can do.
+ *
+ * ## Two versions of one sentence
+ *
+ * `full` ends by pointing at the numbers, and is only ever shown where numbers
+ * are actually on screen — the crisis sheet, directly above them. `short` is
+ * the same statement with that clause removed, for the door, where there is
+ * nothing above it to point at and the crisis numbers are a tap away in the
+ * corner instead.
+ *
+ * They are two strings rather than one built from parts because they are read
+ * in two different situations and the difference between them is a full stop in
+ * a different place, not a variable.
+ */
+export const SCOPE = {
+  full: "Reground is an app that provides daily breathing guides, mood tracking, and mindfulness exercises designed to help you manage everyday stress. The app does not cure mental health conditions or replace a doctor. If you need additional assistance, call or text the numbers below for support.",
+  short:
+    "Reground is an app that provides daily breathing guides, mood tracking, and mindfulness exercises designed to help you manage everyday stress. The app does not cure mental health conditions or replace a doctor.",
+} as const;
+
+/**
  * Crisis routing: the numbers, and the words around them.
  *
  * This is the one part of the app that is not about anxiety management at all.
@@ -913,12 +952,6 @@ export const CRISIS = {
    */
   trigger: "Need help immediately? Talk to someone now.",
   title: "Talk to someone now",
-  /**
-   * Two sentences, and the second one is the important one: it is there to stop
-   * the reader deciding they are not bad enough. Lifelines take distress calls,
-   * not only emergencies, and people who need them routinely believe otherwise.
-   */
-  lead: "These are free, open all night, and answered by people. You do not have to be in danger to use one.",
   /**
    * Under the numbers, and the whole of the sheet for anybody who answered
    * "somewhere else" — see `CRISIS_REGIONS`. A directory maintained by people
@@ -984,43 +1017,6 @@ export const CRISIS = {
  * question about the app being prepared rather than about the person being
  * fragile.
  */
-/**
- * What this app is, and what it is not. The scope statement.
- *
- * ## Why it exists
- *
- * Everything else in this file is careful about the limits of one *exercise* —
- * see `SOMATIC_COPY.principlesLimit`, and the two `cautionsLimit` lines, which
- * say what a two-minute version of a twenty-minute technique can and cannot do.
- * None of them says what the app is. That gap is the thing safety reviewers
- * actually look for in this category, alongside crisis routing: bounded
- * sessions, clear scope, a plain statement of what the software is not, and a
- * way to reach a person. The first was already true of the design — one
- * session, no account, nothing saved — and this is the sentence that says so
- * out loud.
- *
- * It is also the honest thing to do independently of anybody reviewing it. This
- * app is opened by somebody who has already decided they are not okay, and it
- * has no way of knowing how not-okay. Saying what it is not, before it is
- * needed, is the least an app in that position can do.
- *
- * ## Two versions of one sentence
- *
- * `full` ends by pointing at the numbers, and is only ever shown where numbers
- * are actually on screen — the crisis sheet, directly above them. `short` is
- * the same statement with that clause removed, for the door, where there is
- * nothing above it to point at and the crisis numbers are a tap away in the
- * corner instead.
- *
- * They are two strings rather than one built from parts because they are read
- * in two different situations and the difference between them is a full stop in
- * a different place, not a variable.
- */
-export const SCOPE = {
-  full: "Reground is an app that provides daily breathing guides, mood tracking, and mindfulness exercises designed to help you manage everyday stress. The app does not cure mental health conditions or replace a doctor. If you need additional assistance, call or text the numbers below for support.",
-  short:
-    "Reground is an app that provides daily breathing guides, mood tracking, and mindfulness exercises designed to help you manage everyday stress. The app does not cure mental health conditions or replace a doctor.",
-} as const;
 
 export const REGION_PICKER = {
   title: "Where are you?",

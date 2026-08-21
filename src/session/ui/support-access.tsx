@@ -99,9 +99,42 @@ function open(url: string) {
   void Linking.openURL(url).catch(() => {});
 }
 
+/**
+ * Which panel is up, as one value rather than two booleans.
+ *
+ * The sheet and the country picker are separate native modals, and a native
+ * modal is its own window — so "close that one, open this one" has to happen in
+ * a single commit or the platform is briefly asked to hold both. One state
+ * makes every move between them exactly that.
+ *
+ * The move worth naming is `onDone`: answering the country question returns to
+ * the sheet instead of leaving the screen empty-handed. The only reason anybody
+ * reaches the picker from here is to change which numbers the sheet prints, and
+ * an app that closes both panels at that moment has made the reader open the
+ * thing twice to see what their answer did. Android's back gesture inside the
+ * picker lands in the same place, which is what back should mean.
+ */
+type Panel = "none" | "sheet" | "region";
+
+function useSupportPanels() {
+  const [panel, setPanel] = useState<Panel>("none");
+
+  return {
+    open: () => setPanel("sheet"),
+    sheet: {
+      visible: panel === "sheet",
+      onClose: () => setPanel("none"),
+      onChangeRegion: () => setPanel("region"),
+    },
+    picker: {
+      visible: panel === "region",
+      onDone: () => setPanel("sheet"),
+    },
+  };
+}
+
 export function SupportAccess() {
-  const [open_, setOpen] = useState(false);
-  const [asking, setAsking] = useState(false);
+  const { open: show, sheet, picker } = useSupportPanels();
 
   return (
     <>
@@ -110,23 +143,20 @@ export function SupportAccess() {
         accessibilityLabel={CRISIS.trigger}
         depth="text"
         hitSlop={Spacing.three}
-        onPress={() => setOpen(true)}
+        onPress={show}
         style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
       >
-        <ThemedText type="small" themeColor="textMuted" style={styles.underline}>
+        <ThemedText
+          type="small"
+          themeColor="textMuted"
+          style={styles.underline}
+        >
           {CRISIS.trigger}
         </ThemedText>
       </PressableScale>
 
-      <SupportSheet
-        visible={open_}
-        onClose={() => setOpen(false)}
-        onChangeRegion={() => {
-          setOpen(false);
-          setAsking(true);
-        }}
-      />
-      <RegionPicker visible={asking} onDone={() => setAsking(false)} />
+      <SupportSheet {...sheet} />
+      <RegionPicker {...picker} />
     </>
   );
 }
@@ -142,8 +172,7 @@ export function SupportAccess() {
  */
 export function SupportButton() {
   const theme = useTheme();
-  const [open_, setOpen] = useState(false);
-  const [asking, setAsking] = useState(false);
+  const { open: show, sheet, picker } = useSupportPanels();
 
   return (
     <>
@@ -152,7 +181,7 @@ export function SupportButton() {
         accessibilityLabel={CRISIS.buttonLabel}
         depth="text"
         hitSlop={Spacing.two}
-        onPress={() => setOpen(true)}
+        onPress={show}
         style={({ pressed }) => [
           styles.button,
           {
@@ -168,15 +197,8 @@ export function SupportButton() {
         <ThemedText type="defaultSemiBold">{CRISIS.glyph}</ThemedText>
       </PressableScale>
 
-      <SupportSheet
-        visible={open_}
-        onClose={() => setOpen(false)}
-        onChangeRegion={() => {
-          setOpen(false);
-          setAsking(true);
-        }}
-      />
-      <RegionPicker visible={asking} onDone={() => setAsking(false)} />
+      <SupportSheet {...sheet} />
+      <RegionPicker {...picker} />
     </>
   );
 }
@@ -188,7 +210,7 @@ function SupportSheet({
 }: {
   visible: boolean;
   onClose: () => void;
-  /** Reopens the country question — see `CRISIS.region`. */
+  /** Swaps this sheet for the country question — see `CRISIS.region`. */
   onChangeRegion: () => void;
 }) {
   const theme = useTheme();
@@ -238,13 +260,14 @@ function SupportSheet({
           >
             <View style={styles.heading}>
               <ThemedText type="subtitle">{CRISIS.title}</ThemedText>
-              <ThemedText type="small" themeColor="textSecondary">
-                {CRISIS.lead}
-              </ThemedText>
               {/* The way back to the question the door asked once, and the
                   only route to changing an answer. It named the country until
                   recently — see `CRISIS.region` for why saying what it does
                   beats saying what the app knows. */}
+
+              <ThemedText type="small" themeColor="textMuted">
+                {SCOPE.full}
+              </ThemedText>
               <PressableScale
                 accessibilityRole="button"
                 accessibilityLabel={CRISIS.region}
@@ -267,9 +290,6 @@ function SupportSheet({
                 the foot of the sheet because of what is under it: the sentence
                 ends by pointing at the numbers, and pointing works downward.
                 See `SCOPE`, which is also shown on the door. */}
-            <ThemedText type="small" themeColor="textMuted">
-              {SCOPE.full}
-            </ThemedText>
 
             {/* Each row is the whole target, and the number is in the label
                 rather than in the detail line under it — the thing being tapped

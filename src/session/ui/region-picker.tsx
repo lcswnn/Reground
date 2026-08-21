@@ -31,8 +31,13 @@
  * target to invent, and nothing to skip past on the way in a second time.
  *
  * There is no dismiss. Every row is an answer, "Somewhere else" included, and
- * a tap on any of them closes it — so the only way to leave is to have answered
+ * a tap on any of them ends it — so the only way to leave is to have answered
  * the question, and the answer costs nothing to give.
+ *
+ * Where "ends it" goes is the caller's to decide, which is why `onDone` says
+ * done rather than close. Over the door it closes; opened from the crisis sheet
+ * to change an answer, it hands the reader back to the sheet, because the
+ * numbers there are the only thing the answer changes.
  */
 
 import { Modal, ScrollView, StyleSheet, View } from 'react-native';
