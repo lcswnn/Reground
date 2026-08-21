@@ -46,19 +46,43 @@
  * tip jar drawn as a call to action is a screen that wants something. This one
  * is a line they can ignore without deciding to.
  *
- * Tapping it leaves the app, which means the listener below sends them to the
- * door on the way back — a fresh session rather than this screen again. That is
- * the right outcome and the same one they would get from any other trip away.
+ * Tapping it leaves the app and coming back returns to this screen, which is
+ * the right outcome: someone who went to the tip jar was finishing, not
+ * restarting, and booting them to the door for it would be a punishment for
+ * having read the one line on the screen that asks for something.
  *
  * The one screen that keeps its wall now that every other screen has a back
  * button. Going back would mean re-entering a session that no longer exists —
  * and a dead end with a way out of it is not a dead end. See `previousRoute`.
+ *
+ * ## What starts the next session
+ *
+ * A cold launch, and only a cold launch.
+ *
+ * This screen used to listen on `AppState` and route to the door whenever the
+ * app came back to the foreground, so that a backgrounded process returning
+ * days later did not land on a wall. That traded one problem for a worse one:
+ * every trip out of the app and back — a notification, a glance at the clock,
+ * the tip jar — threw away the screen the user was on and replayed the launch
+ * at them. Backgrounding is not finishing, and the app was treating it as if it
+ * were.
+ *
+ * So the rule is now the plain one: leaving the app changes nothing, and the
+ * session restarts when the process actually dies. That needs no code, which is
+ * why there is none here — the session lives in React state, so a cold start
+ * has an empty one and the router opens on `/` by itself.
+ *
+ * The cost is the wall this was written to avoid: a user who finishes, swipes
+ * away without killing the app, and opens it a week later on a process iOS
+ * never reclaimed sees "You may now close the app" and has to force-quit to get
+ * a session. That is the accepted trade — see the note in git for the
+ * time-based version if the wall ever turns out to matter more than the
+ * interruption did.
  */
 
-import { useEffect } from 'react';
-import { AppState, Linking, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
 import { PressableScale } from '@/components/ui/pressable-scale';
@@ -74,33 +98,52 @@ import { StageDirection } from '@/session/ui/stage-direction';
 const sleeping = require('../../assets/Sleeping-Tully.png');
 const TULLY_SIZE = 140;
 
+/**
+ * Half the chrome row, which is what `centered` has already cost this screen.
+ *
+ * `SessionScreen` centres its children in the space *under* the chrome, not on
+ * the page — so a row of height H leaves the content sitting H/2 low. On every
+ * other screen that is invisible, because there is a heading or a question
+ * anchoring the top of the column. Here there is nothing but a drawing and one
+ * line, and 25 points of drift is the whole difference between "centred" and
+ * "slightly sunk".
+ *
+ * The row on this screen is only the two round controls — no back button, and
+ * `stageOf('/closed')` is null so there are no progress marks either. So its
+ * height is the 34-point circle (`BUTTON` in `theme-toggle.tsx`) plus the gap
+ * the frame puts under the row.
+ */
+const CHROME_HALF = (34 + Spacing.three) / 2;
+
+/**
+ * How far above true centre the block then sits, once it is actually centred.
+ *
+ * Optical rather than geometric. The content is top-heavy — a 140-point drawing
+ * over three short lines — so a block centred by its bounding box reads as
+ * hanging low, and the empty screen underneath is what the eye measures it
+ * against. A step up puts the sentence nearer where you are already looking.
+ */
+const LIFT = Spacing.four;
+
 export default function ClosedScreen() {
-  const router = useRouter();
+  const insets = useSafeAreaInsets();
 
   /**
-   * The one way off this screen, and it is not a tap.
+   * The frame's padding is not symmetrical — `paddingTop` is `insets.top` and
+   * `paddingBottom` is `insets.bottom`, and on a notched phone the top inset is
+   * the larger of the two by some 25 points. That tilts the centring box down
+   * the page by half the difference on top of the chrome, and it is a different
+   * amount on every device, so it is read at runtime rather than guessed at.
    *
-   * A route with no exit is a dead end for the session, which is the point —
-   * but it would also be a dead end for the *app*, because iOS keeps a
-   * backgrounded app in memory with its route intact. Someone who opens
-   * Reground again next week, on a process that never died, would land straight
-   * back here and find a wall.
-   *
-   * So: leaving and coming back is what starts a new session. `change` only
-   * fires on a transition, so arriving here does nothing — the app has to have
-   * actually gone away first. Remove this and the screen is permanent until the
-   * OS kills the process.
+   * A transform rather than margin or padding: the correction is optical and
+   * should not change what the block's own layout is, and translating is exact
+   * where a margin on a centred child would only move it half as far.
    */
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (next) => {
-      if (next === 'active') router.replace('/');
-    });
-    return () => subscription.remove();
-  }, [router]);
+  const lift = CHROME_HALF + (insets.top - insets.bottom) / 2 + LIFT;
 
   return (
     <SessionScreen centered>
-      <View style={styles.root}>
+      <View style={[styles.root, { transform: [{ translateY: -lift }] }]}>
         {/* Above the line and in the flow, so the sign-off keeps its place on
             the screen and the drawing sits over it. `contain` rather than a
             fixed height: the asset is square with a lot of air in it, and
@@ -172,9 +215,16 @@ const styles = StyleSheet.create({
   root: {
     alignItems: 'center',
   },
-  // Sized as a square and given a line's worth of air under it — the drawing
-  // and the sentence are one object, so they sit at the gap the app puts
-  // between the lines of a block rather than between two blocks.
+  // Sized as a square, with a clear gap under it. The drawing and the sentence
+  // are still one object, but at a line's worth of air they were one *crowded*
+  // object — the sentence read as a caption pinned to the picture rather than
+  // as the thing the screen is here to say. The extra room lets Tully finish
+  // before the line starts.
+  //
+  // Still a step tighter than the gap under the sign-off, and that ordering is
+  // the point: the drawing belongs to the line, the tip jar does not. If the
+  // two gaps ever match, the screen flattens into three evenly spaced things
+  // and the grouping is gone.
   //
   // 140 points is small enough that the screen is still mostly empty, which is
   // the point of it. A larger Tully turns the last screen of the session into a
@@ -182,16 +232,17 @@ const styles = StyleSheet.create({
   tully: {
     width: TULLY_SIZE,
     height: TULLY_SIZE,
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.four,
   },
-  // A block's worth of space below the sign-off rather than a line's worth: it
-  // and the offer are two separate things, and the gap is what keeps the second
-  // from reading as the end of the first sentence. Inside the offer the two
-  // lines take the gap the app gives the lines of one block, because that is
-  // what they are — one sentence with the link as its object.
+  // A block's worth of space below the sign-off, and a step more than the gap
+  // over it: the drawing and the line are one thing, the offer is another, and
+  // this is the gap that says so. It keeps the tip jar from reading as the end
+  // of the sentence above it. Inside the offer the two lines take the gap the
+  // app gives the lines of one block, because that is what they are — one
+  // sentence with the link as its object.
   tip: {
     alignItems: 'center',
-    marginTop: Spacing.four,
+    marginTop: Spacing.five,
     gap: Spacing.two,
   },
   centred: {

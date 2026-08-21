@@ -62,10 +62,15 @@
  *  - **Progress.** The filled segments in the chrome row, which are the app
  *    reporting on itself.
  *
- * `positive` and `decline` are deliberately *not* on it. Direction in this app
+ * `positive` and `decline` are deliberately *not* on it. Direction in the data
  * is carried by the label and the arrow — see the note those two tokens carry —
- * and a green/red pair would be the first colour here that means something,
- * which is a much larger decision than a warm circle.
+ * so a wrong-way metric is still ink on paper like everything around it.
+ *
+ * There is now exactly one green/red pair in the app, and it is `MoodRamp`
+ * below. It is the first colour here that *means* something, which was a much
+ * larger decision than a warm circle and is why it is fenced to one control:
+ * the 0–10 rating, and nothing else. The note on the token itself carries the
+ * argument. Everywhere the app reports on the world it is still ink.
  *
  * ## The accent is the one thing that changes hue with the scheme
  *
@@ -280,6 +285,46 @@ export const Colors = {
 } as const;
 
 export type ThemeColor = keyof typeof Colors.light & keyof typeof Colors.dark;
+
+/**
+ * The 0–10 rating, coloured: calm at the low end, running through to the bad
+ * end. Three stops per scheme, blended to eleven by `gradient` in `lib/color`.
+ *
+ * ## Why this one control gets hue when nothing else does
+ *
+ * Everything else the app colours is the app talking — the breath, the rule,
+ * the progress marks. This is the one place the *user* is the one saying
+ * something, which is exactly the line the accent was admitted under not
+ * crossing. It is here anyway because eleven identical dots make the two ends
+ * of the scale look alike, and the one thing this control cannot afford is for
+ * somebody upset to answer at the wrong end. Hue says which way the scale runs
+ * before the labels are read, and it says it under a thumb.
+ *
+ * It is a support, not the signal. The end labels still name both ends and the
+ * readout still prints the number — see `mood-scale.tsx`, and note that this
+ * means nothing is lost to a colourblind user, who has the same two words and
+ * the same numeral everyone else does. Red/green is the worst possible pair for
+ * deuteranopia, and it is used here only because it is the third copy of a
+ * message that is already twice redundant.
+ *
+ * ## The colours
+ *
+ * Not a wheel sweep. Every stop is picked against the page it sits on and every
+ * blended value between them clears 3:1 on it — the floor for a graphic mark,
+ * and for the title-sized numeral this also tints. Worst case is 3.71:1 on
+ * paper and 3.34:1 on ink.
+ *
+ * Light runs a deep moss through ochre to a dark brick, which are the palette's
+ * own terracotta warmth pushed either side of it rather than a green and a red
+ * imported from somewhere brighter. Dark cannot use "dark red" as literally as
+ * the request for it sounds: on a page this dark a deep red is a smudge, so the
+ * ink scheme carries the same three hues at the lightness the page needs and
+ * lets saturation do the work the darkness does on paper.
+ */
+export const MoodRamp = {
+  light: ["#546B4A", "#9C6B28", "#7E3227"],
+  dark: ["#A8C998", "#E3BA79", "#E7897C"],
+} as const;
 
 /**
  * Family names registered by `useFonts` in the root layout. Referenced as

@@ -32,6 +32,47 @@ export function mix(from: string, to: string, amount: number): string {
   return `rgb(${r}, ${g}, ${blue})`;
 }
 
+/**
+ * A colour picked off a multi-stop ramp, as hex.
+ *
+ * `t` runs 0–1 across the ramp as a whole however many stops are behind it, so
+ * a caller can hand over a fraction of its own scale and not have to know. Out
+ * of range clamps to the ends rather than extrapolating: a ramp is a range of
+ * colours somebody chose, and there is nothing sensible past either end of it.
+ *
+ * Hex out rather than `mix`'s `rgb()`, and that is the point of the difference:
+ * the result of this is meant to be fed back into the other helpers here, and
+ * `channels` only reads hex.
+ *
+ * Interpolated straight in sRGB rather than a perceptual space. That would give
+ * a more even ramp between two arbitrary colours, but these stops are picked by
+ * eye against the page they sit on and checked for contrast one value at a time
+ * — the blend is being steered at every stop, not trusted to be even between
+ * two of them.
+ */
+export function gradient(stops: readonly string[], t: number): string {
+  if (stops.length === 0) throw new Error('gradient needs at least one stop.');
+  if (stops.length === 1) return stops[0];
+
+  const clamped = Math.max(0, Math.min(1, t));
+  if (clamped === 1) return stops[stops.length - 1];
+
+  // Which leg of the ramp `t` falls on, and how far along that leg it is.
+  const span = 1 / (stops.length - 1);
+  const leg = Math.floor(clamped / span);
+  const local = (clamped - leg * span) / span;
+
+  const from = channels(stops[leg]);
+  const to = channels(stops[leg + 1]);
+
+  const hex = from
+    .map((channel, i) => Math.round(channel + (to[i] - channel) * local))
+    .map((channel) => channel.toString(16).padStart(2, '0'))
+    .join('');
+
+  return `#${hex.toUpperCase()}`;
+}
+
 function channels(hex: string): [number, number, number] {
   const value = hex.replace('#', '');
   return [

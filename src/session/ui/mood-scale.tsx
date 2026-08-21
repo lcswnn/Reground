@@ -95,6 +95,7 @@ import {
 } from 'react-native';
 import Animated, {
   ReduceMotion,
+  interpolateColor,
   useAnimatedStyle,
   useSharedValue,
   withTiming,
@@ -103,8 +104,10 @@ import Animated, {
 import { ThemedText } from '@/components/themed-text';
 import { MOOD_SCALE } from '@/config/session';
 import { MOOD_CONTROL } from '@/content/strings';
-import { Spacing } from '@/constants/theme';
+import { MoodRamp, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
+import { gradient, mix } from '@/lib/color';
+import { useThemePreference } from '@/lib/theme-preference';
 import { tickSelection } from '@/session/ui/haptics';
 
 const VALUES = Array.from(
@@ -150,6 +153,19 @@ const WAVE_RADIUS = 3;
 const LIFT = 7;
 
 /**
+ * How much of the resting row is grey rather than its own colour.
+ *
+ * The ramp at full strength on all eleven dots is a row that shouts the scale
+ * before anybody has answered it — and a scale that looks answered is a scale
+ * that has suggested an answer. Pulled most of the way to the divider ink, the
+ * hue is still there to be read along the row but the dots stay the quiet marks
+ * the layout above was built around; the selected one comes back to full
+ * strength on its own, and 1.9x the size, so there is never a question about
+ * which one is the answer.
+ */
+const REST_MUTE = 0.62;
+
+/**
  * The one dot that carries its number, and it is derived rather than written
  * down: the value at the middle of the scale, rounded down if the scale ever
  * has an even count. On 0–10 that is 5, and it is the middle dot of eleven —
@@ -180,6 +196,24 @@ interface MoodScaleProps {
 }
 
 export function MoodScale({ value, onChange, lowLabel, highLabel }: MoodScaleProps) {
+  const theme = useTheme();
+  /**
+   * Read straight off the preference rather than through `useTheme`, because
+   * the ramp deliberately is not in `Colors` — putting an array of colours in
+   * there would widen `ThemeColor`, and `themeColor="moodRamp"` type-checking
+   * on every `ThemedText` in the app is a hole worth one extra hook here.
+   */
+  const { isDark } = useThemePreference();
+  const ramp = isDark ? MoodRamp.dark : MoodRamp.light;
+
+  /**
+   * A value's colour, full strength. `t` is the position on the scale rather
+   * than the value itself, so the ramp stays correct if the scale is ever not
+   * 0–10.
+   */
+  const colorFor = (option: number) =>
+    gradient(ramp, (option - MOOD_SCALE.min) / (MOOD_SCALE.max - MOOD_SCALE.min));
+
   const [width, setWidth] = useState(0);
   /** Whether a finger is on the row. It is the whole of what the wave keys on. */
   const [dragging, setDragging] = useState(false);
@@ -220,8 +254,15 @@ export function MoodScale({ value, onChange, lowLabel, highLabel }: MoodScalePro
     <View style={styles.root}>
       {/* Held open whether or not there is a number in it, so the row does not
           jump down the screen the moment the first tap lands. */}
+      {/* The numeral is tinted too, and it is the half of this that the user
+          actually watches: their thumb is over the row, so the colour under it
+          is the colour they cannot see. Left at the default ink until there is
+          an answer — a placeholder in the bad end's red would be the screen
+          picking a mood on their behalf. */}
       <View style={styles.readout}>
-        <ThemedText type="title">
+        <ThemedText
+          type="title"
+          style={value === null ? undefined : { color: colorFor(value) }}>
           {value === null ? MOOD_CONTROL.blank : value}
         </ThemedText>
       </View>
@@ -281,10 +322,17 @@ export function MoodScale({ value, onChange, lowLabel, highLabel }: MoodScalePro
             const near =
               value === null ? 0 : falloff(Math.abs(index - (value - MOOD_SCALE.min)));
 
+            const live = colorFor(option);
+
             return (
               <Dot
                 key={option}
                 selected={selected}
+                // Two colours rather than one and an opacity: the dots overlap
+                // nothing, so the resting state is a solid quieter colour and
+                // not a translucent loud one.
+                live={live}
+                rest={mix(live, theme.barDivider, REST_MUTE)}
                 // The selected dot is full size whether or not anybody is
                 // touching it; its neighbours are only anything mid-drag.
                 swell={selected ? 1 : dragging ? near : 0}
@@ -341,14 +389,19 @@ function Dot({
   selected,
   swell,
   lift,
+  rest,
+  live,
 }: {
   selected: boolean;
   /** 0 flat, 1 full size. The crest of the wave, and the selected dot at rest. */
   swell: number;
   /** 0 on the line, 1 at the top of the lift. Only ever non-zero mid-drag. */
   lift: number;
+  /** This dot's place on the ramp, muted — what it is when it is not the answer. */
+  rest: string;
+  /** The same place at full strength. */
+  live: string;
 }) {
-  const theme = useTheme();
   const grown = useSharedValue(selected ? 1 : 0);
   const raised = useSharedValue(0);
 
@@ -366,28 +419,22 @@ function Dot({
     raised.value = withTiming(lift, timing);
   }, [grown, lift, raised, swell]);
 
+  // Colour rides the same value the growth does, so a dot coming up under the
+  // finger saturates as it swells rather than switching hue at some threshold
+  // on the way. Mid-drag that carries the wave into the colour too: the
+  // neighbours brighten a little as the crest passes them, which is the row
+  // reading as one surface in colour as well as in shape.
   const style = useAnimatedStyle(() => ({
     transform: [
       { translateY: -LIFT * raised.value },
       { scale: 1 + (SELECTED_SCALE - 1) * grown.value },
     ],
+    backgroundColor: interpolateColor(grown.value, [0, 1], [rest, live]),
   }));
 
   return (
     <View style={styles.cell}>
-      <Animated.View
-        style={[
-          styles.dot,
-          style,
-          {
-            // The strong step of the accent, which is the fill the chips took
-            // when this was eleven buttons — see `constants/theme.ts`. Unpicked
-            // dots are the app's divider ink, so the row reads as one mark
-            // among ten quiet ones rather than as ten competing dots.
-            backgroundColor: selected ? theme.accentStrong : theme.barDivider,
-          },
-        ]}
-      />
+      <Animated.View style={[styles.dot, style]} />
     </View>
   );
 }
