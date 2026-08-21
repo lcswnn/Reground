@@ -142,12 +142,26 @@ export async function setSharedFlag(shares: boolean): Promise<void> {
  * a delete, so the failure mode of trying again later is a queue that keeps
  * trying to erase rows that are already gone. If it fails, the next flip of the
  * switch will do it.
+ *
+ * ## It reads the session rather than calling `ensureInstall`
+ *
+ * That distinction is the whole correctness of this function, so it is worth the
+ * paragraph. `ensureInstall` *creates* an anonymous user when there is not one
+ * already — and the commonest way to reach this code is somebody turning the
+ * switch off on the first-launch panel, before any user exists. Calling it here
+ * would sign them in expressly to delete nothing, which is the exact opposite of
+ * what they just asked for: opting out would be the thing that registered them.
+ *
+ * So this asks whether there is already a session and does nothing if there is
+ * not. No id means nothing was ever sent, which means there is nothing to erase.
  */
 export async function forgetSharedData(): Promise<void> {
   const client = supabase();
   if (!client) return;
 
-  const id = await ensureInstall();
+  // Never `ensureInstall` — see above.
+  const { data } = await client.auth.getSession();
+  const id = data.session?.user.id;
   if (!id) return;
 
   await client.from('app_sessions').delete().eq('install_id', id);
