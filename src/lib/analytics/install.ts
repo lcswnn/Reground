@@ -33,6 +33,7 @@ import { Platform } from 'react-native';
 import Constants from 'expo-constants';
 
 import { supabase } from '@/lib/supabase';
+import { trace } from '@/lib/analytics/debug';
 
 /**
  * The whole bootstrap, memoised as a promise rather than as a value.
@@ -62,16 +63,26 @@ export function ensureInstall(): Promise<string | null> {
 
 async function bootstrap(): Promise<string | null> {
   const client = supabase();
-  if (!client) return null;
+  if (!client) {
+    trace('no client — EXPO_PUBLIC_SUPABASE_URL or _PUBLISHABLE_KEY is unset in this build');
+    return null;
+  }
 
   const { data: existing } = await client.auth.getSession();
   let userId = existing.session?.user.id ?? null;
+  trace('existing session', userId ?? 'none');
 
   if (!userId) {
     const { data, error } = await client.auth.signInAnonymously();
-    if (error) return null;
+    if (error) {
+      // The expected message when the dashboard toggle is off is
+      // "Anonymous sign-ins are disabled".
+      trace('signInAnonymously FAILED', error.message);
+      return null;
+    }
 
     userId = data.user?.id ?? null;
+    trace('signed in', userId ?? 'no user returned');
   }
 
   if (!userId) return null;
@@ -99,8 +110,12 @@ async function bootstrap(): Promise<string | null> {
   // A failed hello is not a failed install. The id is real either way, the row
   // will be written by the next launch or by the first session that records,
   // and there is nothing on screen this could usefully change.
-  if (error) return userId;
+  if (error) {
+    trace('app_installs upsert FAILED', error.message);
+    return userId;
+  }
 
+  trace('app_installs ok', userId);
   return userId;
 }
 

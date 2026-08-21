@@ -478,7 +478,8 @@ export const PUZZLE_COPY = {
    * telling that person their ball-and-paddle competes with a picture would be
    * a promise about a mechanism that isn't running.
    */
-  calmFraming: "A few minutes of this. No score, no way to lose.",
+  calmFraming:
+    'Play this game for a few minutes, and the app will let you know when you can move on. Or, press "I\'m done" to continue.',
   /**
    * The visuospatial shelf — this is the step that matters, and we say why.
    *

@@ -37,6 +37,7 @@ import 'expo-sqlite/localStorage/install';
 import { supabase } from '@/lib/supabase';
 import { ensureInstall } from '@/lib/analytics/install';
 import { mergeQueue, type SessionRow } from '@/lib/analytics/row';
+import { trace } from '@/lib/analytics/debug';
 
 const STORAGE_KEY = 'humanitas.share.queue';
 
@@ -105,13 +106,17 @@ export function enqueue(row: SessionRow): void {
  */
 export async function flush(): Promise<void> {
   const rows = read();
+  trace('flush — rows pending', rows.length);
   if (rows.length === 0) return;
 
   const client = supabase();
   if (!client) return;
 
   const installId = await ensureInstall();
-  if (!installId) return;
+  if (!installId) {
+    trace('flush aborted — no install id, rows stay queued');
+    return;
+  }
 
   const { error } = await client
     .from('app_sessions')
@@ -123,7 +128,12 @@ export async function flush(): Promise<void> {
       { onConflict: 'install_id,started_at' },
     );
 
-  if (error) return;
+  if (error) {
+    trace('app_sessions upsert FAILED', error.message);
+    return;
+  }
+
+  trace('app_sessions sent', rows.length);
 
   /**
    * Re-read before clearing, and remove only what was actually sent. A session

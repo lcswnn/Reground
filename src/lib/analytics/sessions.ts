@@ -25,6 +25,7 @@ import { isSharing } from '@/lib/analytics/consent';
 import { appVersion } from '@/lib/analytics/install';
 import { enqueue } from '@/lib/analytics/queue';
 import { sessionRow } from '@/lib/analytics/row';
+import { trace } from '@/lib/analytics/debug';
 import type { SessionState } from '@/session/session-context';
 
 export type { SessionRow } from '@/lib/analytics/row';
@@ -40,10 +41,17 @@ export function recordSession(state: SessionState): void {
   // The consent gate, and this is the place it belongs: the queue is durable, so
   // a row that gets past here survives relaunches. Nothing a user has declined
   // should ever be written down, not even briefly.
-  if (!isSharing()) return;
+  if (!isSharing()) {
+    trace('recordSession skipped — the switch is off');
+    return;
+  }
 
   const row = sessionRow(state, new Date(), appVersion());
-  if (!row) return;
+  if (!row) {
+    trace('recordSession skipped — no startedAt or no category');
+    return;
+  }
 
+  trace('recordSession', row.started_at);
   enqueue(row);
 }
