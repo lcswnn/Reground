@@ -354,10 +354,11 @@ export const BREATHE_INTRO = {
    * rounds to three: the count because it is interpolated, the length because
    * the test stopped passing.
    *
-   * This used to end "…and Tully breathes with it", which stopped being true
-   * the moment `SHOW_TULLY` went false in `breathing-guide.tsx`: the line
-   * promised a character the next screen no longer has. Put the clause back
-   * when the flag goes back up — it belongs with it, not without it.
+   * This used to end "…and Tully breathes with it". The clause went when the
+   * character was switched off on the breathing screen and is staying gone now
+   * that they have been removed from the app: the line described the screen and
+   * the screen changed. What is left describes the circle, which is the whole of
+   * what the next screen shows.
    */
   shape: (rounds: number) =>
     `${rounds} rounds, about half a minute. The circle grows as you breathe in and shrinks as you breathe out.`,

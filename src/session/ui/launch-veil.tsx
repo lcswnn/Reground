@@ -58,8 +58,15 @@ import { splashHoldsForMs } from "@/lib/splash";
  * that way. This view is a copy of the native splash drawn in React so the
  * grain can sit over it — see the note above — and the handoff between the two
  * is only invisible while both are showing the same picture at the same size.
+ *
+ * It is the app icon, and it used to be a drawing of Tully waving. The wave was
+ * the app introducing a character on the way in, which is a thing to say at the
+ * top of a launch only if the character turns up again later; Tully has been
+ * taken out of the app, so it no longer did. The icon is what the user just
+ * tapped, which makes the splash a continuation of that tap rather than a
+ * title card for someone who never appears.
  */
-const mark = require("../../../assets/Tully-wave.png");
+const mark = require("../../../assets/New-Icon-19.png");
 
 /**
  * `expo.splash.backgroundColor` in `app.json`, written out rather than read from
@@ -79,15 +86,19 @@ const BACKGROUND = "#EDE6D6";
  * be the same number: this view is a copy of the native splash and the handoff
  * between them is only invisible while both draw the mark at one size.
  *
- * It came down from 260 to 180 — Tully at that width filled a third of a phone
- * and read as a character being introduced, where the splash is a held breath
- * before the app rather than a title card — went back up to 220 as the middle of
- * that argument, and is now 120, matching `app.json`. This value drifted from
- * the plugin's once, and the symptom is worth recording because it does not look
- * like a mismatch: the plugin was at 120 while this was left at 180, so the mark
- * grew at the handoff and the launch read as *two* splashes, a small Tully and
- * then a big one, rather than one plate held and released. There is no size that
- * is right here independent of `app.json`; there is only the same number twice.
+ * It came down from 260 through 180 and 220 to 120, most of that argument being
+ * about how large a drawing the launch should open on. The drawing is gone now —
+ * the mark is the app icon — but the number stayed at the bottom of that range,
+ * because the reasoning survived the change of picture: the splash is a held
+ * breath before the app rather than a title card, and at 120 the paper around
+ * the mark is the larger part of the screen.
+ *
+ * This value drifted from the plugin's once, and the symptom is worth recording
+ * because it does not look like a mismatch: the plugin was at 120 while this was
+ * left at 180, so the mark grew at the handoff and the launch read as *two*
+ * splashes, a small one and then a big one, rather than one plate held and
+ * released. There is no size that is right here independent of `app.json`; there
+ * is only the same number twice.
  */
 const MARK_SIZE = 120;
 

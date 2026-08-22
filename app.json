@@ -35,7 +35,7 @@
         "expo-splash-screen",
         {
           "backgroundColor": "#EDE6D6",
-          "image": "./assets/Tully-wave.png",
+          "image": "./assets/New-Icon-19.png",
           "imageWidth": 120,
           "resizeMode": "contain"
         }

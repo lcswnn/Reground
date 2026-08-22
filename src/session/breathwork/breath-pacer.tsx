@@ -6,10 +6,10 @@
  * The two are the same idea and deliberately not the same file. That one paces
  * the opening physiological sigh: a fixed five-phase cycle whose lengths are
  * tuning rather than instruction, with per-phase easings chosen to make a
- * snatched top-up read as snatched, and with Tully's nine poses scheduled
- * against phase names it hard-codes. Generalising it would mean making every
- * one of those decisions a parameter, and the parameter values that produced
- * the sigh are exactly the ones nobody should be able to change by accident.
+ * snatched top-up read as snatched, against phase names it hard-codes.
+ * Generalising it would mean making every one of those decisions a parameter,
+ * and the parameter values that produced the sigh are exactly the ones nobody
+ * should be able to change by accident.
  *
  * This one is the other case: a cycle read off data, of any length, where the
  * numbers are a promise made to the user by name — "4 in, hold 7, out 8" — and

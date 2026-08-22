@@ -177,65 +177,6 @@ export const BREATH_CYCLES = Math.max(
 );
 
 /**
- * Tully, who breathes along with the circle.
- *
- * Tully is drawn, not animated: nine poses, and the breath is which one is on
- * screen. `poseMs` gives each pose its share of the phase it belongs to — one
- * array per phase, in cycle order, and each array has to sum to that phase's
- * duration above. `tully-cycle.test.ts` holds that invariant, because the
- * failure mode of breaking it is Tully quietly falling out of step with the
- * circle rather than anything throwing.
- *
- * Only the way up was drawn. The exhale walks the same poses back down, which
- * is why the counts below are lopsided in the way they are: eight beats climb,
- * and seven come back down over more than twice the time. Slower on the way
- * down is the point — the exhale is the long phase, and a Tully who finished
- * deflating early would leave the user still breathing out at a Tully who had
- * stopped.
- *
- * `secondInhale` is the tight one: three beats inside 600ms, which is not far
- * off the shimmer rate below. That is the fastest anything here moves, and it
- * is deliberate — the top-up is a snatched breath, and drawn at first-inhale
- * pace it would read as one long inhale with a stumble in it. If it ever needs
- * to breathe more, `BREATHING.secondInhaleMs` is the number to move, not this
- * one; these only decide how that phase is divided up.
- *
- * The hold is a single beat on purpose. Splitting it would start Tully
- * deflating during the phase whose whole job is that nothing moves, so the top
- * drawing keeps all of it and the first step down belongs to the exhale.
- */
-export const TULLY = {
-  /**
-   * How long one of the three hand-drawn outlines holds before the next.
-   * ~8fps, which is the rate the wobble was drawn at — faster reads as noise,
-   * slower reads as a stutter.
-   */
-  shimmerMs: 120,
-  poseMs: {
-    // Five beats, still even, now 176 each — 500, then 360, 300, 280, then
-    // this, each time because `firstInhaleMs` came down and these have to
-    // re-tile it exactly or Tully drifts a little further from the circle every
-    // cycle. Five and not four: `brim` is the top of the first inhale and the
-    // only phase it appears in, so dropping a beat here would drop a drawing out
-    // of the app entirely.
-    //
-    // The top-up's three beats are now 100ms apart, which is inside the shimmer
-    // rate below. That is as tight as this can go: at a shorter
-    // `secondInhaleMs` the poses would change faster than the wobble they are
-    // drawn with, and Tully would read as flickering rather than moving. Cut
-    // the beat count before cutting the phase any further.
-    firstInhale: [176, 176, 176, 176, 176],
-    secondInhale: [100, 100, 100],
-    hold: [1_000],
-    // Re-tiled for the shorter exhale, keeping the ramp: each beat is a little
-    // longer than the one before, so the descent slows as it empties instead of
-    // dropping at a constant rate. Sums to `exhaleMs` — the test is what says so.
-    exhale: [380, 405, 420, 435, 445, 450, 465],
-    rest: [1_200],
-  },
-} as const;
-
-/**
  * The 5-4-3-2-1's crossfade: out, a beat of nothing, in.
  *
  * The beat is the part that matters. A straight cut, or a fade with no gap

@@ -15,16 +15,13 @@
  * still animated on the UI thread; only the four transitions per cycle cross
  * back.
  *
- * Tully, on the top half, is driven from the same machine. They are drawn rather
- * than animated — nine poses, and the breath is which one is showing — so they
- * cannot be interpolated the way the circle is, and they need their own beats
- * inside each phase. Those come from `tully-cycle.ts` and are scheduled off the
- * phase's own start below, so the two halves cannot drift apart no matter how
- * long the screen runs.
- *
- * Tully is currently switched off — see `SHOW_TULLY`. Everything above is still
- * true of the code and stops being true of the screen only while that flag is
- * false.
+ * This screen used to have a second half: a drawn character, Tully, on the top
+ * of it, breathing along with the circle off the same phase machine. They were
+ * switched off behind a flag for a long while before being removed outright,
+ * and the removal took the pose cycle, the artwork and the split layout with
+ * it. What is left is the circle, alone and back at the size it had before any
+ * of that arrived — which is why the sizing constants below are one pair rather
+ * than the two the split needed.
  *
  * ## Three bands, and only one of them is in the flow
  *
@@ -69,8 +66,6 @@ import { BREATHING_COPY } from '@/content/strings';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { withAlpha } from '@/lib/color';
-import { BreathingTully } from '@/session/breathing/breathing-tully';
-import { LEAD_IN_POSE, STILL_POSE, TULLY_CYCLE } from '@/session/breathing/tully-cycle';
 import {
   breathGlowSize,
   BreathGlow,
@@ -80,21 +75,6 @@ import { type BreathPhase } from '@/session/ui/breath-pulse';
 import { pulseBreath } from '@/session/ui/haptics';
 
 type Phase = 'inhale-1' | 'inhale-2' | 'hold' | 'exhale' | 'rest';
-
-/**
- * Tully on the breathing screen: off for now, and one word from being back.
- *
- * Nothing was deleted to do this. The artwork, the pose cycle, the beats inside
- * each phase and the layout that gave them the top half are all still here and
- * all still correct — this only decides whether any of it runs. Flip to `true`
- * and the screen is exactly what it was: Tully above, circle below, sharing a
- * centre line. Left as `false`, the circle takes the whole screen back at the
- * size it had before Tully arrived, and their beats are never scheduled.
- *
- * Annotated `boolean` rather than left to infer `false`, so both branches stay
- * type-checked and neither rots while the flag is down.
- */
-const SHOW_TULLY: boolean = false;
 
 /**
  * Not zero, and not near it: an emptied circle reads as "finished" rather than
@@ -117,36 +97,17 @@ const MID_SCALE = 0.82;
 const GLOW_REACH = 1.45;
 
 /**
- * The circle used to own the screen. It now has the bottom half of it, so it
- * is bounded by height as well as width — on a short screen the width-derived
- * size would push the cue and the track into Tully.
- */
-const DIAMETER_RATIO = 0.58;
-const DIAMETER_HEIGHT_RATIO = 0.22;
-const MAX_DIAMETER = 260;
-
-/**
- * And the sizing from before that, for while Tully is off: one ratio against
- * the shorter side, because with nothing above it the circle is no longer
- * competing for height with anything and can go back to owning the screen.
- */
-const SOLO_DIAMETER_RATIO = 0.6;
-const SOLO_MAX_DIAMETER = 300;
-
-/**
- * Tully, bounded on the same two axes as the circle so the pair keep their
- * relative sizes on any screen rather than one of them hitting a cap first.
+ * The circle owns the screen: one ratio against the shorter side, because there
+ * is nothing above it to compete for height with.
  *
- * Sized as a square, and the artwork's 1.15 aspect means `contain` fits them to
- * the width and leaves the spare above and below. That spare is what they grow
- * into: the union crop is sized for their fullest pose, so at the bottom of the
- * breath they are a good deal shorter than the box. Deliberately smaller than
- * the circle — the circle is the thing to breathe with, and a Tully that
- * outweighs it turns the screen into a picture of Tully with a timer under it.
+ * It briefly took only the bottom half — bounded on width *and* height, at 0.58
+ * and a 260 cap — for as long as there was a drawn character sharing the screen
+ * with it. That pairing is gone and these are the numbers from before it, which
+ * is the right place to land: a circle somebody is asked to watch for half a
+ * minute should be the largest thing in front of them.
  */
-const TULLY_RATIO = 0.44;
-const TULLY_HEIGHT_RATIO = 0.19;
-const MAX_TULLY = 190;
+const DIAMETER_RATIO = 0.6;
+const MAX_DIAMETER = 300;
 
 interface Step {
   phase: Phase;
@@ -163,9 +124,6 @@ interface Step {
   pulse: BreathPhase | null;
   cue: string | null;
 }
-
-/** The Tully poses that fill each phase. Keyed so the two lists can't slip. */
-const posesFor = (phase: Phase) => TULLY_CYCLE[phase];
 
 const CYCLE: readonly Step[] = [
   {
@@ -266,21 +224,12 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
   const { width, height } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
 
-  const diameter = SHOW_TULLY
-    ? Math.min(width * DIAMETER_RATIO, height * DIAMETER_HEIGHT_RATIO, MAX_DIAMETER)
-    : Math.min(Math.min(width, height) * SOLO_DIAMETER_RATIO, SOLO_MAX_DIAMETER);
-  const tullySize = Math.min(width * TULLY_RATIO, height * TULLY_HEIGHT_RATIO, MAX_TULLY);
+  const diameter = Math.min(Math.min(width, height) * DIAMETER_RATIO, MAX_DIAMETER);
 
   const scale = useSharedValue(MIN_SCALE);
   const progress = useSharedValue(0);
   /** `null` until the lead-in is over. Nothing is cued before the breath starts. */
   const [step, setStep] = useState<number | null>(null);
-  /**
-   * Starts at the floor of the breath, where the circle also starts, so Tully
-   * is already sitting at the bottom when the screen fades in rather than
-   * appearing mid-inhale.
-   */
-  const [pose, setPose] = useState<number>(LEAD_IN_POSE);
 
   // Held in a ref so the effect below can stay mounted for the whole minute
   // instead of tearing down and restarting the breath on every phase change.
@@ -297,35 +246,9 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     const cycles = BREATH_CYCLES;
     let index = 0;
     let timeout: ReturnType<typeof setTimeout> | undefined;
-    // Tully's beats inside the current phase. At most six are ever pending,
-    // and they are replaced wholesale on every phase change.
-    let poseTimers: ReturnType<typeof setTimeout>[] = [];
     let cancelled = false;
     /** The pulse train of the phase now running. Stopped before the next one. */
     let stopPulses: (() => void) | undefined;
-
-    const clearPoses = () => {
-      for (const id of poseTimers) clearTimeout(id);
-      poseTimers = [];
-    };
-
-    /**
-     * Re-anchored to the phase boundary every time, rather than chained off the
-     * previous pose. Over four cycles a chain would accumulate every timer's
-     * overshoot and Tully would end the minute visibly behind the circle;
-     * this way each phase's error is at most one timer deep and never carries.
-     */
-    const schedulePoses = (beats: ReturnType<typeof posesFor>) => {
-      clearPoses();
-      setPose(beats[0].pose);
-
-      let at = 0;
-      for (let i = 1; i < beats.length; i += 1) {
-        at += beats[i - 1].ms;
-        const next = beats[i].pose;
-        poseTimers.push(setTimeout(() => setPose(next), at));
-      }
-    };
 
     // Delayed by the same lead-in, so the line starts moving when the breath
     // does rather than while the circle is still.
@@ -335,16 +258,13 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     );
 
     // Reduce Motion: the circle opens once and stays open. Everything below
-    // still runs, so the cues and the ticks keep pacing the breath. Tully's
-    // half of this is a render-time substitution rather than a write from here
-    // — see `shownPose`.
+    // still runs, so the cues and the ticks keep pacing the breath.
     if (reducedMotion) scale.value = withTiming(1, { duration: 400 });
 
     const run = () => {
       if (cancelled) return;
 
       if (index >= cycles * CYCLE.length) {
-        clearPoses();
         onDoneRef.current();
         return;
       }
@@ -364,19 +284,12 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
 
       // Honouring Reduce Motion by holding the circle still, rather than by
       // animating it more gently: someone who asked the system to stop things
-      // moving asked for exactly that. Tully is held for the same reason —
-      // they are the louder of the two, so animating them here would defeat the
-      // setting more than the circle would.
+      // moving asked for exactly that.
       if (!reducedMotion) {
         scale.value = withTiming(current.scale, {
           duration: current.ms,
           easing: current.easing,
         });
-        // No timers for a Tully nobody can see: with the flag down this is the
-        // only thing between the phase machine and up to six pending callbacks
-        // per phase, for a whole minute, driving a state update that renders
-        // nothing.
-        if (SHOW_TULLY) schedulePoses(posesFor(current.phase));
       }
 
       index += 1;
@@ -390,7 +303,6 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     return () => {
       cancelled = true;
       if (timeout) clearTimeout(timeout);
-      clearPoses();
       stopPulses?.();
     };
   }, [progress, reducedMotion, scale]);
@@ -425,27 +337,8 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
   const cueExitMs =
     at === null ? CUE_FADE_MS : cueFadeFor(CYCLE[(at + 1) % CYCLE.length].ms);
 
-  // Under Reduce Motion nothing schedules a pose, so `pose` is left at the
-  // lead-in value. Substituting here rather than writing the still pose into
-  // state keeps the effect free of a synchronous setState, and means Tully
-  // is correct on the very first render instead of one render later.
-  const shownPose = reducedMotion ? STILL_POSE : pose;
-
   return (
     <View style={styles.root}>
-      {/* Top half. Tully is centred in it on both axes, which puts them
-          directly over the circle below — the two share a centre line, so the
-          screen reads as one column rather than two stacked things.
-
-          The artwork's canvas is identical across all nine poses, so Tully
-          grow up and out of a fixed footprint as the breath fills them instead
-          of shifting around as the pose changes. */}
-      {SHOW_TULLY ? (
-        <View style={styles.tullyHalf}>
-          <BreathingTully pose={shownPose} size={tullySize} still={reducedMotion} />
-        </View>
-      ) : null}
-
       <View style={styles.breathHalf}>
         <View style={styles.cueSlot}>
           {cue ? (
@@ -523,22 +416,11 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     alignItems: 'center',
   },
-  // Two equal halves rather than one centred column, while there are two of
-  // them. The split is the layout: Tully is who you are breathing with and the
-  // circle is the breath, and stacking them at the same weight is what stops
-  // either reading as decoration hung off the other.
-  //
-  // With `SHOW_TULLY` false the top half is not rendered at all, so `breathHalf`
-  // is the only flex child and its `justifyContent: 'center'` centres the circle
-  // on the screen rather than in a bottom half. Nothing here needs changing to
-  // switch between the two.
-  tullyHalf: {
-    flex: 1,
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingBottom: Spacing.two,
-  },
+  // The only flex child, so its `justifyContent: 'center'` centres the circle on
+  // the screen. It is still called a half because it was one — this sat under a
+  // matching band that held the drawn character, and the two split the screen
+  // evenly so neither read as decoration hung off the other. With that band gone
+  // the name is the last of it, and the layout needs nothing else to say so.
   breathHalf: {
     flex: 1,
     alignSelf: 'stretch',

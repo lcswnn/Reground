@@ -14,20 +14,21 @@
  * The session state was already cleared on the way in, so nothing entered is
  * still in memory behind this.
  *
- * ## Tully, asleep, above the line
+ * ## There is no drawing here any more
  *
- * The one drawing on this screen and one of the few in the app — see
- * `SHOW_TULLY` in `breathing-guide.tsx` for the other, which is currently
- * switched off. It is here rather than anywhere else because this is the only
- * screen with nothing to do on it: a picture on a screen that is asking for
- * something competes with the asking, and a picture on a screen that has
- * finished asking is just the last thing you see.
+ * There used to be one: Tully, asleep, over the line. It earned its place by
+ * doing what the sentence does in a register the sentence cannot reach — the
+ * line tells the user to put the phone down and the character was already
+ * doing it — and this was the only screen in the app with nothing to do on it,
+ * so a picture here competed with nothing.
  *
- * Asleep specifically, and that is the whole of why it earns its place. The
- * sentence under it tells the user to put the phone down; a character doing
- * exactly that says the same thing in the register the sentence cannot reach,
- * and nobody has to read it. It is the app going quiet rather than the app
- * waving goodbye.
+ * Tully has been taken out of the app entirely, so the argument no longer has
+ * anything to attach to. It is recorded because the screen reads differently
+ * without it and the difference is not an oversight: the sign-off now carries
+ * the whole of the ending on its own, which is what the stage-direction voice
+ * was written for in the first place. If a drawing ever comes back to this
+ * screen, the case above is the case for it — it has to be doing something the
+ * line cannot, not filling the space the line is sitting in.
  *
  * ## The one link
  *
@@ -81,7 +82,6 @@
  */
 
 import { Linking, StyleSheet, View } from 'react-native';
-import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
@@ -92,21 +92,14 @@ import { SessionScreen } from '@/session/ui/session-screen';
 import { StageDirection } from '@/session/ui/stage-direction';
 
 /**
- * The drawing, and how big it is allowed to be. See the note at the top of the
- * file for why it is on this screen and no other.
- */
-const sleeping = require('../../assets/Sleeping-Tully.png');
-const TULLY_SIZE = 140;
-
-/**
  * Half the chrome row, which is what `centered` has already cost this screen.
  *
  * `SessionScreen` centres its children in the space *under* the chrome, not on
  * the page — so a row of height H leaves the content sitting H/2 low. On every
  * other screen that is invisible, because there is a heading or a question
- * anchoring the top of the column. Here there is nothing but a drawing and one
- * line, and 25 points of drift is the whole difference between "centred" and
- * "slightly sunk".
+ * anchoring the top of the column. Here there is nothing but a line and the
+ * offer under it, and 25 points of drift is the whole difference between
+ * "centred" and "slightly sunk".
  *
  * The row on this screen is only the two round controls — no back button, and
  * `stageOf('/closed')` is null so there are no progress marks either. So its
@@ -118,12 +111,19 @@ const CHROME_HALF = (34 + Spacing.three) / 2;
 /**
  * How far above true centre the block then sits, once it is actually centred.
  *
- * Optical rather than geometric. The content is top-heavy — a 140-point drawing
- * over three short lines — so a block centred by its bounding box reads as
- * hanging low, and the empty screen underneath is what the eye measures it
- * against. A step up puts the sentence nearer where you are already looking.
+ * Zero, now that there is no drawing. This was `Spacing.four` and the reason was
+ * entirely the picture: a 140-point drawing over three short lines is top-heavy,
+ * so the block's bounding box centred it lower than it looked, and a step up put
+ * the sentence nearer where the eye already was. With the drawing gone the block
+ * is a line and a two-line offer under it — if anything bottom-heavy — and the
+ * same step up would now lift a light block visibly above centre, which is the
+ * opposite of the correction.
+ *
+ * Kept as a named zero rather than deleted, because the geometric correction
+ * below it is real on every device and this is the knob for the optical one on
+ * top. If the screen reads low again, this is the number to move.
  */
-const LIFT = Spacing.four;
+const LIFT = 0;
 
 export default function ClosedScreen() {
   const insets = useSafeAreaInsets();
@@ -144,21 +144,6 @@ export default function ClosedScreen() {
   return (
     <SessionScreen centered>
       <View style={[styles.root, { transform: [{ translateY: -lift }] }]}>
-        {/* Above the line and in the flow, so the sign-off keeps its place on
-            the screen and the drawing sits over it. `contain` rather than a
-            fixed height: the asset is square with a lot of air in it, and
-            letting it fit the box is what keeps Tully the size they look. */}
-        <Image
-          source={sleeping}
-          style={styles.tully}
-          contentFit="contain"
-          // Nothing is announced. It is a picture of the thing the sentence
-          // under it already says, and a screen reader that stops to describe
-          // a sleeping character on the way to "you may now close the app" is
-          // reading out the decoration and delaying the point.
-          accessible={false}
-        />
-
         <StageDirection>{CLOSED.line}</StageDirection>
 
         <View style={styles.tip}>
@@ -215,31 +200,12 @@ const styles = StyleSheet.create({
   root: {
     alignItems: 'center',
   },
-  // Sized as a square, with a clear gap under it. The drawing and the sentence
-  // are still one object, but at a line's worth of air they were one *crowded*
-  // object — the sentence read as a caption pinned to the picture rather than
-  // as the thing the screen is here to say. The extra room lets Tully finish
-  // before the line starts.
-  //
-  // Still a step tighter than the gap under the sign-off, and that ordering is
-  // the point: the drawing belongs to the line, the tip jar does not. If the
-  // two gaps ever match, the screen flattens into three evenly spaced things
-  // and the grouping is gone.
-  //
-  // 140 points is small enough that the screen is still mostly empty, which is
-  // the point of it. A larger Tully turns the last screen of the session into a
-  // picture with a caption.
-  tully: {
-    width: TULLY_SIZE,
-    height: TULLY_SIZE,
-    marginBottom: Spacing.four,
-  },
-  // A block's worth of space below the sign-off, and a step more than the gap
-  // over it: the drawing and the line are one thing, the offer is another, and
-  // this is the gap that says so. It keeps the tip jar from reading as the end
-  // of the sentence above it. Inside the offer the two lines take the gap the
-  // app gives the lines of one block, because that is what they are — one
-  // sentence with the link as its object.
+  // A block's worth of space below the sign-off. The gap used to be justified
+  // against the one above it — drawing and line as one thing, the offer as
+  // another — and with the drawing gone it is doing the simpler job of keeping
+  // the tip jar from reading as the end of the sentence above it. Inside the
+  // offer the two lines take the gap the app gives the lines of one block,
+  // because that is what they are — one sentence with the link as its object.
   tip: {
     alignItems: 'center',
     marginTop: Spacing.five,
