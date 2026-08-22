@@ -153,6 +153,30 @@ export const Colors = {
     border: "#D0CBC2",
 
     /**
+     * The two round controls in the chrome row — the crisis numbers and the
+     * appearance switch — and nothing else.
+     *
+     * Their own pair rather than `backgroundElement`/`border`, because they are
+     * the only controls in the app that do not sit on the page. `DaySky` draws a
+     * sunrise behind every light-mode screen, and at the top of the frame, which
+     * is where these live, it has resolved to a pale blue. A control tinted for
+     * the paper reads as a warm chip stuck on a cool sky — which is exactly what
+     * it looked like.
+     *
+     * So these are the same colours in blue, and deliberately in the same
+     * *relationship* rather than merely the same family. The old pair sat 2.4 ΔE
+     * off the paper with a border 8.6 ΔE off the fill: a fill you can barely find
+     * and an edge that does all the defining. This pair is 2.2 and 8.5 against
+     * the sky behind it, and carries ink at 6.62:1 where the old one carried
+     * 6.63:1. The controls are exactly as quiet as they were.
+     *
+     * The value assumes the sky at the top of the frame. If `STOPS` in
+     * `sunrise.ts` is retuned, these move with it.
+     */
+    chrome: "#DCE4ED",
+    chromeBorder: "#C3CDDA",
+
+    /**
      * The tab bar's top edge, and only that — the one line that separates chrome
      * from content rather than one card from another, so it runs heavier than
      * `border`. Ink at 35%.
@@ -246,6 +270,19 @@ export const Colors = {
 
     /** Paper at 20%. */
     border: "#767476",
+
+    /**
+     * The chrome row's two round controls — see the light scheme for why they
+     * have a pair of their own at all.
+     *
+     * Unchanged from `backgroundElement`/`border`, which is what they were, and
+     * that is the right answer here rather than an oversight. The reason the
+     * light scheme needed its own values is that it has a sunrise behind it; the
+     * dark scheme's background is the flat ink page with stars on it, so a
+     * control tinted for the page is already tinted for what is behind it.
+     */
+    chrome: "#565459",
+    chromeBorder: "#767476",
 
     /** See the light scheme. Paper at 35%. */
     barDivider: "#8B898B",

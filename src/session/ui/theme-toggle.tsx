@@ -157,7 +157,7 @@ export function ThemeToggle() {
       }}
       style={({ pressed }) => [
         styles.button,
-        { borderColor: theme.border, backgroundColor: theme.backgroundElement },
+        { borderColor: theme.chromeBorder, backgroundColor: theme.chrome },
         pressed && styles.pressed,
       ]}>
       {/* Both pictures are always mounted and always in the same place; which
@@ -171,12 +171,7 @@ export function ThemeToggle() {
             indistinguishable from one on a surface this flat. It does mean the
             crescent only works while the button has a fill: if this ever goes
             transparent, this disc has to take `theme.background` instead. */}
-        <View
-          style={[
-            styles.bite,
-            { backgroundColor: theme.backgroundElement },
-          ]}
-        />
+        <View style={[styles.bite, { backgroundColor: theme.chrome }]} />
       </Animated.View>
 
       <Animated.View style={[styles.icon, sunStyle]}>

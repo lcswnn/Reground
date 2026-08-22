@@ -119,7 +119,7 @@ export default function BreatheIntroScreen() {
                 against a serif's 400, which is a real difference in voice.
                 The app is on one sans now and the two cuts differ only in
                 weight, so all the reading cut bought here was a lighter
-                heading. See `readingCut`, which still has one caller. */}
+                heading. See `readingCut`, which has no callers left at all. */}
             <ThemedText type="title">
               {BREATHE_INTRO.body}
             </ThemedText>

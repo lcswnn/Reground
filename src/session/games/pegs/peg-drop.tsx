@@ -62,6 +62,8 @@ import {
   GRAVITY,
   launchSpeed,
   layField,
+  LAUNCH_Y,
+  MAX_AIM,
   type Peg,
 } from '@/session/games/pegs/playfield';
 
@@ -90,30 +92,9 @@ const SUBSTEPS = 4;
 /** Longest frame the physics will believe. A locked screen hands us a huge one. */
 const MAX_FRAME_MS = 48;
 
-/** How far down the board the ball is released from. */
-const LAUNCH_Y = 26;
-
 /** The socket the ball sits in until it is let go, and the dots of the guide. */
 const SOCKET_RADIUS = 7;
 const GUIDE_DOT_RADIUS = 2;
-
-/**
- * How far off straight down a ball can be aimed, in radians. 1.35 is 77°.
- *
- * Still short of horizontal on purpose. A ball fired flat runs the ceiling from
- * wall to wall and takes several seconds to come down through anything, and the
- * aim that does it is easy to reach for by accident on a small board.
- *
- * It was 66°, which was short of horizontal by rather too much: the top row of
- * pegs stands at three tenths down the board and its outermost peg is about 130
- * points off the middle on a phone, and a ball launched at 66° had travelled
- * only 110 of them by the time it had fallen that far. The corners of the top
- * row were not a hard shot, they were not a shot — they could only be reached
- * off a wall, and only by accident. See `LAUNCH_RATIO`, which was raised with
- * this: the angle alone brought the far peg to about a point inside the
- * possible, which is a different way of being unreachable.
- */
-const MAX_AIM = 1.35;
 
 /**
  * The dotted arc out of the launcher: how many dots, and how far apart they sit
@@ -157,7 +138,20 @@ export function PegDrop() {
   const theme = useTheme();
 
   const [box, setBox] = useState({ width: 0, height: 0 });
-  const [pegs, setPegs] = useState<Peg[]>(() => layField());
+  /**
+   * Empty until the board has been measured, which is a frame or two after
+   * mount and is the first moment a field can honestly be laid.
+   *
+   * It used to be laid in the initialiser, before anything knew how big the
+   * board was, and that was the bug: how far in the outermost pegs have to
+   * stand depends on the shape of the board they stand on — see
+   * `reachableSide`. A field laid without those numbers is a field whose corners
+   * may be outside the ball's reach, which is exactly what was happening.
+   *
+   * The board is portrait-locked (`app.json`) so this settles once and the field
+   * is never re-laid underneath a game in progress.
+   */
+  const [pegs, setPegs] = useState<Peg[]>([]);
   const [out, setOut] = useState<ReadonlySet<number>>(() => new Set());
   const [status, setStatus] = useState<Status>('aiming');
 
@@ -279,20 +273,40 @@ export function PegDrop() {
       fieldShown.value = withTiming(0, { duration: FADE_MS });
       after(FADE_MS, () => {
         outIds.current = new Set();
-        setPegs(layField());
+        setPegs(layField(box));
         setOut(new Set());
         fieldShown.value = withTiming(1, { duration: FADE_MS });
         tickDissolve();
         changing.current = false;
       });
     });
-  }, [after, cleared, fieldShown, status]);
+  }, [after, box, cleared, fieldShown, status]);
 
   const onLayout = (event: LayoutChangeEvent) => {
     const { width, height } = event.nativeEvent.layout;
     boardW.value = width;
     boardH.value = height;
     setBox({ width, height });
+
+    /**
+     * The first field, laid here because here is the first moment it can be laid
+     * honestly: how far in the outermost pegs have to stand is a question about
+     * the shape of the board, and this is where the board's shape arrives. See
+     * `reachableSide`.
+     *
+     * In the layout handler rather than an effect watching `box`, which is what
+     * this was first written as — laying a field is a response to an event, not
+     * a synchronisation with rendered state, and `react-hooks/set-state-in-effect`
+     * is right to say so.
+     *
+     * Guarded on the field being empty, so a second layout pass — a keyboard, a
+     * split-view drag — cannot sweep away a game in progress. A field that has
+     * been cleared is replaced by the effect above, on its own pause and fade,
+     * and this must not race it.
+     */
+    setPegs((current) =>
+      current.length > 0 ? current : layField({ width, height }),
+    );
 
     /**
      * The ball, in the socket, ready to be aimed.

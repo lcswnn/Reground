@@ -3,11 +3,11 @@
  * that doesn't run wider than a comfortable measure on a tablet.
  *
  * There is a sky behind all of it, and which one depends on the scheme: stars
- * in dark mode (`NightSky`), clouds in light (`DaySky`). Both are mounted here
- * and nowhere else. The sheets that draw their own frames (the crisis numbers,
- * the region picker, the sharing panel) deliberately get neither: those are
- * cards over a scrim rather than the page, and a sky inside a card is a picture
- * of a sky.
+ * overhead in dark mode (`NightSky`), a banded sunrise along the foot of the page
+ * in light (`DaySky`). Both are mounted here and nowhere else. The sheets that
+ * draw their own frames (the crisis numbers, the region picker, the sharing
+ * panel) deliberately get neither: those are cards over a scrim rather than the
+ * page, and a sky inside a card is a picture of a sky.
  *
  * No header beyond one thin row of chrome: a back button top-left on the
  * screens that have somewhere to go back to — see `previousRoute` for which do

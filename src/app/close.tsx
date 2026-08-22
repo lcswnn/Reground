@@ -28,7 +28,7 @@
  * nothing. `Rule` has no alignment of its own for exactly this reason: it
  * follows whatever holds it.
  *
- * ## The idea is the biggest thing under the heading now
+ * ## The idea is the thing to look at, and the block is what says so
  *
  * The order of emphasis under the title used to run the other way: "Now try to
  * unwind…" at the heading tier, and the suggestion below it in muted body copy,
@@ -38,12 +38,22 @@
  * saying put the phone down; the idea is the only thing on the page they have
  * not seen before, and it is the thing they leave holding.
  *
- * So the instruction comes down a tier to body copy, and the idea goes up one
- * to the heading tier and out into its own block, marked with a `Rule` standing
- * at its left. That mark is doing what an indent and a bar do in a book: this
- * paragraph is a different kind of thing from the ones around it. It stays
- * muted, which is what keeps it a suggestion — the size says look here, the ink
- * says you can also not.
+ * So the instruction came down a tier to body copy, and the idea went out into
+ * its own block, marked with a `Rule` standing at its left. That mark is doing
+ * what an indent and a bar do in a book: this paragraph is a different kind of
+ * thing from the ones around it.
+ *
+ * The idea went up to the heading tier as well for a while, and has since come
+ * back to body. Both were emphasis, and it turned out to be one too many: at 20
+ * points, in its own ruled block, under its own label, a sentence somebody is
+ * explicitly free to ignore was the loudest thing on a screen whose job is to
+ * end. The block, the rule and the eyebrow already say *this is the different
+ * one*; the size was saying it a fourth time.
+ *
+ * What is left is the same order of emphasis carried by position rather than by
+ * scale — instruction, then a ruled block — and both lines now sit at the same
+ * size, which is the size the app reads at. It stays muted, which is what keeps
+ * it a suggestion.
  *
  * "Idea" sits above it rather than in front of it, in the eyebrow slot. Inline,
  * it was a word the eye had to get past before the suggestion started, and at
@@ -58,7 +68,7 @@ import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { useRouter } from 'expo-router';
 
-import { readingCut, ThemedText } from '@/components/themed-text';
+import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
 import { CLOSE, pickUnwindIdea } from '@/content/strings';
 import { Spacing } from '@/constants/theme';
@@ -114,16 +124,15 @@ export default function CloseScreen() {
               {CLOSE.ideaHeading}
             </ThemedText>
             {/* Muted, so it stays a suggestion rather than a fourth instruction
-                — the tier says look at this, the ink says you don't have to.
+                — the block says look at this, the ink says you don't have to.
 
-                The heading tier's size in the reading cut: the heading tier is
-                set in the display face, which is the semibold, and a whole
-                paragraph of it would read as a second heading rather than as
-                something to consider. See `readingCut`, which hands back the
-                body face and keeps the size. */}
-            <ThemedText type="subtitle" themeColor="textMuted" style={readingCut}>
-              {idea}.
-            </ThemedText>
+                The body tier, down from the heading tier it briefly held. At 20
+                points a whole sentence of suggestion sat on the page with about
+                the weight of a second title, which is more than a thing somebody
+                is free to ignore should be asking for. It no longer needs
+                `readingCut` either: that existed to hand the heading tier back
+                the body face, and this tier is already set in it. */}
+            <ThemedText themeColor="textMuted">{idea}.</ThemedText>
           </View>
         </View>
 

@@ -11,16 +11,21 @@ import {
 } from 'react';
 import { Appearance } from 'react-native';
 
+import { openingAppearance, phaseAt } from '@/lib/appearance-clock';
+
 export type ThemePreference = 'light' | 'dark';
 
 const STORAGE_KEY = 'humanitas.appearance';
 
 /**
- * Light unless the user has said otherwise — the palette was drawn for paper
- * first, and the system scheme is deliberately not consulted. Someone whose
- * phone is dark all evening still gets the app they chose.
+ * The half of the day the stored choice was made in.
+ *
+ * Its own key rather than a field on a JSON blob, so that a reader who set the
+ * switch before this existed simply has a missing value here rather than an
+ * unparseable one — see `openingAppearance`, which treats the two the same and
+ * lets the old choice expire at the next boundary.
  */
-const DEFAULT_PREFERENCE: ThemePreference = 'light';
+const PHASE_KEY = 'humanitas.appearance.phase';
 
 /**
  * Read synchronously at first render.
@@ -29,14 +34,24 @@ const DEFAULT_PREFERENCE: ThemePreference = 'light';
  * is a real blocking read rather than a promise — which is the whole point.
  * Loading the preference in an effect would paint one frame of light theme
  * before flipping to dark.
+ *
+ * The clock is read once, here, and never again. Deciding at launch is the whole
+ * design: an app that flipped to dark at six in the evening while somebody was
+ * partway through a session would be changing the room around them mid-breath,
+ * which is the opposite of what any of this is for. The session ends in the
+ * appearance it started in, and the next launch asks the question again.
  */
-function readStoredPreference(): ThemePreference {
+function readOpeningPreference(): ThemePreference {
   try {
-    return localStorage.getItem(STORAGE_KEY) === 'dark' ? 'dark' : DEFAULT_PREFERENCE;
+    return openingAppearance(
+      localStorage.getItem(STORAGE_KEY),
+      localStorage.getItem(PHASE_KEY),
+      new Date(),
+    );
   } catch {
     // Storage is unavailable on some web contexts (private mode, blocked
-    // cookies). A missing preference is not worth failing a render over.
-    return DEFAULT_PREFERENCE;
+    // cookies). The clock still works, and it is the better half of the answer.
+    return openingAppearance(null, null, new Date());
   }
 }
 
@@ -83,10 +98,10 @@ function applyNativeAppearance(preference: ThemePreference): void {
   }
 }
 
-applyNativeAppearance(readStoredPreference());
+applyNativeAppearance(readOpeningPreference());
 
 export function ThemePreferenceProvider({ children }: PropsWithChildren) {
-  const [preference, setStoredPreference] = useState<ThemePreference>(readStoredPreference);
+  const [preference, setStoredPreference] = useState<ThemePreference>(readOpeningPreference);
 
   // Keeps native views in step when the switch is flipped at runtime.
   useEffect(() => {
@@ -98,6 +113,10 @@ export function ThemePreferenceProvider({ children }: PropsWithChildren) {
     setStoredPreference(next);
     try {
       localStorage.setItem(STORAGE_KEY, next);
+      // Stamped with the half of the day it was chosen in, which is what lets it
+      // expire at the next boundary instead of overriding the clock forever.
+      // See `openingAppearance` for why a choice is meant to expire at all.
+      localStorage.setItem(PHASE_KEY, phaseAt(new Date()));
     } catch {
       // Same as above — the choice still applies for this session.
     }

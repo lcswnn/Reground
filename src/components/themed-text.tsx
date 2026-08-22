@@ -119,11 +119,16 @@ const ON_FILL = new Set<ThemeColor>([
  * bought nothing except less ink. Titles are titles again, in the cut drawn for
  * them.
  *
- * What is left is the caller it was always most right for: a whole paragraph
- * set at the heading tier — see `close.tsx` — where the size is doing the work
- * of drawing the eye and the weight would turn a suggestion into a second
- * heading. Size and leading still come from the tier; this changes the face and
- * nothing else.
+ * Its last caller has now gone too. `close.tsx` used it for the unwinding idea,
+ * which was a whole paragraph at the heading tier and exactly the case this was
+ * kept for — and that paragraph has since come down to the body tier, which is
+ * set in the reading cut already.
+ *
+ * So this currently overrides nothing anywhere. It is kept rather than deleted
+ * because the case it answers is a real one that recurs — a long line set large,
+ * where the display weight turns a sentence into a heading — and the argument
+ * for it is worth more than the four tokens it costs. If a second release goes
+ * by with no caller, delete it; the reasoning is in git.
  */
 export const readingCut = { fontFamily: Fonts.body } as const;
 

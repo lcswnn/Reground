@@ -187,8 +187,8 @@ export function SupportButton() {
         style={({ pressed }) => [
           styles.button,
           {
-            borderColor: theme.border,
-            backgroundColor: theme.backgroundElement,
+            borderColor: theme.chromeBorder,
+            backgroundColor: theme.chrome,
           },
           pressed && styles.pressed,
         ]}

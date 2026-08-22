@@ -1,327 +1,135 @@
 /**
- * Clouds on the paper page, and only on the paper page.
+ * A sunrise behind the paper page, and only the paper page.
  *
  * The light scheme's half of what `NightSky` does for the dark one.
  * `SessionScreen` mounts exactly one of the two, on the same condition, in the
- * same place, and neither ever appears on the other's scheme.
+ * same place, and neither ever appears on the other's scheme. The dark page is a
+ * lit screen in an unlit room and gets stars overhead; the light page is paper in
+ * daylight and gets the sky.
  *
- * The pairing is the idea: the dark page is a lit screen in an unlit room, so it
- * gets a night sky; the light page is paper in daylight, so it gets a day one.
+ * It fills the screen rather than sitting along the bottom, and it has to. The
+ * ramp runs gold at the horizon, through the warm neutral where that light gives
+ * out, into pale blue — and a sky that stops halfway up is a picture of a sky
+ * pasted onto a page, with an edge to prove it. Running the full height, the
+ * page *is* the sky, so there is no seam anywhere to find.
  *
- * ## Darker than the paper, not lighter
+ * ## A gradient, drawn from what used to be bands
  *
- * There is no room to go lighter. The page is `#EDE6D6` and the only thing above
- * it is white, so a pale cloud has about six percent of a channel to work in and
- * arrives as a faintly washed patch with no edge — which is the failure this
- * component was written after. The version before it was a warm gradient at 7%
- * alpha, and the honest report on it was that it did not seem to do anything.
+ * This was nine flat colours with hard edges, a screen-printed sunrise. It is
+ * now one continuous blend through those same nine colours — `STOPS` in
+ * `sunrise.ts`, with `STOP_POSITIONS` saying where each one sits up the screen.
  *
- * Downward there is the whole of the ink to draw on, and it is a tone the
- * palette already uses at exactly this strength: `backgroundElement` is ink at
- * 5% and `backgroundSelected` is ink at 9% — both real, visible surfaces in this
- * app. The nearest clouds sit in that range on purpose. They are the same
- * material as a pressed row, in the shape of weather.
+ * Keeping all nine matters more than it looks. A gradient like this could be
+ * drawn from its two ends, and that is what makes most of them disappointing:
+ * interpolating straight from gold to pale blue cuts across the middle of the
+ * colour wheel, so the mid-sky comes out grey and faintly dirty. The nine stops
+ * are samples along a path through CIELAB that stays out where the colour is,
+ * and handing the gradient all of them keeps the blend on that path rather than
+ * on the shortcut.
  *
- * Darker clouds on a light page are also just what clouds are from underneath.
+ * The stops are also not evenly spaced — see `STOP_POSITIONS`. The colour moves
+ * about twice as fast in the bottom of the frame as in the top, which is what
+ * atmosphere does and what keeps the result from reading as a swatch card stood
+ * on end.
  *
- * ## Why these do not look like the clouds in a weather icon
+ * One number is worth carrying over from the banded version, because it was
+ * learned the hard way: an earlier ramp was measured only for contrast and
+ * shipped invisible — its horizon sat 5.6 ΔE from the paper and the page simply
+ * looked like the page. The sweep from end to end is now 26.5 ΔE. On a large
+ * flat area, a colour difference that is plainly visible in a swatch beside its
+ * neighbour can be completely invisible spread across a screen. Measure it.
  *
- * A cartoon cloud is three or four equal bumps in a symmetrical row. Nothing in
- * the sky looks like that, and the reason is worth writing down because it is
- * the whole of what this file does differently:
+ * ## Every colour in it is *lighter* than the page, and that is what makes it safe
  *
- *  1. **The bottom is flat.** Real cumulus condense at one altitude, so they all
- *     share a level base — a whole sky of them is flat-bottomed at the same
- *     height. It is the single most recognisable thing about a cloud and the
- *     first thing a drawn one drops. Every lobe here is bottom-aligned to one
- *     line and a bar runs along it, so the silhouette is domed above and cut
- *     straight beneath.
+ * This is the part that took three attempts, and the first two were wrong in the
+ * same way. The obvious way to warm a page is to lay a warm colour over it, and
+ * every version of that darkens what it touches — which on this particular paper
+ * is not affordable. `textMuted` is 4.79:1 on `#EDE6D6`, so the page starts with
+ * about three tenths of a point of headroom over the 4.5:1 floor, and *any* warm
+ * tint with enough presence to be seen spends more than that. Measured: a warm
+ * wash strong enough to be noticed at all put muted copy at 3.8:1.
  *
- *  2. **The top is off-centre.** The tallest lobe sits somewhere in the first
- *     half and the profile falls away more slowly behind it than in front, so
- *     each cloud has a head and a tail rather than a middle. That asymmetry is
- *     wind, and it is what stops a row of circles reading as a row of circles.
+ * So the light goes the other way. A sunrise is brighter than the page it falls
+ * on, not darker — and a lighter background raises contrast against dark type
+ * instead of lowering it. Every stop is above the paper's own luminance, and a
+ * blend between two colours lighter than the page is itself lighter than the
+ * page, so the guarantee covers every point of the gradient and not just the
+ * nine that were measured:
  *
- *  3. **They are wide.** Height is a bit under half of width. Drawn clouds are
- *     nearly square because that is what fits in an icon; the ones outside are
- *     long, because they are much further away than they are tall.
+ *     plain paper    ink 6.83   muted 4.79
+ *     dimmest stop   ink 6.84   muted 4.80   (the warm end, at the bottom)
+ *     brightest stop ink 6.92   muted 4.86   (the blue, at the top)
  *
- * ## One opacity, applied to the whole cloud at once
+ * That is the brief — "it can't make text hard to read" — answered with a
+ * guarantee rather than a judgement call. There is no screen, no tier and no
+ * height up the page at which this makes text harder to read than the bare page
+ * did. If these colours are ever retuned, that property is the one to preserve:
+ * keep every stop lighter than `Colors.light.background` and the guarantee
+ * holds.
  *
- * The lobes and the base bar are fully opaque, and the *group* carries the
- * alpha. This is load-bearing rather than tidy: translucent shapes that overlap
- * composite into a darker patch at every seam, so a cloud built from six
- * see-through circles is a cloud with all its own construction lines drawn on
- * it. Setting `opacity` on the parent flattens the group first and fades it
- * once, which is what makes the result a silhouette instead of a diagram.
+ * ## And why it is not distracting
  *
- * It is also why clouds are laid out in separate horizontal bands. Two clouds
- * that overlapped would be two groups, and the overlap would show as a seam for
- * exactly the same reason.
+ * Nothing here moves and nothing animates. The axis is vertical, so the colour
+ * is constant along every line of type — a diagonal would change colour across a
+ * word, which is exactly the flicker the reading halo in `ThemedText` exists to
+ * prevent.
  *
- * ## Everything is generated once, at module load
+ * And no part of it is loud. The furthest stop from the page is the blue at
+ * 16.1 ΔE and the warm end is nearer still at 11.3; what carries the sunrise is
+ * the *sweep*, not any one colour in it. That is the difference between a background somebody notices
+ * once and one they have to keep noticing.
  *
- * Same as `NightSky`, for the same reason written out at more length there:
- * screens cross-fade into each other, so a sky that differed between them would
- * dissolve one set of clouds into another on every navigation. Seeded rather
- * than random so it also survives a restart. Nothing here moves — clouds that
- * drifted would be the one thing on screen asking to be watched, on pages built
- * to be looked away from.
+ * The blend also costs nothing the bands did not: it is one view with a shader
+ * where there were nine views, and `expo-linear-gradient` was already a
+ * dependency here.
  */
 
+import { LinearGradient } from 'expo-linear-gradient';
 import { memo } from 'react';
-import { StyleSheet, View, type DimensionValue } from 'react-native';
+import { StyleSheet } from 'react-native';
+
+import { STOPS, STOP_POSITIONS } from '@/session/ui/sunrise';
 
 /**
- * The ink, which is `Colors.light.text`, written out rather than read from the
- * palette — the same call `NightSky` makes about the paper tone, for the same
- * reason. This exists in one scheme only, so there is no light/dark pair for it
- * to be a role in, and taking it from `theme.text` would say these are type.
+ * The ramp, turned end for end.
  *
- * Fully opaque here. The alpha lives on the group — see the note above.
+ * `STOPS` reads horizon-first because that is how a sky is described, and
+ * `LinearGradient` paints from `start` to `end` — which here is top to bottom.
+ * Reversed once at module load rather than in the render, and the positions have
+ * to be mirrored as well as reversed: a stop that sat a tenth up from the bottom
+ * sits nine tenths down from the top.
  */
-const INK = '#4E4C50';
+type AtLeastTwo<T> = readonly [T, T, ...T[]];
+
+const COLOURS = [...STOPS].reverse() as unknown as AtLeastTwo<string>;
+const LOCATIONS = [...STOP_POSITIONS]
+  .reverse()
+  .map((at) => 1 - at) as unknown as AtLeastTwo<number>;
 
 /**
- * The three distances, far to near, as they are laid out down the page.
- *
- * Size and alpha move together, which is the same depth cue the stars use: a
- * small faint cloud reads as far off, a large stronger one as overhead. Tying
- * the two means the sky has three legible distances rather than nine muddled
- * ones.
- *
- * The near tier at 0.1 is ink at ten percent — a shade past `backgroundSelected`
- * and therefore known to be visible on this paper rather than guessed at. The
- * far tier at 0.045 is under `backgroundElement` and is meant to sit at the edge
- * of being noticed, which is where the horizon belongs.
- *
- * `band` is the slice of screen height the cloud is placed in, top-down. Small
- * clouds ride high and large ones low, because that is what distance does to a
- * sky: the far ones crowd toward the horizon line and the near ones are the only
- * things with room to be big.
- */
-const TIERS = [
-  { width: 78, opacity: 0.045, band: [0.05, 0.14], zone: [0.46, 0.78] },
-  { width: 104, opacity: 0.055, band: [0.17, 0.28], zone: [-0.1, 0.2] },
-  { width: 150, opacity: 0.075, band: [0.34, 0.46], zone: [0.5, 0.92] },
-  { width: 186, opacity: 0.09, band: [0.52, 0.63], zone: [-0.14, 0.16] },
-  { width: 218, opacity: 0.1, band: [0.7, 0.79], zone: [0.34, 0.8] },
-] as const;
-
-/** Height as a share of width. Wide and low, which is what real cumulus are. */
-const HEIGHT_RATIO = 0.44;
-
-/** How much of the cloud's height the flat base bar takes. */
-const BAR_SHARE = 0.34;
-
-/**
- * Lobes per cloud. Enough to build a profile, few enough to stay a silhouette.
- *
- * Capped at five rather than six because six is where the profile stops being
- * one: spread across that many, the fall from the peak lands under a lobe's
- * width per step and every diameter comes out within a few points of its
- * neighbours, which is a row of equal circles — the exact thing the asymmetry
- * above exists to avoid. Fewer, larger lobes read as a mass with a shape.
- */
-const MIN_LOBES = 4;
-const MAX_LOBES = 5;
-
-/** Fixed, so the sky is the same on every launch. */
-const SEED = 0xc10d;
-
-/**
- * mulberry32 again, copied rather than shared with `NightSky`.
- *
- * Four lines, and the two skies are otherwise independent — a `lib/random.ts`
- * holding one function for two callers in the same folder is a file to find
- * before either can be read. If a third sky ever wants it, that is the moment.
- */
-function seeded(seed: number) {
-  let state = seed;
-
-  return () => {
-    state = (state + 0x6d2b79f5) | 0;
-    let t = Math.imul(state ^ (state >>> 15), 1 | state);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
-
-interface Lobe {
-  /** From the cloud's left edge. */
-  x: number;
-  diameter: number;
-}
-
-interface Cloud {
-  left: DimensionValue;
-  top: DimensionValue;
-  width: number;
-  height: number;
-  barHeight: number;
-  opacity: number;
-  lobes: readonly Lobe[];
-  /** Mirrored, so half the sky's tails point the other way. */
-  flipped: boolean;
-}
-
-/**
- * The profile: how tall the cloud is at a given point across its width.
- *
- * `peak` is where the tallest lobe sits, always in the first half. In front of
- * it the height falls away over the short distance to the leading edge; behind
- * it the same fall is stretched over `TAIL_EASE`, so the cloud trails off rather
- * than ending. That is the asymmetry described at the top of the file, and it is
- * the one number here that would most change the character of the sky.
- *
- * The exponent keeps the shoulders full: at 1.4 the profile leaves the peak
- * slowly and drops away late, which reads as a mass with a shape. A linear
- * falloff gives a triangle of circles, which reads as a pile.
- */
-const TAIL_EASE = 0.72;
-const SHOULDER = 1.4;
-/**
- * How tall the cloud still is at its furthest edge, as a share of the peak.
- *
- * 0.28, down from 0.38, which was flattening the whole profile: at the higher
- * floor the smallest lobe was two-thirds the largest and the cloud read as a bank
- * of similar circles. A quarter is enough that the ends still have a lobe rather
- * than a point, and little enough that the peak is visibly the peak.
- */
-const FLOOR = 0.28;
-
-const heightAt = (t: number, peak: number) => {
-  const distance =
-    t < peak ? (peak - t) / peak : ((t - peak) / (1 - peak)) * TAIL_EASE;
-
-  return 1 - Math.min(distance, 1) ** SHOULDER * (1 - FLOOR);
-};
-
-/**
- * One cloud per tier, top to bottom, each jittered inside its own band.
- *
- * The draws are taken in a fixed order and the whole sky reshuffles if that
- * order, the seed, or any count above changes. Nothing depends on this exact
- * arrangement — but there is no such thing as a small edit here.
- */
-const CLOUDS: readonly Cloud[] = TIERS.map((tier, index) => {
-  const random = seeded(SEED + index * 0x9e37);
-
-  const width = tier.width;
-  const height = width * HEIGHT_RATIO;
-  const barHeight = height * BAR_SHARE;
-
-  const count = MIN_LOBES + Math.floor(random() * (MAX_LOBES - MIN_LOBES + 1));
-  const peak = 0.28 + random() * 0.24;
-
-  const lobes: Lobe[] = [];
-  for (let i = 0; i < count; i += 1) {
-    // Centres spread evenly across the width, then nudged. Even spacing is what
-    // keeps the lobes overlapping into one mass; the nudge is what keeps them
-    // from reading as evenly spaced.
-    const t = (i + 0.5) / count;
-    const jitter = (random() - 0.5) * (0.7 / count);
-    const centre = Math.min(0.96, Math.max(0.04, t + jitter));
-
-    // Capped at the box, and the jitter only ever shrinks. A lobe taller than
-    // the cloud's own height would be clipped at the top by the group's opacity
-    // layer, flattening the peak into a straight edge — which is the one part of
-    // the silhouette that has to be a curve.
-    const diameter = Math.min(
-      height,
-      height * heightAt(centre, peak) * (0.86 + random() * 0.14),
-    );
-
-    lobes.push({ x: centre * width - diameter / 2, diameter });
-  }
-
-  return {
-    // Placed in the tier's own zone rather than anywhere across the width, and
-    // the zones alternate sides down the page. Left to a free draw the five
-    // clouds landed at 54%, 89%, 71%, 48% and 69% — the entire sky in the right
-    // half with a bare column down the left, which is the clumping a small
-    // sample always gives and which reads as a mistake rather than as weather.
-    // The zones are the same answer `NightSky` reaches with its jittered grid:
-    // deliberate coverage, random detail.
-    //
-    // Some zones start negative so a cloud runs off the edge. The sky should
-    // carry on past the screen rather than be arranged inside it.
-    left: `${((tier.zone[0] + random() * (tier.zone[1] - tier.zone[0])) * 100).toFixed(2)}%` as DimensionValue,
-    // Bands stop at 0.79 so the lowest cloud is still a cloud. At 0.92 — where a
-    // free draw put it — a 96pt cloud hangs most of the way off the bottom of
-    // the screen and reads as a shape someone forgot to finish.
-    top: `${((tier.band[0] + random() * (tier.band[1] - tier.band[0])) * 100).toFixed(2)}%` as DimensionValue,
-    width,
-    height,
-    barHeight,
-    opacity: tier.opacity,
-    lobes,
-    flipped: random() < 0.45,
-  };
-});
-
-/**
- * Memoised for the same reason as `NightSky`: no props, nothing it can ever draw
- * differently, and `SessionScreen` re-renders on every route change.
+ * Memoised because it takes no props and can never draw anything different.
+ * `SessionScreen` re-renders on every route change and there is nothing here to
+ * reconcile again when it does.
  */
 export const DaySky = memo(function DaySky() {
   return (
-    // Pointer-transparent and pinned to all four edges of the frame's root,
-    // which is outside its padding — so the sky runs under the safe area and off
-    // every edge rather than stopping at the gutter the text sits in.
-    <View style={StyleSheet.absoluteFill} pointerEvents="none">
-      {CLOUDS.map((cloud, index) => (
-        <View
-          key={index}
-          style={{
-            position: 'absolute',
-            left: cloud.left,
-            top: cloud.top,
-            width: cloud.width,
-            height: cloud.height,
-            // The whole point. One alpha over a flattened group, so the lobes
-            // and the bar fuse into a silhouette instead of showing every seam
-            // where two of them overlap.
-            opacity: cloud.opacity,
-            transform: cloud.flipped ? [{ scaleX: -1 }] : undefined,
-          }}
-        >
-          {cloud.lobes.map((lobe, lobeIndex) => (
-            <View
-              key={lobeIndex}
-              style={{
-                position: 'absolute',
-                left: lobe.x,
-                // Bottom-aligned, every one of them. This is the flat base.
-                bottom: 0,
-                width: lobe.diameter,
-                height: lobe.diameter,
-                borderRadius: lobe.diameter / 2,
-                backgroundColor: INK,
-              }}
-            />
-          ))}
-
-          {/* The base: what turns a row of circles into one cloud with a level
-              underside. Rounded at the ends and nearly square at the bottom
-              corners, so the cloud sits on its line rather than floating as a
-              pill. */}
-          <View
-            style={{
-              position: 'absolute',
-              left: 0,
-              right: 0,
-              bottom: 0,
-              height: cloud.barHeight,
-              borderTopLeftRadius: cloud.barHeight / 2,
-              borderTopRightRadius: cloud.barHeight / 2,
-              borderBottomLeftRadius: 2,
-              borderBottomRightRadius: 2,
-              backgroundColor: INK,
-            }}
-          />
-        </View>
-      ))}
-    </View>
+    // Pinned to all four edges of the frame's root, which is outside its padding
+    // — so the sky runs under the safe area and off every edge rather than
+    // stopping at the gutter the text sits in. Pointer-transparent, like the
+    // stars and the grain: nothing in the background of this app is a target.
+    <LinearGradient
+      colors={COLOURS}
+      locations={LOCATIONS}
+      // Straight down the middle. A vertical axis is the only one that keeps the
+      // colour constant along each line of type — see the note above on why a
+      // diagonal is the wrong shape for something drawn behind words.
+      start={START}
+      end={END}
+      style={StyleSheet.absoluteFill}
+      pointerEvents="none"
+    />
   );
 });
+
+const START = { x: 0.5, y: 0 } as const;
+const END = { x: 0.5, y: 1 } as const;
