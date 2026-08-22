@@ -47,8 +47,8 @@
  * outermost ring off both edges of the phone.
  */
 
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useEffect, useRef, useState } from "react";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, {
   Easing,
   FadeIn,
@@ -58,23 +58,23 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
-import { ThemedText } from '@/components/themed-text';
-import { BREATHING, BREATH_CYCLES, BREATH_CYCLE_MS } from '@/config/session';
-import { BREATHING_COPY } from '@/content/strings';
-import { Radius, Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { withAlpha } from '@/lib/color';
+import { ThemedText } from "@/components/themed-text";
+import { BREATHING, BREATH_CYCLES, BREATH_CYCLE_MS } from "@/config/session";
+import { Radius, Spacing } from "@/constants/theme";
+import { BREATHING_COPY } from "@/content/strings";
+import { useTheme } from "@/hooks/use-theme";
+import { withAlpha } from "@/lib/color";
 import {
-  breathGlowSize,
   BreathGlow,
   GlowStage,
-} from '@/session/ui/breath-glow';
-import { type BreathPhase } from '@/session/ui/breath-pulse';
-import { pulseBreath } from '@/session/ui/haptics';
+  breathGlowSize,
+} from "@/session/ui/breath-glow";
+import { type BreathPhase } from "@/session/ui/breath-pulse";
+import { pulseBreath } from "@/session/ui/haptics";
 
-type Phase = 'inhale-1' | 'inhale-2' | 'hold' | 'exhale' | 'rest';
+type Phase = "inhale-1" | "inhale-2" | "hold" | "exhale" | "rest";
 
 /**
  * Not zero, and not near it: an emptied circle reads as "finished" rather than
@@ -127,7 +127,7 @@ interface Step {
 
 const CYCLE: readonly Step[] = [
   {
-    phase: 'inhale-1',
+    phase: "inhale-1",
     ms: BREATHING.firstInhaleMs,
     scale: MID_SCALE,
     /**
@@ -148,25 +148,25 @@ const CYCLE: readonly Step[] = [
     // `bezierFn`, not `bezier`: the latter returns a factory, and every other
     // entry in this table is a plain easing function.
     easing: Easing.bezierFn(0.33, 0, 0.55, 0.85),
-    pulse: 'inhale',
+    pulse: "inhale",
     cue: BREATHING_COPY.inhale,
   },
   {
     // `in`, not `out`: this one should accelerate into the top so it reads as
     // a snatched breath rather than a second slow one.
-    phase: 'inhale-2',
+    phase: "inhale-2",
     ms: BREATHING.secondInhaleMs,
     scale: 1,
     easing: Easing.in(Easing.quad),
     // Too short for a train — one firm tap at the top-up, which is what it is.
-    pulse: 'inhale',
+    pulse: "inhale",
     cue: BREATHING_COPY.secondInhale,
   },
   {
     // Held at full, and given no word of its own. The circle is visibly still,
     // which says it — and a "hold" cue at the top of a full breath is one more
     // instruction to read at the moment there is least room for one.
-    phase: 'hold',
+    phase: "hold",
     ms: BREATHING.holdMs,
     scale: 1,
     easing: Easing.linear,
@@ -174,15 +174,15 @@ const CYCLE: readonly Step[] = [
     cue: null,
   },
   {
-    phase: 'exhale',
+    phase: "exhale",
     ms: BREATHING.exhaleMs,
     scale: MIN_SCALE,
     easing: Easing.inOut(Easing.quad),
-    pulse: 'exhale',
+    pulse: "exhale",
     cue: BREATHING_COPY.exhale,
   },
   {
-    phase: 'rest',
+    phase: "rest",
     ms: BREATHING.restMs,
     scale: MIN_SCALE,
     easing: Easing.linear,
@@ -212,7 +212,8 @@ const CUE_FADE_MS = 600;
  */
 const CUE_FADE_SHARE = 0.34;
 
-const cueFadeFor = (ms: number) => Math.min(CUE_FADE_MS, Math.round(ms * CUE_FADE_SHARE));
+const cueFadeFor = (ms: number) =>
+  Math.min(CUE_FADE_MS, Math.round(ms * CUE_FADE_SHARE));
 
 interface BreathingGuideProps {
   /** Called once, after the last full cycle. Never mid-exhale. */
@@ -224,7 +225,10 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
   const { width, height } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
 
-  const diameter = Math.min(Math.min(width, height) * DIAMETER_RATIO, MAX_DIAMETER);
+  const diameter = Math.min(
+    Math.min(width, height) * DIAMETER_RATIO,
+    MAX_DIAMETER,
+  );
 
   const scale = useSharedValue(MIN_SCALE);
   const progress = useSharedValue(0);
@@ -254,7 +258,10 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     // does rather than while the circle is still.
     progress.value = withDelay(
       BREATHING.leadInMs,
-      withTiming(1, { duration: cycles * BREATH_CYCLE_MS, easing: Easing.linear }),
+      withTiming(1, {
+        duration: cycles * BREATH_CYCLE_MS,
+        easing: Easing.linear,
+      }),
     );
 
     // Reduce Motion: the circle opens once and stays open. Everything below
@@ -279,7 +286,7 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
       // instead of one — this screen paces the shape of a breath rather than a
       // rate, and the shape is in the two inhales. See `breath-pulse.ts`.
       stopPulses = current.pulse
-        ? pulseBreath(current.pulse, current.ms, 'sigh')
+        ? pulseBreath(current.pulse, current.ms, "sigh")
         : undefined;
 
       // Honouring Reduce Motion by holding the circle still, rather than by
@@ -307,7 +314,9 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
     };
   }, [progress, reducedMotion, scale]);
 
-  const coreStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const coreStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
   const haloStyle = useAnimatedStyle(() => ({
     // Trails the core by a fraction of the distance it has left, so the gap
     // between them has closed by the top of the breath instead of leaving a
@@ -348,8 +357,13 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
               key={`${step}-${cue}`}
               entering={FadeIn.duration(cueEnterMs)}
               exiting={FadeOut.duration(cueExitMs)}
-              style={styles.cue}>
-              <ThemedText type="subtitle" themeColor="textSecondary" style={styles.cueText}>
+              style={styles.cue}
+            >
+              <ThemedText
+                type="subtitle"
+                themeColor="textSecondary"
+                style={styles.cueText}
+              >
                 {cue}
               </ThemedText>
             </Animated.View>
@@ -380,7 +394,22 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
               styles.circle,
               coreStyle,
               { width: diameter, height: diameter, borderRadius: diameter / 2 },
-              { backgroundColor: withAlpha(theme.info, 0.2), borderColor: theme.info },
+              // Ninety percent, up from twenty. The low value was written for a
+              // page with nothing on it, where a translucent core simply read as
+              // a tint and there was nothing behind it to see. Both schemes now
+              // draw on the page — stars in the dark one, clouds in the light —
+              // and at a fifth of a stop those came straight through the middle
+              // of the circle, which put a moving object over the one shape the
+              // screen asks you to rest on for half a minute.
+              //
+              // Still short of solid. The last tenth keeps the halo behind it
+              // faintly present through the core, so the two still read as one
+              // object giving off light rather than as a disc with a ring
+              // around it.
+              {
+                backgroundColor: withAlpha(theme.info, 0.4),
+                borderColor: theme.info,
+              },
             ]}
           />
         </GlowStage>
@@ -402,7 +431,11 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
             the quietest thing on the screen after the circle. */}
         <View style={[styles.track, { backgroundColor: theme.barDivider }]}>
           <Animated.View
-            style={[styles.fill, progressStyle, { backgroundColor: theme.accent }]}
+            style={[
+              styles.fill,
+              progressStyle,
+              { backgroundColor: theme.accent },
+            ]}
           />
         </View>
       </View>
@@ -413,8 +446,8 @@ export function BreathingGuide({ onDone }: BreathingGuideProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    alignSelf: 'stretch',
-    alignItems: 'center',
+    alignSelf: "stretch",
+    alignItems: "center",
   },
   // The only flex child, so its `justifyContent: 'center'` centres the circle on
   // the screen. It is still called a half because it was one — this sat under a
@@ -423,9 +456,9 @@ const styles = StyleSheet.create({
   // the name is the last of it, and the layout needs nothing else to say so.
   breathHalf: {
     flex: 1,
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: "stretch",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.four,
     // Padding at the foot of the box the circle is centred in, which lifts it
     // by half of that — the same trick the door uses on its sphere. Two things
@@ -433,7 +466,14 @@ const styles = StyleSheet.create({
     // circle and is part of the same object, so the pair's centre is lower than
     // the circle's; and a shape somebody is looking at for half a minute reads
     // as sitting low when it is measured dead centre.
-    paddingBottom: Spacing.five,
+    //
+    // 48 rather than `Spacing.five`, so the lift is 24 rather than 16. The step
+    // is deliberately small: the scale's own next rung is 64, which would put
+    // the circle 32 above centre and read as a circle that had been moved rather
+    // than as one sitting where it belongs. Written as two rungs added together
+    // rather than as a bare 48, because every number in this file is on the
+    // scale and an arithmetic exception is easier to read than a new constant.
+    paddingBottom: Spacing.five + Spacing.three,
   },
   // Pinned to the top of the screen rather than stacked above the circle, and
   // that is what puts the circle in the middle: a cue in the flow pushes
@@ -444,7 +484,7 @@ const styles = StyleSheet.create({
   // and swaps one word for another — see `cue`. Without a height to swap
   // inside, the two would have nothing to be laid out against.
   cueSlot: {
-    position: 'absolute',
+    position: "absolute",
     // Down from the top edge by the app's long pause. At `0` the word sat
     // directly under the chrome row, which read as a fourth piece of chrome
     // rather than as the instruction for the thing in the middle of the screen.
@@ -454,24 +494,24 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     height: 34,
-    justifyContent: 'center',
+    justifyContent: "center",
   },
   // Absolute so an outgoing word sits on top of the incoming one instead of
   // being laid out beside it.
   cue: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cueText: {
     letterSpacing: 2,
-    textAlign: 'center',
+    textAlign: "center",
   },
   circle: {
-    position: 'absolute',
+    position: "absolute",
     borderWidth: StyleSheet.hairlineWidth * 3,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   // It went 120 points of hairline at 35% opacity → 200 of five at full →
   // this: 180 of four, at 80%.
@@ -496,11 +536,11 @@ const styles = StyleSheet.create({
     height: 4,
     borderRadius: Radius.pill,
     opacity: 0.8,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   fill: {
-    width: '100%',
-    height: '100%',
-    transformOrigin: 'left',
+    width: "100%",
+    height: "100%",
+    transformOrigin: "left",
   },
 });

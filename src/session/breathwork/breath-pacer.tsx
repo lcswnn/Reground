@@ -36,8 +36,8 @@
  *    count, so there is nothing to round.
  */
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View, useWindowDimensions } from 'react-native';
+import { useEffect, useMemo, useRef, useState } from "react";
+import { StyleSheet, View, useWindowDimensions } from "react-native";
 import Animated, {
   Easing,
   FadeIn,
@@ -47,26 +47,26 @@ import Animated, {
   useSharedValue,
   withDelay,
   withTiming,
-} from 'react-native-reanimated';
+} from "react-native-reanimated";
 
-import { ThemedText } from '@/components/themed-text';
-import { Button } from '@/components/ui/button';
-import { BREATHWORK, GROUNDING_FADE } from '@/config/session';
+import { ThemedText } from "@/components/themed-text";
+import { Button } from "@/components/ui/button";
+import { BREATHWORK, GROUNDING_FADE } from "@/config/session";
+import { Spacing } from "@/constants/theme";
 import {
   patternRunMs,
   type BreathPattern,
   type BreathPhaseKind,
-} from '@/content/breathwork';
-import { BREATHWORK_COPY } from '@/content/strings';
-import { Spacing } from '@/constants/theme';
-import { useTheme } from '@/hooks/use-theme';
-import { withAlpha } from '@/lib/color';
+} from "@/content/breathwork";
+import { BREATHWORK_COPY } from "@/content/strings";
+import { useTheme } from "@/hooks/use-theme";
+import { withAlpha } from "@/lib/color";
 import {
-  breathGlowSize,
   BreathGlow,
   GlowStage,
-} from '@/session/ui/breath-glow';
-import { pulseBreath, tickBreath } from '@/session/ui/haptics';
+  breathGlowSize,
+} from "@/session/ui/breath-glow";
+import { pulseBreath, tickBreath } from "@/session/ui/haptics";
 
 /**
  * Not zero, and not near it: an emptied circle reads as "finished" rather than
@@ -98,7 +98,8 @@ const CUE_FADE_MS = 600;
  */
 const CUE_FADE_SHARE = 0.34;
 
-const cueFadeFor = (ms: number) => Math.min(CUE_FADE_MS, Math.round(ms * CUE_FADE_SHARE));
+const cueFadeFor = (ms: number) =>
+  Math.min(CUE_FADE_MS, Math.round(ms * CUE_FADE_SHARE));
 
 const CUES: Readonly<Record<BreathPhaseKind, string>> = {
   in: BREATHWORK_COPY.in,
@@ -143,7 +144,10 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
   const { width, height } = useWindowDimensions();
   const reducedMotion = useReducedMotion();
 
-  const diameter = Math.min(Math.min(width, height) * DIAMETER_RATIO, MAX_DIAMETER);
+  const diameter = Math.min(
+    Math.min(width, height) * DIAMETER_RATIO,
+    MAX_DIAMETER,
+  );
 
   const cycle = useMemo<readonly Step[]>(
     () =>
@@ -151,7 +155,7 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
         ms: phase.seconds * 1_000,
         scale: SCALES[phase.kind],
         cue: CUES[phase.kind],
-        moving: phase.kind === 'in' || phase.kind === 'out',
+        moving: phase.kind === "in" || phase.kind === "out",
         kind: phase.kind,
       })),
     [pattern],
@@ -206,8 +210,11 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
       // are a movement are paced all the way through, and a hold is left silent
       // until its own end.
       stopPulses?.();
-      if (current.kind === 'in' || current.kind === 'out') {
-        stopPulses = pulseBreath(current.kind === 'in' ? 'inhale' : 'exhale', current.ms);
+      if (current.kind === "in" || current.kind === "out") {
+        stopPulses = pulseBreath(
+          current.kind === "in" ? "inhale" : "exhale",
+          current.ms,
+        );
       } else {
         stopPulses = undefined;
         tickBreath();
@@ -238,7 +245,9 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
     };
   }, [cycle, pattern, progress, reducedMotion, scale]);
 
-  const coreStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+  const coreStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
   const haloStyle = useAnimatedStyle(() => ({
     // Trails the core by a fraction of the distance it has left, so the gap
     // between them has closed by the top of the breath instead of leaving a
@@ -265,7 +274,10 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
     at === null ? CUE_FADE_MS : cueFadeFor(cycle[(at + 1) % cycle.length].ms);
 
   return (
-    <Animated.View entering={FadeIn.duration(GROUNDING_FADE.inMs)} style={styles.root}>
+    <Animated.View
+      entering={FadeIn.duration(GROUNDING_FADE.inMs)}
+      style={styles.root}
+    >
       {/* The pattern's name, quiet and at the top. Four rounds in, "was this
           the one that holds for seven?" is a real question, and the alternative
           to answering it here is backing out of a running breath to find out. */}
@@ -285,8 +297,13 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
               key={`${step}-${cue}`}
               entering={FadeIn.duration(cueEnterMs)}
               exiting={FadeOut.duration(cueExitMs)}
-              style={styles.cue}>
-              <ThemedText type="subtitle" themeColor="textSecondary" style={styles.cueText}>
+              style={styles.cue}
+            >
+              <ThemedText
+                type="subtitle"
+                themeColor="textSecondary"
+                style={styles.cueText}
+              >
                 {cue}
               </ThemedText>
             </Animated.View>
@@ -319,7 +336,22 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
               styles.circle,
               coreStyle,
               { width: diameter, height: diameter, borderRadius: diameter / 2 },
-              { backgroundColor: withAlpha(theme.info, 0.2), borderColor: theme.info },
+              // Ninety percent, up from twenty. The low value was written for a
+              // page with nothing on it, where a translucent core simply read as
+              // a tint and there was nothing behind it to see. Both schemes now
+              // draw on the page — stars in the dark one, clouds in the light —
+              // and at a fifth of a stop those came straight through the middle
+              // of the circle, which put a moving object over the one shape the
+              // screen asks you to rest on for half a minute.
+              //
+              // Still short of solid. The last tenth keeps the halo behind it
+              // faintly present through the core, so the two still read as one
+              // object giving off light rather than as a disc with a ring
+              // around it.
+              {
+                backgroundColor: withAlpha(theme.info, 0.5),
+                borderColor: theme.info,
+              },
             ]}
           />
         </GlowStage>
@@ -337,7 +369,11 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
         {reducedMotion ? null : (
           <View style={[styles.track, { backgroundColor: theme.border }]}>
             <Animated.View
-              style={[styles.fill, progressStyle, { backgroundColor: theme.textMuted }]}
+              style={[
+                styles.fill,
+                progressStyle,
+                { backgroundColor: theme.textMuted },
+              ]}
             />
           </View>
         )}
@@ -356,53 +392,53 @@ export function BreathPacer({ pattern, onDone, onStop }: BreathPacerProps) {
 const styles = StyleSheet.create({
   root: {
     flex: 1,
-    alignSelf: 'stretch',
+    alignSelf: "stretch",
     gap: Spacing.four,
   },
   stageArea: {
     flex: 1,
-    alignSelf: 'stretch',
-    alignItems: 'center',
-    justifyContent: 'center',
+    alignSelf: "stretch",
+    alignItems: "center",
+    justifyContent: "center",
     gap: Spacing.four,
   },
   cueSlot: {
     height: 34,
-    alignSelf: 'stretch',
-    justifyContent: 'center',
+    alignSelf: "stretch",
+    justifyContent: "center",
   },
   // Absolute so an outgoing word sits on top of the incoming one instead of
   // being laid out beside it.
   cue: {
-    position: 'absolute',
+    position: "absolute",
     left: 0,
     right: 0,
-    alignItems: 'center',
+    alignItems: "center",
   },
   cueText: {
     letterSpacing: 2,
-    textAlign: 'center',
+    textAlign: "center",
   },
   circle: {
-    position: 'absolute',
+    position: "absolute",
     borderWidth: StyleSheet.hairlineWidth * 3,
-    borderColor: 'transparent',
+    borderColor: "transparent",
   },
   track: {
     width: 120,
     height: StyleSheet.hairlineWidth * 2,
     opacity: 0.35,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   fill: {
-    width: '100%',
-    height: '100%',
-    transformOrigin: 'left',
+    width: "100%",
+    height: "100%",
+    transformOrigin: "left",
   },
   actions: {
     gap: Spacing.three,
   },
   hint: {
-    textAlign: 'center',
+    textAlign: "center",
   },
 });

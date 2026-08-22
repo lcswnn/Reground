@@ -2,6 +2,13 @@
  * The frame every session screen sits in: safe area, one gutter, and a column
  * that doesn't run wider than a comfortable measure on a tablet.
  *
+ * There is a sky behind all of it, and which one depends on the scheme: stars
+ * in dark mode (`NightSky`), clouds in light (`DaySky`). Both are mounted here
+ * and nowhere else. The sheets that draw their own frames (the crisis numbers,
+ * the region picker, the sharing panel) deliberately get neither: those are
+ * cards over a scrim rather than the page, and a sky inside a card is a picture
+ * of a sky.
+ *
  * No header beyond one thin row of chrome: a back button top-left on the
  * screens that have somewhere to go back to — see `previousRoute` for which do
  * and where each one lands — a pair of round buttons top-right on all of them
@@ -30,8 +37,11 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 import { MaxContentWidth, Spacing } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
+import { useThemePreference } from "@/lib/theme-preference";
 import { stageOfPath } from "@/session/routing";
 import { BackButton } from "@/session/ui/back-button";
+import { DaySky } from "@/session/ui/day-sky";
+import { NightSky } from "@/session/ui/night-sky";
 import { ProgressLines } from "@/session/ui/progress-lines";
 import { SupportButton } from "@/session/ui/support-access";
 import { ThemeToggle } from "@/session/ui/theme-toggle";
@@ -54,6 +64,7 @@ export function SessionScreen({
   ...rest
 }: SessionScreenProps) {
   const theme = useTheme();
+  const { isDark } = useThemePreference();
   const insets = useSafeAreaInsets();
   /**
    * Read off the router rather than passed in by each screen. Which part a
@@ -78,6 +89,20 @@ export function SessionScreen({
       ]}
       {...rest}
     >
+      {/* Under everything and outside the column, so it fills the frame rather
+          than the gutter the text sits in. Mounted here rather than beside
+          `ScreenFilm` in `app/_layout.tsx` because that layer is drawn *over*
+          the app: this one is the page, and this root is the view holding the
+          page colour. Anything root-level would be behind the opaque background
+          below and never seen.
+
+          One per scheme and never both. The dark page is a lit screen in an
+          unlit room and gets a night sky; the light page is paper in daylight
+          and gets a day one. Each is what its own background already was rather
+          than an ornament laid over it, which is the only footing decoration
+          gets in this app. */}
+      {isDark ? <NightSky /> : <DaySky />}
+
       <View style={styles.column}>
         {/* The spacer, not `space-between`, is what pins the switch to the
             right on the screens that have no back button to sit opposite. */}

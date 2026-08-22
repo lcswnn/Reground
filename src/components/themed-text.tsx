@@ -15,6 +15,38 @@ const GLOW_ALPHA = 0.13;
 const GLOW_RADIUS = 5;
 
 /**
+ * The reading halo: the *page's* colour, spread softly around the glyphs of body
+ * text so it stays readable over whatever the page has drawn on it.
+ *
+ * Both schemes now put something behind the words — stars overhead in the dark
+ * one, clouds in the light — and text laid straight onto that is text whose
+ * background changes from line to line, sometimes mid-word. This is the fix, and
+ * it is the one that mapmakers reached for a century before there were screens:
+ * a place name crossing a coastline is not boxed, it is haloed in the colour of
+ * the paper, and nobody looking at the map ever notices.
+ *
+ * That is the whole of why this and not a panel behind the text. A panel has
+ * edges and corners, so it is a *thing on the page* — one more rectangle to
+ * account for on every screen, and one that has to be sized, cornered and
+ * spaced. The halo has no edge at any point, because it is the same colour as
+ * what surrounds it: over bare page it is strictly invisible, and it only becomes
+ * anything at all where a cloud or a star passes behind a letter. It does its
+ * whole job in exactly the places where there is a job, and nowhere else.
+ *
+ * Alpha is near-solid on purpose. This is not a shadow and is not meant to read
+ * as one — it is the page reasserting itself in the two or three points around
+ * each letterform. Anything translucent enough to see through would let the very
+ * thing it is masking come back.
+ *
+ * The radius is small for the same reason. At 4 the halo is gone within a couple
+ * of points of the stroke, so the space between lines and between words still
+ * shows whatever is behind. Wider closes those gaps and the text starts to sit in
+ * a pale cloud of its own — which is the panel again, drawn badly.
+ */
+const HALO_ALPHA = 0.92;
+const HALO_RADIUS = 4;
+
+/**
  * The glow itself, exported so anything that draws its own label outside
  * `ThemedText` — `Button`, `OptionCard` — can match it exactly rather than
  * carrying a second copy of `GLOW_ALPHA`/`GLOW_RADIUS` that drifts the next
@@ -27,6 +59,35 @@ export function softGlow(color: string) {
     textShadowRadius: GLOW_RADIUS,
   };
 }
+
+export function readingHalo(background: string) {
+  return {
+    textShadowColor: withAlpha(background, HALO_ALPHA),
+    textShadowOffset: { width: 0, height: 0 },
+    textShadowRadius: HALO_RADIUS,
+  };
+}
+
+/**
+ * The text colours that mean "this is sitting on a filled shape", which are
+ * exactly the ones that must not get a halo.
+ *
+ * A halo is the page's colour, and it is invisible only while the page is what
+ * is actually behind the letters. On a filled control — paper-coloured type on
+ * the ink of a primary button, or on the terracotta of a selected rating chip —
+ * the page colour is not the backdrop at all, so haloing there would ring every
+ * glyph in a bright fringe that has nothing to do with the surface it is on. It
+ * would be the most visible thing on the screen, which is the exact opposite of
+ * the point.
+ *
+ * Those controls are opaque in the first place. Nothing is drawn behind their
+ * labels, so there is nothing for a halo to mask and no legibility to recover.
+ */
+const ON_FILL = new Set<ThemeColor>([
+  "textOnBrand",
+  "textOnAccent",
+  "textOnPositive",
+]);
 
 /**
  * Four roles and one numeral, and every one of them is a size from `Type`.
@@ -102,7 +163,17 @@ export function ThemedText({
       style={[
         { color },
         styles[type],
-        GLOWS_SOFTLY.has(type) && softGlow(color),
+        // One `textShadow` per `Text`, so these are alternatives rather than
+        // layers, and the split follows what each tier needs. The display tiers
+        // keep the glow they were given: they are large, heavy and already the
+        // most legible thing on any screen they appear on, and their glow is a
+        // deliberate lift off the page rather than a legibility fix. Everything
+        // else — which is all the body copy, all the captions, every quiet line
+        // in the app — gets the halo, because those are the sizes a cloud behind
+        // a letter actually costs something.
+        GLOWS_SOFTLY.has(type)
+          ? softGlow(color)
+          : !ON_FILL.has(themeColor ?? "text") && readingHalo(theme.background),
         style,
       ]}
       {...rest}

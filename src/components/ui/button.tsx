@@ -5,7 +5,7 @@ import {
   type PressableProps,
 } from "react-native";
 
-import { softGlow } from "@/components/themed-text";
+import { readingHalo, softGlow } from "@/components/themed-text";
 import { PressableScale } from "@/components/ui/pressable-scale";
 import { Fonts, MaxFontScale, Radius, Spacing, Type } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
@@ -100,7 +100,14 @@ export function Button({
             styles.label,
             size === "large" && styles.labelLarge,
             { color: foreground },
-            softGlow(foreground),
+            // The ghost variant is the only one with no fill of its own, so it
+            // is the only one whose label has the page — and whatever the page
+            // has drawn on it — directly behind it. It takes the reading halo
+            // for the same reason body copy does. The filled variants keep the
+            // glow: their labels sit on solid ink, terracotta or the element
+            // tone, where a page-coloured halo would ring every glyph in a
+            // fringe belonging to no surface on screen.
+            variant === "ghost" ? readingHalo(theme.background) : softGlow(foreground),
           ]}
         >
           {title}
