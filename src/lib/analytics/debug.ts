@@ -17,7 +17,9 @@
  * Console.app with the device selected, filtered on `[analytics]`.
  */
 
-const ENABLED = true;
+// Off, along with the tracking itself. Set to true to bring the traces back
+// when analytics is switched on again — see `enabled.ts`.
+const ENABLED = false;
 
 export function trace(step: string, detail?: unknown): void {
   if (!ENABLED) return;

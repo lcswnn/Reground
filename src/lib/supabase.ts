@@ -49,6 +49,8 @@ import 'expo-sqlite/localStorage/install';
 import { AppState } from 'react-native';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 
+import { ANALYTICS_ENABLED } from '@/lib/analytics/enabled';
+
 const URL = process.env.EXPO_PUBLIC_SUPABASE_URL;
 const KEY = process.env.EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY;
 
@@ -93,7 +95,10 @@ const storage = {
 export function supabase(): SupabaseClient | null {
   if (cached !== undefined) return cached;
 
-  if (!URL || !KEY) {
+  // The master switch, and the missing-keys case, which are the same outcome by
+  // design — see `enabled.ts`. Everything downstream already treats a null
+  // client as "record nothing", so this is the whole of the off state.
+  if (!ANALYTICS_ENABLED || !URL || !KEY) {
     cached = null;
     return cached;
   }

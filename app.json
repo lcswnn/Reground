@@ -36,7 +36,7 @@
         {
           "backgroundColor": "#EDE6D6",
           "image": "./assets/Tully-wave.png",
-          "imageWidth": 220,
+          "imageWidth": 120,
           "resizeMode": "contain"
         }
       ],

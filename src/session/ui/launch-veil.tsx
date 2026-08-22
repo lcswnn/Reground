@@ -25,7 +25,7 @@
  * `expo-splash-screen` plugin, which is build-time config the bundle cannot read
  * back. They are duplicated below and have to be changed in both places or the
  * handoff shows as a jump. The plugin's `resizeMode: "contain"` is why the mark
- * is square here: the asset is 1024×1024, so contained at 260 wide it is 260
+ * is square here: the asset is 1024×1024, so contained at 120 wide it is 120
  * tall.
  *
  * ## It stays light in dark mode, deliberately
@@ -81,11 +81,15 @@ const BACKGROUND = "#EDE6D6";
  *
  * It came down from 260 to 180 — Tully at that width filled a third of a phone
  * and read as a character being introduced, where the splash is a held breath
- * before the app rather than a title card — and back up to 220, which is the
- * middle of that argument: large enough to be a wave rather than a logo, still
- * short of owning the screen.
+ * before the app rather than a title card — went back up to 220 as the middle of
+ * that argument, and is now 120, matching `app.json`. This value drifted from
+ * the plugin's once, and the symptom is worth recording because it does not look
+ * like a mismatch: the plugin was at 120 while this was left at 180, so the mark
+ * grew at the handoff and the launch read as *two* splashes, a small Tully and
+ * then a big one, rather than one plate held and released. There is no size that
+ * is right here independent of `app.json`; there is only the same number twice.
  */
-const MARK_SIZE = 220;
+const MARK_SIZE = 120;
 
 export function LaunchVeil() {
   const [cleared, setCleared] = useState(false);
